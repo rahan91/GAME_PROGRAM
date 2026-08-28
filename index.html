@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GALLERY</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      min-height: 100vh;
+      background: #1c1c1c;
+      overflow: hidden;
+    }
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      animation: float 12s ease-in-out infinite;
+    }
+    .orb--1 {
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(80, 100, 90, 0.3) 0%, rgba(80, 100, 90, 0.1) 40%, transparent 70%);
+      top: 5%;
+      left: 5%;
+      animation-delay: 0s;
+    }
+    .orb--2 {
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(70, 95, 80, 0.25) 0%, rgba(70, 95, 80, 0.08) 40%, transparent 70%);
+      top: 50%;
+      right: 0%;
+      animation-delay: -4s;
+    }
+    .orb--3 {
+      width: 650px;
+      height: 650px;
+      background: radial-gradient(circle, rgba(90, 110, 95, 0.22) 0%, rgba(90, 110, 95, 0.06) 40%, transparent 70%);
+      bottom: 0%;
+      left: 30%;
+      animation-delay: -8s;
+    }
+    .vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none;
+    }
+    .title {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      transition: top 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .title.active {
+      top: 60px;
+      transform: translateY(0);
+    }
+    .title h1 {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 4rem;
+      font-weight: 300;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(140, 180, 150, 0.85);
+      text-shadow: 0 0 60px rgba(100, 160, 120, 0.3);
+      transition: font-size 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .title.active h1 {
+      font-size: 2rem;
+    }
+    .grid {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+    .grid-inner {
+      display: grid;
+      grid-template-columns: repeat(3, 140px);
+      grid-template-rows: repeat(2, 140px);
+      gap: 24px;
+    }
+    .card {
+      width: 140px;
+      height: 140px;
+      border-radius: 10px;
+      background: rgba(80, 100, 90, 0.15);
+      border: 1px solid rgba(140, 180, 150, 0.15);
+      opacity: 0;
+      transform: translateY(120vh);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .card:nth-child(1), .card:nth-child(2) { transition-delay: 0s; }
+    .card:nth-child(3), .card:nth-child(4) { transition-delay: 0.15s; }
+    .card:nth-child(5), .card:nth-child(6) { transition-delay: 0.3s; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-30px) scale(1.05); }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
+  <div class="orb orb--3"></div>
+  <div class="vignette"></div>
+  <div class="title" id="title"><h1>Select your Game</h1></div>
+  <div class="grid">
+    <div class="grid-inner">
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+      <div class="card"></div>
+    </div>
+  </div>
+  <script>
+    let triggered = false;
+    function activate() {
+      if (triggered) return;
+      triggered = true;
+      document.getElementById('title').classList.add('active');
+      document.querySelectorAll('.card').forEach(c => c.classList.add('active'));
+    }
+    document.addEventListener('keydown', activate);
+    document.addEventListener('click', activate);
+    document.addEventListener('touchstart', activate);
+  </script>
+</body>
+</html>
