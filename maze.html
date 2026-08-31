@@ -552,8 +552,11 @@
   }
 
   function draw() {
+    ctx.globalAlpha = 1;
     ctx.drawImage(wallsLayer, 0, 0);
+    if (trailLayer) ctx.globalAlpha = 0.3;
     if (trailLayer) ctx.drawImage(trailLayer, 0, 0);
+    ctx.globalAlpha = 1;
     ctx.save();
     ctx.translate(PADDING, PADDING);
 
@@ -587,7 +590,7 @@
     trailLayer.height = canvas.height;
     trailCtx = trailLayer.getContext('2d');
     trailCtx.translate(PADDING, PADDING);
-    trailCtx.strokeStyle = 'rgba(140,180,150,0.3)';
+    trailCtx.strokeStyle = 'rgba(140,180,150,1)';
     trailCtx.lineWidth = Math.min(Math.max(cellSize * 0.25, 2), 5);
     trailCtx.lineCap = 'round';
     trailCtx.lineJoin = 'round';
