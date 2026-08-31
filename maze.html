@@ -514,7 +514,7 @@
     player = { x: 0, y: 0 };
     won = false; moves = 0;
     trail = [{ x: 0, y: 0 }];
-    startTime = performance.now();
+    startTime = Date.now();
     statusEl.textContent = 'Moves: 0';
     renderWallsLayer();
     initTrailLayer();
@@ -639,7 +639,7 @@
     const aiWasSolving = aiTimer !== null;
     stopAI();
     if (aiWasSolving) {
-      const aiElapsed = (performance.now() - aiStartTime) / 1000;
+      const aiElapsed = (Date.now() - aiStartTime) / 1000;
       const optimal = shortestPathLength();
       const accuracy = Math.min(optimal / Math.max(moves, 1), 1);
       addScore(1);
@@ -647,7 +647,7 @@
         Math.round(accuracy * 100) + '% accuracy, ' + aiElapsed.toFixed(2) + 's)';
       return;
     }
-    const elapsed = Math.max((performance.now() - startTime) / 1000, 0.01);
+    const elapsed = Math.max((Date.now() - startTime) / 1000, 0.01);
     const optimal = shortestPathLength();
     const efficiency = Math.min(optimal / Math.max(moves, 1), 1);
     const mazeSize = cols * rows;
@@ -729,7 +729,7 @@
     if (won || aiTimer) return;
     const path = bfsPath(player.x, player.y);
     if (!path || !path.length) { statusEl.textContent = 'Already at the exit!'; return; }
-    aiStartTime = performance.now();
+    aiStartTime = Date.now();
     let i = 0;
     const total = path.length;
     const MAX_STEPS_PER_FRAME = 300;
