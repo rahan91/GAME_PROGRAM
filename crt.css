@@ -72,3 +72,23 @@
   94% { opacity: 0.5; }
   96% { opacity: 0.65; }
 }
+
+body:has(#mazeCanvas) {
+  transform: perspective(1000px) rotateX(4deg) scale(1.06);
+  transform-origin: 50% 42%;
+  font-smooth: auto;
+}
+
+body:has(#mazeCanvas)::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 100%);
+}
+
+body:has(#mazeCanvas) #mazeCanvas {
+  box-shadow: 0 0 40px rgba(0,0,0,0.6);
+}
+
