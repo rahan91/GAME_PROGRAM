@@ -712,15 +712,26 @@
     aiStartTime = performance.now();
     let i = 0;
     const total = path.length;
-    const targetMs = 150;
+    const targetMs = 80;
     const stepsPerFrame = Math.max(1, Math.ceil(total / ((targetMs / 16.7) || 1)));
     aiTimer = setInterval(() => {
-      if (won) return;
+      if (won) { stopAI(); return; }
       for (let k = 0; k < stepsPerFrame; k++) {
-        if (i >= total) break;
-        move(...path[i++]);
+        if (i >= total) { stopAI(); break; }
+        const [dx, dy] = path[i++];
+        player.x += dx; player.y += dy;
+        const prev = trail.length > 1 ? trail[trail.length - 2] : null;
+        trail.push({ x: player.x, y: player.y });
+        if (!(prev && prev.x === player.x && prev.y === player.y)) moves++;
+        if (player.x === cols - 1 && player.y === rows - 1) {
+          won = true;
+          stopAI();
+          finishRun();
+          draw();
+          return;
+        }
       }
-      if (i >= total) stopAI();
+      draw();
     }, 16);
   });
 
