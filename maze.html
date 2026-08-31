@@ -288,7 +288,7 @@
   const selectTrigger = difficultySelect.querySelector('.select-trigger');
   const selectOptions = difficultySelect.querySelectorAll('.select-option');
 
-  let cols, rows, cellSize, grid, player, won, moves, trail, startTime, wallsLayer;
+  let cols, rows, cellSize, grid, player, won, moves, trail, startTime, wallsLayer, trailLayer, trailCtx;
   const PADDING = 2;
   const STORAGE_KEY = 'mazeGameScores';
   let selectedDifficulty = 'medium';
@@ -514,6 +514,7 @@
     startTime = performance.now();
     statusEl.textContent = 'Moves: 0';
     renderWallsLayer();
+    initTrailLayer();
     draw();
   }
 
@@ -552,19 +553,9 @@
 
   function draw() {
     ctx.drawImage(wallsLayer, 0, 0);
+    if (trailLayer) ctx.drawImage(trailLayer, 0, 0);
     ctx.save();
     ctx.translate(PADDING, PADDING);
-
-    if (trail.length > 1) {
-      ctx.strokeStyle = 'rgba(140,180,150,0.2)';
-      ctx.lineWidth = Math.max(cellSize * 0.12, 2);
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(trail[0].x * cellSize + cellSize / 2, trail[0].y * cellSize + cellSize / 2);
-      for (let i = 1; i < trail.length; i++)
-        ctx.lineTo(trail[i].x * cellSize + cellSize / 2, trail[i].y * cellSize + cellSize / 2);
-      ctx.stroke();
-    }
 
     const sr = cellSize * 0.5;
     ctx.fillStyle = 'rgba(100,180,120,0.8)';
@@ -590,25 +581,48 @@
     ctx.restore();
   }
 
+  function initTrailLayer() {
+    trailLayer = document.createElement('canvas');
+    trailLayer.width = canvas.width;
+    trailLayer.height = canvas.height;
+    trailCtx = trailLayer.getContext('2d');
+    trailCtx.translate(PADDING, PADDING);
+    trailCtx.strokeStyle = 'rgba(140,180,150,0.2)';
+    trailCtx.lineWidth = Math.max(Math.max(cellSize * 0.12, 2), 8);
+    trailCtx.lineCap = 'round';
+    trailCtx.lineJoin = 'round';
+  }
+
+  function appendTrailSegment(prevX, prevY, x, y) {
+    trailCtx.beginPath();
+    trailCtx.moveTo(prevX * cellSize + cellSize / 2, prevY * cellSize + cellSize / 2);
+    trailCtx.lineTo(x * cellSize + cellSize / 2, y * cellSize + cellSize / 2);
+    trailCtx.stroke();
+  }
+
   const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 
   function move(dx, dy) {
     if (won) return;
-    const cell = grid[player.x + player.y * cols];
+    const px = player.x, py = player.y;
+    const cell = grid[px + py * cols];
     if (dx === 0 && dy === -1 && cell.walls.top) return;
     if (dx === 1 && dy === 0 && cell.walls.right) return;
     if (dx === 0 && dy === 1 && cell.walls.bottom) return;
     if (dx === -1 && dy === 0 && cell.walls.left) return;
-    const nx = player.x + dx, ny = player.y + dy;
+    const nx = px + dx, ny = py + dy;
     if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) return;
 
-    player.x += dx; player.y += dy;
-    const prev = trail.length > 1 ? trail[trail.length - 2] : null;
-    trail.push({ x: player.x, y: player.y });
-    if (!(prev && prev.x === player.x && prev.y === player.y)) moves++;
+    player.x = nx; player.y = ny;
+    trail.push({ x: nx, y: ny });
+    if (trail.length > 1) {
+      const prev = trail[trail.length - 2];
+      appendTrailSegment(prev.x, prev.y, nx, ny);
+    }
+    moves++;
     statusEl.textContent = 'Moves: ' + moves;
     draw();
-    if (player.x === cols - 1 && player.y === rows - 1) {
+    if (nx === cols - 1 && ny === rows - 1) {
       finishRun();
       draw();
     }
@@ -712,17 +726,18 @@
     aiStartTime = performance.now();
     let i = 0;
     const total = path.length;
-    const targetMs = 80;
-    const stepsPerFrame = Math.max(1, Math.ceil(total / ((targetMs / 16.7) || 1)));
+    const MAX_STEPS_PER_FRAME = 300;
+    const stepsPerFrame = Math.max(1, Math.min(MAX_STEPS_PER_FRAME, Math.ceil(total / ((80 / 16.7) || 1))));
     aiTimer = setInterval(() => {
       if (won) { stopAI(); return; }
       for (let k = 0; k < stepsPerFrame; k++) {
         if (i >= total) { stopAI(); break; }
         const [dx, dy] = path[i++];
+        const px = player.x, py = player.y;
         player.x += dx; player.y += dy;
-        const prev = trail.length > 1 ? trail[trail.length - 2] : null;
         trail.push({ x: player.x, y: player.y });
-        if (!(prev && prev.x === player.x && prev.y === player.y)) moves++;
+        appendTrailSegment(px, py, player.x, player.y);
+        moves++;
         if (player.x === cols - 1 && player.y === rows - 1) {
           won = true;
           stopAI();
