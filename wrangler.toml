@@ -1,0 +1,8 @@
+name = "game-program"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DATABASE"
+database_name = "game-program-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"

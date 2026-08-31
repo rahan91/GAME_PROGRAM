@@ -147,6 +147,103 @@
       0%, 100% { transform: translateY(0) scale(1); }
       50% { transform: translateY(-30px) scale(1.05); }
     }
+    .auth-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+      padding: 8px 18px;
+      border: 1px solid rgba(140,180,150,0.4);
+      border-radius: 6px;
+      background: rgba(80,100,90,0.2);
+      color: rgba(140,180,150,0.9);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .auth-btn:hover { background: rgba(80,100,90,0.4); }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      width: 320px;
+      background: #1c1c1c;
+      border: 1px solid rgba(140,180,150,0.2);
+      border-radius: 10px;
+      padding: 24px;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    .modal h2 {
+      color: rgba(140,180,150,0.9);
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+    .modal .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .modal .tab {
+      flex: 1;
+      padding: 6px;
+      border: 1px solid rgba(140,180,150,0.2);
+      border-radius: 6px;
+      background: transparent;
+      color: rgba(140,180,150,0.7);
+      cursor: pointer;
+    }
+    .modal .tab.active {
+      background: rgba(140,180,150,0.25);
+      color: #e0e0e0;
+    }
+    .modal input {
+      width: 100%;
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(140,180,150,0.2);
+      border-radius: 6px;
+      background: rgba(80,100,90,0.15);
+      color: #e0e0e0;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .modal input:focus { outline: none; border-color: rgba(140,180,150,0.5); }
+    .modal .submit {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(140,180,150,0.35);
+      color: #e0e0e0;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .modal .submit:hover { background: rgba(140,180,150,0.5); }
+    .modal .err {
+      color: rgba(220,120,120,0.9);
+      font-size: 13px;
+      min-height: 18px;
+      margin-bottom: 8px;
+    }
+    .modal .close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: rgba(140,180,150,0.6);
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .modal { position: relative; }
+    .user-chip { color: rgba(140,180,150,0.9); }
   </style>
 </head>
 <body>
@@ -154,6 +251,28 @@
   <div class="orb orb--2"></div>
   <div class="orb orb--3"></div>
   <div class="vignette"></div>
+
+  <div id="authBtnWrap" style="position:fixed;top:20px;right:20px;z-index:10;">
+    <button class="auth-btn" id="authBtn">Login</button>
+  </div>
+
+  <div class="modal-overlay" id="authModal">
+    <div class="modal">
+      <button class="close" id="closeAuth">&times;</button>
+      <h2 id="modalTitle">Log in</h2>
+      <div class="tabs">
+        <button class="tab active" data-mode="login">Log in</button>
+        <button class="tab" data-mode="register">Register</button>
+      </div>
+      <div id="authBody">
+        <input type="text" id="authLogin" placeholder="Username or email" autocomplete="username">
+        <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
+      </div>
+      <div class="err" id="authErr"></div>
+      <button class="submit" id="authSubmit">Log in</button>
+    </div>
+  </div>
+
   <div class="title" id="title"><h1>Select your Game</h1></div>
   <div class="grid">
     <div class="grid-inner">
@@ -196,6 +315,97 @@
     document.addEventListener('click', activate);
     document.addEventListener('touchstart', activate);
     document.addEventListener('mousemove', activate);
+
+    // ---- Auth ----
+    const authBtn = document.getElementById('authBtn');
+    const modal = document.getElementById('authModal');
+    const closeBtn = document.getElementById('closeAuth');
+    const modalTitle = document.getElementById('modalTitle');
+    const authBody = document.getElementById('authBody');
+    const authErr = document.getElementById('authErr');
+    const authSubmit = document.getElementById('authSubmit');
+    const tabs = document.querySelectorAll('.tab');
+    let mode = 'login';
+
+    function setMode(m) {
+      mode = m;
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+      modalTitle.textContent = m === 'login' ? 'Log in' : 'Register';
+      authSubmit.textContent = m === 'login' ? 'Log in' : 'Create account';
+      authErr.textContent = '';
+      authBody.innerHTML = '';
+      if (m === 'register') {
+        authBody.innerHTML =
+          '<input type="text" id="authLogin" placeholder="Username" autocomplete="username">' +
+          '<input type="email" id="authEmail" placeholder="Email (optional)" autocomplete="email">' +
+          '<input type="password" id="authPassword" placeholder="Password (8+ chars)" autocomplete="new-password">';
+      } else {
+        authBody.innerHTML =
+          '<input type="text" id="authLogin" placeholder="Username or email" autocomplete="username">' +
+          '<input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">';
+      }
+    }
+
+    function renderAuthState(user) {
+      if (user) {
+        authBtn.textContent = 'Logout (' + user.username + ')';
+      } else {
+        authBtn.textContent = 'Login';
+      }
+    }
+
+    function openModal() {
+      setMode('login');
+      modal.classList.add('open');
+    }
+
+    authBtn.addEventListener('click', async () => {
+      const user = (window.__user && window.__user.username) ? window.__user : null;
+      if (user) {
+        await fetch('/api/logout', { method: 'POST' });
+        window.__user = null;
+        renderAuthState(null);
+        return;
+      }
+      openModal();
+    });
+
+    tabs.forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
+    closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+
+    authSubmit.addEventListener('click', async () => {
+      const login = document.getElementById('authLogin').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const emailEl = document.getElementById('authEmail');
+      const email = emailEl ? emailEl.value.trim() : undefined;
+      const payload = mode === 'register'
+        ? { username: login, email, password }
+        : { login, password };
+      try {
+        const res = await fetch('/api/' + (mode === 'register' ? 'register' : 'login'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) { authErr.textContent = data.error || 'Request failed'; return; }
+        window.__user = data.user;
+        renderAuthState(data.user);
+        modal.classList.remove('open');
+      } catch (err) {
+        authErr.textContent = 'Network error';
+      }
+    });
+
+    (async () => {
+      try {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        window.__user = data.user || null;
+        renderAuthState(window.__user);
+      } catch { window.__user = null; renderAuthState(null); }
+    })();
   </script>
 </body>
 </html>

@@ -1,0 +1,17 @@
+{
+  "name": "game-program",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev . --d1 DATABASE",
+    "deploy:db": "wrangler d1 migrations apply DATABASE",
+    "deploy": "wrangler pages deploy ."
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3"
+  }
+}

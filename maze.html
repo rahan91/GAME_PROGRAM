@@ -826,6 +826,17 @@
   const lastName = localStorage.getItem(STORAGE_KEY + '_lastPlayer');
   if (lastName) { nameInput.value = lastName; refreshScoreDisplay(); }
 
+  (async () => {
+    try {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      if (data.user && !nameInput.value) {
+        nameInput.value = data.user.username;
+        refreshScoreDisplay();
+      }
+    } catch {}
+  })();
+
   updateDifficultyGlow();
   generateMaze(20, 20);
 })();
