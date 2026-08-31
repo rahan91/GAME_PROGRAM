@@ -118,15 +118,20 @@
     padding: 6px 10px;
     border: 1px solid rgba(140,180,150,0.2);
     border-radius: 6px;
-    background: rgba(80,100,90,0.15);
+    background: #0d0d0d;
     color: #e0e0e0;
     font-size: 14px;
     cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  #difficultySelect option {
+    background: #111;
+    color: #e0e0e0;
   }
 
   #difficultySelect:focus {
     outline: none;
-    border-color: rgba(140,180,150,0.5);
   }
 
   #status {
@@ -661,7 +666,24 @@
     generateMaze(w, h);
   });
 
+  const DIFFICULTY_GLOWS = {
+    'very easy': { color: '#4a9eff', shadow: '0 0 8px #4a9eff55, 0 0 20px #4a9eff22' },
+    'easy':      { color: '#4aff7a', shadow: '0 0 8px #4aff7a55, 0 0 20px #4aff7a22' },
+    'medium':    { color: '#ffe44a', shadow: '0 0 8px #ffe44a55, 0 0 20px #ffe44a22' },
+    'hard':      { color: '#ff8c4a', shadow: '0 0 8px #ff8c4a55, 0 0 20px #ff8c4a22' },
+    'very hard': { color: '#ff4a4a', shadow: '0 0 8px #ff4a4a55, 0 0 20px #ff4a4a22' },
+    'insane':    { color: '#c84aff', shadow: '0 0 8px #c84aff55, 0 0 20px #c84aff22' },
+    'extreme':   { color: '#ff4ad0', shadow: '0 0 10px #ff4ad088, 0 0 25px #ff4ad044' }
+  };
+
+  function updateDifficultyGlow() {
+    const glow = DIFFICULTY_GLOWS[difficultySelect.value] || DIFFICULTY_GLOWS['medium'];
+    difficultySelect.style.borderColor = glow.color;
+    difficultySelect.style.boxShadow = glow.shadow;
+  }
+
   difficultySelect.addEventListener('change', () => {
+    updateDifficultyGlow();
     const w = clamp(parseInt(widthInput.value) || 20, 5, 80);
     const h = clamp(parseInt(heightInput.value) || 20, 5, 80);
     generateMaze(w, h);
@@ -683,6 +705,7 @@
   const lastName = localStorage.getItem(STORAGE_KEY + '_lastPlayer');
   if (lastName) { nameInput.value = lastName; refreshScoreDisplay(); }
 
+  updateDifficultyGlow();
   generateMaze(20, 20);
 })();
 </script>
