@@ -1,8 +1,10 @@
 name = "game-program"
 pages_build_output_dir = "."
+compatibility_date = "2026-08-28"
+compatibility_flags = ["nodejs_compat"]
 
 [[d1_databases]]
 binding = "DATABASE"
 database_name = "game-program-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "1871f96e-a5ad-43b2-b55f-8402372a9b2f"
 migrations_dir = "migrations"
