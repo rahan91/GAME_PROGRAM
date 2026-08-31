@@ -2,6 +2,8 @@
   var W, H;
   var STRENGTH = 0.5;
 
+  if (document.querySelector('#mazeCanvas')) return;
+
   var overlay = document.createElement('div');
   overlay.style.cssText =
     'position:fixed;inset:0;z-index:2147482000;pointer-events:none;overflow:hidden;background:#0b0b0b;';
