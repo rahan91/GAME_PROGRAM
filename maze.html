@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maze</title>
+<title>MAZE</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -115,23 +115,54 @@
   #solveBtn:hover { background: rgba(100,180,120,0.45); }
 
   #difficultySelect {
+    position: relative;
+    width: 120px;
+    cursor: pointer;
+  }
+
+  .select-trigger {
     padding: 6px 10px;
     border: 1px solid rgba(140,180,150,0.2);
     border-radius: 6px;
     background: #0d0d0d;
     color: #e0e0e0;
     font-size: 14px;
-    cursor: pointer;
     transition: border-color 0.3s, box-shadow 0.3s;
+    user-select: none;
   }
 
-  #difficultySelect option {
-    background: #111;
+  .select-options {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #0d0d0d;
+    border: 1px solid rgba(140,180,150,0.15);
+    border-radius: 6px;
+    overflow: hidden;
+    display: none;
+    z-index: 20;
+  }
+
+  .custom-select.open .select-options {
+    display: block;
+  }
+
+  .select-option {
+    padding: 6px 10px;
     color: #e0e0e0;
+    font-size: 14px;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   }
 
-  #difficultySelect:focus {
-    outline: none;
+  .select-option:hover {
+    background: rgba(255,255,255,0.06);
+    color: var(--glow-color, #e0e0e0);
+    text-shadow: var(--glow-shadow, none);
+  }
+
+  .select-option.selected {
+    color: #fff;
   }
 
   #status {
@@ -223,15 +254,18 @@
   <label for="heightInput">Height</label>
   <input type="number" id="heightInput" value="20" min="5" max="80">
   <label for="difficultySelect">Difficulty</label>
-  <select id="difficultySelect">
-    <option value="very easy">Very Easy</option>
-    <option value="easy">Easy</option>
-    <option value="medium" selected>Medium</option>
-    <option value="hard">Hard</option>
-    <option value="very hard">Very Hard</option>
-    <option value="insane">Insane</option>
-    <option value="extreme">Extreme</option>
-  </select>
+  <div class="custom-select" id="difficultySelect">
+    <div class="select-trigger">Medium</div>
+    <div class="select-options">
+      <div class="select-option" data-value="very easy">Very Easy</div>
+      <div class="select-option" data-value="easy">Easy</div>
+      <div class="select-option selected" data-value="medium">Medium</div>
+      <div class="select-option" data-value="hard">Hard</div>
+      <div class="select-option" data-value="very hard">Very Hard</div>
+      <div class="select-option" data-value="insane">Insane</div>
+      <div class="select-option" data-value="extreme">Extreme</div>
+    </div>
+  </div>
   <button id="generateBtn">Generate</button>
   <button id="solveBtn">Solve with AI</button>
 </div>
@@ -251,10 +285,13 @@
   const nameInput = document.getElementById('playerName');
   const scoreDisplay = document.getElementById('scoreDisplay');
   const difficultySelect = document.getElementById('difficultySelect');
+  const selectTrigger = difficultySelect.querySelector('.select-trigger');
+  const selectOptions = difficultySelect.querySelectorAll('.select-option');
 
   let cols, rows, cellSize, grid, player, won, moves, trail, startTime;
   const PADDING = 2;
   const STORAGE_KEY = 'mazeGameScores';
+  let selectedDifficulty = 'medium';
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -269,7 +306,7 @@
   };
 
   function currentDifficulty() {
-    return DIFFICULTIES[difficultySelect.value] || DIFFICULTIES['medium'];
+    return DIFFICULTIES[selectedDifficulty] || DIFFICULTIES['medium'];
   }
 
   function loadScores() {
@@ -667,26 +704,54 @@
   });
 
   const DIFFICULTY_GLOWS = {
-    'very easy': { color: '#4a9eff', shadow: '0 0 8px #4a9eff55, 0 0 20px #4a9eff22' },
-    'easy':      { color: '#4aff7a', shadow: '0 0 8px #4aff7a55, 0 0 20px #4aff7a22' },
-    'medium':    { color: '#ffe44a', shadow: '0 0 8px #ffe44a55, 0 0 20px #ffe44a22' },
-    'hard':      { color: '#ff8c4a', shadow: '0 0 8px #ff8c4a55, 0 0 20px #ff8c4a22' },
-    'very hard': { color: '#ff4a4a', shadow: '0 0 8px #ff4a4a55, 0 0 20px #ff4a4a22' },
-    'insane':    { color: '#c84aff', shadow: '0 0 8px #c84aff55, 0 0 20px #c84aff22' },
-    'extreme':   { color: '#ff4ad0', shadow: '0 0 10px #ff4ad088, 0 0 25px #ff4ad044' }
+    'very easy': { color: '#4a9eff', shadow: '0 0 8px #4a9effaa, 0 0 20px #4a9eff44' },
+    'easy':      { color: '#4aff7a', shadow: '0 0 8px #4aff7aaa, 0 0 20px #4aff7a44' },
+    'medium':    { color: '#ffe44a', shadow: '0 0 8px #ffe44aaa, 0 0 20px #ffe44a44' },
+    'hard':      { color: '#ff8c4a', shadow: '0 0 8px #ff8c4aaa, 0 0 20px #ff8c4a44' },
+    'very hard': { color: '#ff4a4a', shadow: '0 0 8px #ff4a4aaa, 0 0 20px #ff4a4a44' },
+    'insane':    { color: '#c84aff', shadow: '0 0 8px #c84affaa, 0 0 20px #c84aff44' },
+    'extreme':   { color: '#ff4ad0', shadow: '0 0 10px #ff4ad0bb, 0 0 25px #ff4ad066' }
   };
 
   function updateDifficultyGlow() {
-    const glow = DIFFICULTY_GLOWS[difficultySelect.value] || DIFFICULTY_GLOWS['medium'];
-    difficultySelect.style.borderColor = glow.color;
-    difficultySelect.style.boxShadow = glow.shadow;
+    const glow = DIFFICULTY_GLOWS[selectedDifficulty] || DIFFICULTY_GLOWS['medium'];
+    selectTrigger.style.borderColor = glow.color;
+    selectTrigger.style.boxShadow = glow.shadow;
+    selectOptions.forEach(opt => {
+      const g = DIFFICULTY_GLOWS[opt.dataset.value];
+      if (g) {
+        opt.style.setProperty('--glow-color', g.color);
+        opt.style.setProperty('--glow-shadow', g.shadow);
+      }
+    });
   }
 
-  difficultySelect.addEventListener('change', () => {
+  function selectOption(opt) {
+    selectedDifficulty = opt.dataset.value;
+    selectTrigger.textContent = opt.textContent;
+    selectOptions.forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
     updateDifficultyGlow();
+    difficultySelect.classList.remove('open');
     const w = clamp(parseInt(widthInput.value) || 20, 5, 80);
     const h = clamp(parseInt(heightInput.value) || 20, 5, 80);
     generateMaze(w, h);
+  }
+
+  selectTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    difficultySelect.classList.toggle('open');
+  });
+
+  selectOptions.forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectOption(opt);
+    });
+  });
+
+  document.addEventListener('click', () => {
+    difficultySelect.classList.remove('open');
   });
 
   nameInput.addEventListener('change', () => {
