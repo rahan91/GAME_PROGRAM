@@ -700,12 +700,18 @@
     const path = bfsPath(player.x, player.y);
     if (!path || !path.length) { statusEl.textContent = 'Already at the exit!'; return; }
     aiStartTime = performance.now();
-    const stepMs = Math.max(4, 500 / Math.max(path.length, 1));
     let i = 0;
+    const total = path.length;
+    const targetMs = 150;
+    const stepsPerFrame = Math.max(1, Math.ceil(total / ((targetMs / 16.7) || 1)));
     aiTimer = setInterval(() => {
-      if (won || i >= path.length) { stopAI(); return; }
-      move(...path[i++]);
-    }, stepMs);
+      if (won) return;
+      for (let k = 0; k < stepsPerFrame; k++) {
+        if (i >= total) break;
+        move(...path[i++]);
+      }
+      if (i >= total) stopAI();
+    }, 16);
   });
 
   generateBtn.addEventListener('click', () => {
