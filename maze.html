@@ -288,7 +288,7 @@
   const selectTrigger = difficultySelect.querySelector('.select-trigger');
   const selectOptions = difficultySelect.querySelectorAll('.select-option');
 
-  let cols, rows, cellSize, grid, player, won, moves, trail, startTime;
+  let cols, rows, cellSize, grid, player, won, moves, trail, startTime, wallsLayer;
   const PADDING = 2;
   const STORAGE_KEY = 'mazeGameScores';
   let selectedDifficulty = 'medium';
@@ -513,26 +513,30 @@
     trail = [{ x: 0, y: 0 }];
     startTime = performance.now();
     statusEl.textContent = 'Moves: 0';
+    renderWallsLayer();
     draw();
   }
 
-  function draw() {
-    ctx.fillStyle = '#1c1c1c';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    ctx.translate(PADDING, PADDING);
+  function renderWallsLayer() {
+    wallsLayer = document.createElement('canvas');
+    wallsLayer.width = canvas.width;
+    wallsLayer.height = canvas.height;
+    const wctx = wallsLayer.getContext('2d');
+    wctx.fillStyle = '#1c1c1c';
+    wctx.fillRect(0, 0, wallsLayer.width, wallsLayer.height);
+    wctx.translate(PADDING, PADDING);
 
     const wall = (x1, y1, x2, y2) => {
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
+      wctx.beginPath();
+      wctx.moveTo(x1, y1);
+      wctx.lineTo(x2, y2);
+      wctx.stroke();
     };
 
-    ctx.strokeStyle = 'rgba(140,180,150,0.6)';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'butt';
-    ctx.lineJoin = 'miter';
+    wctx.strokeStyle = 'rgba(140,180,150,0.6)';
+    wctx.lineWidth = 2;
+    wctx.lineCap = 'butt';
+    wctx.lineJoin = 'miter';
     for (const cell of grid) {
       const cx = cell.x * cellSize, cy = cell.y * cellSize;
       if (cell.walls.top) wall(cx, cy, cx + cellSize, cy);
@@ -541,9 +545,15 @@
       if (cell.walls.left) wall(cx, cy, cx, cy + cellSize);
     }
 
-    ctx.strokeStyle = 'rgba(140,180,150,0.9)';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(0, 0, cols * cellSize, rows * cellSize);
+    wctx.strokeStyle = 'rgba(140,180,150,0.9)';
+    wctx.lineWidth = 3;
+    wctx.strokeRect(0, 0, cols * cellSize, rows * cellSize);
+  }
+
+  function draw() {
+    ctx.drawImage(wallsLayer, 0, 0);
+    ctx.save();
+    ctx.translate(PADDING, PADDING);
 
     if (trail.length > 1) {
       ctx.strokeStyle = 'rgba(140,180,150,0.2)';
