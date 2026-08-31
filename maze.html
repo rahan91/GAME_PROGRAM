@@ -203,13 +203,10 @@
     border: 1px solid rgba(140,180,150,0.2);
     border-radius: 6px;
     background: rgba(80,100,90,0.15);
-    color: #e0e0e0;
+    color: rgba(140,180,150,0.95);
     font-size: 14px;
-  }
-
-  #playerName:focus {
-    outline: none;
-    border-color: rgba(140,180,150,0.5);
+    font-weight: 600;
+    white-space: nowrap;
   }
 
   #scoreDisplay {
@@ -243,7 +240,7 @@
 
 <div id="scoreboard">
   <label for="playerName">Player</label>
-  <input type="text" id="playerName" placeholder="Your name" maxlength="30">
+  <span id="playerName" title="Logged-in user">anonymous</span>
   <span id="scoreDisplay">Score: 0</span>
   <button id="resetScoreBtn">Reset Score</button>
 </div>
@@ -319,7 +316,7 @@
   }
 
   function currentPlayer() {
-    return nameInput.value.trim() || 'anonymous';
+    return nameInput.textContent.trim() || 'anonymous';
   }
 
   function refreshScoreDisplay() {
@@ -810,11 +807,6 @@
     difficultySelect.classList.remove('open');
   });
 
-  nameInput.addEventListener('change', () => {
-    localStorage.setItem(STORAGE_KEY + '_lastPlayer', currentPlayer());
-    refreshScoreDisplay();
-  });
-
   document.getElementById('resetScoreBtn').addEventListener('click', () => {
     const name = currentPlayer();
     if (!confirm(`Reset ${name}'s score to 0? This cannot be undone.`)) return;
@@ -823,18 +815,15 @@
     refreshScoreDisplay();
   });
 
-  const lastName = localStorage.getItem(STORAGE_KEY + '_lastPlayer');
-  if (lastName) { nameInput.value = lastName; refreshScoreDisplay(); }
-
   (async () => {
     try {
       const res = await fetch('/api/me');
       const data = await res.json();
-      if (data.user && !nameInput.value) {
-        nameInput.value = data.user.username;
-        refreshScoreDisplay();
-      }
-    } catch {}
+      nameInput.textContent = data.user ? data.user.username : 'anonymous';
+    } catch {
+      nameInput.textContent = 'anonymous';
+    }
+    refreshScoreDisplay();
   })();
 
   updateDifficultyGlow();
