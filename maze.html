@@ -646,7 +646,7 @@
     const aiWasSolving = aiTimer !== null;
     stopAI();
     if (aiWasSolving) {
-      const aiElapsed = (Date.now() - aiStartTime) / 1000;
+      const aiElapsed = Math.max((Date.now() - startTime) / 1000, 0.01);
       const optimal = shortestPathLength();
       const accuracy = Math.min(optimal / Math.max(moves, 1), 1);
       addScore(1);
@@ -699,7 +699,7 @@
     if (now >= nextMoveTime) { move(...KEY_TO_DIR[key]); nextMoveTime = now + REPEAT_INTERVAL; }
   }, 15);
 
-  let aiTimer = null, aiStartTime = 0;
+  let aiTimer = null;
   function stopAI() { if (aiTimer) { clearInterval(aiTimer); aiTimer = null; } }
 
   function bfsPath(sx, sy) {
@@ -737,7 +737,6 @@
     if (won || aiTimer) return;
     const path = bfsPath(player.x, player.y);
     if (!path || !path.length) { statusEl.textContent = 'Already at the exit!'; return; }
-    aiStartTime = Date.now();
     let i = 0;
     const total = path.length;
     const MAX_STEPS_PER_FRAME = 300;
