@@ -587,8 +587,8 @@
     trailLayer.height = canvas.height;
     trailCtx = trailLayer.getContext('2d');
     trailCtx.translate(PADDING, PADDING);
-    trailCtx.strokeStyle = 'rgba(140,180,150,0.2)';
-    trailCtx.lineWidth = Math.max(Math.max(cellSize * 0.12, 2), 8);
+    trailCtx.strokeStyle = 'rgba(140,180,150,0.3)';
+    trailCtx.lineWidth = Math.min(Math.max(cellSize * 0.25, 2), 5);
     trailCtx.lineCap = 'round';
     trailCtx.lineJoin = 'round';
   }
