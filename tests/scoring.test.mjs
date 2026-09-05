@@ -81,19 +81,21 @@ assert(S.targetRunScore(perfectRun + (1e9)) <= 5000, 'adding waiting time cannot
 
 console.log('\n=== Button scoring ===');
 const btn = S.buttonScore;
-// score = 100 * (1 - e^(-seconds/100))
+// sec<=30: 10*sec | sec<=60: 300+5*(sec-30) | sec>60: 450+2*(sec-60)
 assert(btn(0) === 0, 'zero hold scores nothing');
-between(btn(1000), 0, 1, '1s hold ~ 1 point');                 // 100*(1-e^-0.01)=0.995
-between(btn(10000), 9, 10, '10s hold ~ 9.5 points');           // 100*(1-e^-0.1)=9.52
-between(btn(60000), 45, 46, '60s hold ~ 45 points');           // 100*(1-e^-0.6)=45.1
-assert(btn(2000) > btn(1000), 'longer hold scores more');
-assert(btn(100000) > btn(10000), 'very long hold keeps climbing (soft cap)');
-assert(btn(600000) <= S.BUTTON_SOFT_CAP, 'long hold never exceeds the soft cap');
-assert(btn(1e9) <= S.BUTTON_SOFT_CAP, 'score never exceeds the soft cap');
-assert(btn(960000) <= S.BUTTON_SOFT_CAP, 'approaches cap but never overshoots');
+assert(btn(10000) === 100, '10s hold = 100 (tier 1)');
+assert(btn(30000) === 300, '30s hold hits tier boundary = 300');
+assert(btn(31000) === 305, '31s hold = 305 (tier 2 slope 5)');
+assert(btn(60000) === 450, '60s hold hits tier boundary = 450');
+assert(btn(61000) === 452, '61s hold = 452 (tier 3 slope 2)');
+assert(btn(20000) > btn(10000), 'longer hold scores more');
+assert(btn(100000) > btn(60000), 'very long hold keeps climbing (no hard cap)');
+const t1Gain = btn(10000) - btn(0);
+const t3Gain = btn(61000) - btn(60000);
+assert(t3Gain < t1Gain, 'later tiers pay less per second');
 assert(btn(NaN) === 0, 'NaN hold -> 0');
 assert(btn(-50) === 0, 'negative hold -> 0');
-assert(btn(Infinity) <= S.BUTTON_SOFT_CAP, 'infinite hold bounded by soft cap');
+assert(btn(Infinity) === 0, 'infinite hold -> 0 (non-finite sanitized)');
 
 console.log('\n=== Calibration comparison ===');
 function mazeRepr(label, cells, diff, optimal, actual, time) {
@@ -116,10 +118,10 @@ tgtRepr('exceptional', 220, 0);
 function btnRepr(label, holdMs) {
   console.log('  ' + label.padEnd(14) + ' button: ' + String(S.buttonScore(holdMs)).padStart(5));
 }
-btnRepr('tap 1s', 1000);
-btnRepr('hold 3s', 3000);
-btnRepr('hold 6s', 6000);
-btnRepr('hold 12s', 12000);
+btnRepr('hold 10s', 10000);
+btnRepr('hold 30s', 30000);
+btnRepr('hold 45s', 45000);
+btnRepr('hold 90s', 90000);
 
 console.log('\n' + (failures === 0 ? 'ALL ' + checks + ' CHECKS PASSED' : failures + ' OF ' + checks + ' CHECKS FAILED'));
 process.exit(failures === 0 ? 0 : 1);

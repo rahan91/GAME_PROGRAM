@@ -82,15 +82,23 @@
   }
 
   // ---------------- Button ----------------
-  // score = 100 * (1 - e^(-seconds / 100)). Soft cap approaches 100.
-  var BUTTON_SOFT_CAP = 100;
-
+  // Piecewise, by seconds held:
+  //   sec <= 30   -> 10 * sec
+  //   30 < sec    -> 300 + 5 * (sec - 30)
+  //   sec > 60    -> 450 + 2 * (sec - 60)
   function buttonScore(holdMs) {
     if (!Number.isFinite(holdMs)) return 0;
     holdMs = Math.max(0, holdMs);
-    var seconds = holdMs / 1000;
-    var raw = 100 * (1 - Math.exp(-seconds / 100));
-    return Math.max(0, Math.min(BUTTON_SOFT_CAP, Math.round(raw)));
+    var sec = holdMs / 1000;
+    var raw;
+    if (sec <= 30) {
+      raw = 10 * sec;
+    } else if (sec <= 60) {
+      raw = 300 + 5 * (sec - 30);
+    } else {
+      raw = 450 + 2 * (sec - 60);
+    }
+    return Math.max(0, Math.round(raw));
   }
 
   global.Scoring = {
@@ -104,7 +112,6 @@
     RUN_TARGETS: RUN_TARGETS,
     TARGET_REF_REACTION: TARGET_REF_REACTION,
     TARGET_SPEED_MAX: TARGET_SPEED_MAX,
-    buttonScore: buttonScore,
-    BUTTON_SOFT_CAP: BUTTON_SOFT_CAP
+    buttonScore: buttonScore
   };
 })(typeof window !== 'undefined' ? window : globalThis);
