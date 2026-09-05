@@ -84,12 +84,19 @@
     .item:hover { border-color: rgba(140,180,150,0.3); background: rgba(80,100,90,0.18); }
     .item.equipped { border-color: rgba(160,220,180,0.6); background: rgba(140,180,150,0.12); }
 
-    .swatch { width: 56px; height: 56px; border-radius: 8px; margin-bottom: 10px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); }
+    .swatch {
+      width: 56px; height: 56px; margin-bottom: 10px; border-radius: 8px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      background: rgba(200,220,205,0.07);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
     .swatch.maze { border-radius: 8px; }
-    .swatch.cursor { width: 48px; height: 48px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
-    .swatch.cursor span { width: 12px; height: 12px; border-radius: 50%; background: #1c1c1c; display: block; transform: translate(18px, 18px) rotate(45deg); }
-    .swatch.target { border-radius: 50%; }
-    .swatch.target span { width: 20px; height: 20px; border-radius: 50%; background: #1c1c1c; display: block; transform: translate(18px, 18px); border: 2px solid rgba(255,255,255,0.25); }
+    .swatch.cursor { width: 48px; height: 48px; }
+    .swatch.cursor img { height: 100%; width: auto; }
+    .swatch.target { position: relative; border-radius: 50%; }
+    .swatch.target img { width: 100%; height: 100%; display: block; }
+    .swatch.target .tint { position: absolute; inset: 0; mix-blend-mode: color; pointer-events: none; }
 
     .item .name { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(200,220,205,0.9); }
     .item .price { font-size: 12px; color: rgba(230,200,120,0.85); margin-top: 2px; }
@@ -175,10 +182,10 @@
 
     function swatchHTML(item) {
       if (item.slot === 'cursor') {
-        return '<div class="swatch cursor" style="background:' + item.color + '"><span></span></div>';
+        return '<div class="swatch cursor"><img src="assets/cursor-arrow.png" alt="cursor" style="filter:' + window.Shop.cursorFilterCss(item.color) + ';"></div>';
       }
       if (item.slot === 'target') {
-        return '<div class="swatch target" style="background:' + item.color + '"><span></span></div>';
+        return '<div class="swatch target"><img src="assets/target.png" alt="target"><div class="tint" style="background:' + item.color + ';"></div></div>';
       }
       return '<div class="swatch maze" style="background:' + item.color + '"></div>';
     }
