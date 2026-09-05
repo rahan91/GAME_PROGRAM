@@ -707,10 +707,10 @@
     const dy = e.clientY - dragStart.y;
     const rect = canvas.getBoundingClientRect();
     const cellPx = Math.max(14, rect.width / cols);
-    const th = cellPx * 0.6;
+    const th = Math.max(32, cellPx * 0.8);
     if (Math.abs(dx) < th && Math.abs(dy) < th) return;
-    if (Math.abs(dx) > Math.abs(dy)) move(Math.sign(dx), 0);
-    else move(0, Math.sign(dy));
+    if (Math.abs(dx) > Math.abs(dy) * 1.3) move(Math.sign(dx), 0);
+    else if (Math.abs(dy) > Math.abs(dx) * 1.3) move(0, Math.sign(dy));
     dragStart = { x: e.clientX, y: e.clientY };
   });
   const endDrag = () => { dragStart = null; };
