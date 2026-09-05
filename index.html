@@ -183,7 +183,7 @@
     }
     .lb-head, .lb-row {
       display: grid;
-      grid-template-columns: 34px 1fr 48px 64px;
+      grid-template-columns: 40px 1fr 56px 68px;
       align-items: center;
       padding: 6px 18px;
     }
@@ -203,6 +203,8 @@
     .lb-row .rk { color: rgba(140, 180, 150, 0.45); text-align: right; padding-right: 8px; }
     .lb-row .pl { color: rgba(140, 180, 150, 0.35); text-align: right; padding-right: 8px; font-size: 0.7rem; }
     .lb-row .pt { text-align: right; color: rgba(220, 240, 225, 0.95); }
+    .lb-head .rk, .lb-head .pl, .lb-head .pt { font-size: inherit; }
+    .lb-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-row.me { background: rgba(140, 180, 150, 0.14); }
     .lb-row.me .pt { color: rgba(160, 220, 180, 1); }
     .lb-row .rk.top { color: rgba(230, 200, 120, 0.9); }
@@ -412,10 +414,10 @@
     <div class="lb-title">Leaderboard</div>
     <div class="lb-board">
       <div class="lb-head">
-        <div style="text-align:right;padding-right:8px;">#</div>
+        <div class="rk">#</div>
         <div>Player</div>
-        <div style="text-align:right;padding-right:8px;">Pl</div>
-        <div style="text-align:right;">Pts</div>
+        <div class="pl">ID</div>
+        <div class="pt">Pts</div>
       </div>
       <div id="lbRows"><div class="lb-status">Loading&hellip;</div></div>
     </div>
@@ -590,8 +592,8 @@
       container.innerHTML = rows.map((row, i) =>
         '<div class="lb-row' + (row.username === meUser ? ' me' : '') + '">' +
         '<div class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</div>' +
-        '<div>' + row.username + '</div>' +
-        '<div class="pl">' + row.plays + '</div>' +
+        '<div class="nm">' + row.username + '</div>' +
+        '<div class="pl">' + (row.id !== undefined ? row.id : '') + '</div>' +
         '<div class="pt">' + (row.total !== undefined ? Math.round(row.total * 100) / 100 : 0) + '</div>' +
         '</div>'
       ).join('');
