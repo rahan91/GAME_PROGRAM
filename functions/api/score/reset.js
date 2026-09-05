@@ -1,4 +1,4 @@
-import { json, getUserFromRequest } from '../_lib/auth.js';
+import { json, getUserFromRequest } from '../../_lib/auth.js';
 
 export async function onRequestPost(context) {
   const user = await getUserFromRequest(context.env, context.request);
