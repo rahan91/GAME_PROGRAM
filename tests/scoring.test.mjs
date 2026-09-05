@@ -81,15 +81,16 @@ assert(S.targetRunScore(perfectRun + (1e9)) <= 5000, 'adding waiting time cannot
 
 console.log('\n=== Button scoring ===');
 const btn = S.buttonScore;
+// score = 100 * (1 - e^(-seconds/100))
 assert(btn(0) === 0, 'zero hold scores nothing');
-assert(btn(1500) === 1, 'one whole second = 1 point (floor)');
-assert(btn(2500) === 2, 'partial second does not round up');
-assert(btn(5000) === 5, '5s hold = 5 points');
+between(btn(1000), 0, 1, '1s hold ~ 1 point');                 // 100*(1-e^-0.01)=0.995
+between(btn(10000), 9, 10, '10s hold ~ 9.5 points');           // 100*(1-e^-0.1)=9.52
+between(btn(60000), 45, 46, '60s hold ~ 45 points');           // 100*(1-e^-0.6)=45.1
 assert(btn(2000) > btn(1000), 'longer hold scores more');
-assert(btn(490000) === 490, 'just below cap still builds');
-assert(btn(500000) === S.BUTTON_SOFT_CAP, '500s hits the soft cap exactly');
-assert(btn(600000) === S.BUTTON_SOFT_CAP, 'longer than cap stays capped');
+assert(btn(100000) > btn(10000), 'very long hold keeps climbing (soft cap)');
+assert(btn(600000) <= S.BUTTON_SOFT_CAP, 'long hold never exceeds the soft cap');
 assert(btn(1e9) <= S.BUTTON_SOFT_CAP, 'score never exceeds the soft cap');
+assert(btn(960000) <= S.BUTTON_SOFT_CAP, 'approaches cap but never overshoots');
 assert(btn(NaN) === 0, 'NaN hold -> 0');
 assert(btn(-50) === 0, 'negative hold -> 0');
 assert(btn(Infinity) <= S.BUTTON_SOFT_CAP, 'infinite hold bounded by soft cap');

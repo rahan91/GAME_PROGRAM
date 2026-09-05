@@ -82,13 +82,15 @@
   }
 
   // ---------------- Button ----------------
-  // PLACEHOLDER formula: +1 point per whole second held, soft cap at 500.
-  var BUTTON_SOFT_CAP = 500;
+  // score = 100 * (1 - e^(-seconds / 100)). Soft cap approaches 100.
+  var BUTTON_SOFT_CAP = 100;
 
   function buttonScore(holdMs) {
     if (!Number.isFinite(holdMs)) return 0;
     holdMs = Math.max(0, holdMs);
-    return Math.min(BUTTON_SOFT_CAP, Math.floor(holdMs / 1000));
+    var seconds = holdMs / 1000;
+    var raw = 100 * (1 - Math.exp(-seconds / 100));
+    return Math.max(0, Math.min(BUTTON_SOFT_CAP, Math.round(raw)));
   }
 
   global.Scoring = {
