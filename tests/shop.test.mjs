@@ -48,4 +48,15 @@ for (const [color, price] of Object.entries(TARGET_PRICES)) {
   });
 }
 
+for (const slot of ['maze', 'cursor', 'target']) {
+  check(`${slot} default item`, () => {
+    const i = item(`${slot}:default`);
+    assert.ok(i, `${slot}:default exists`);
+    assert.equal(i.slot, slot);
+    assert.equal(i.price, 0);
+    assert.equal(i.default, true);
+    assert.equal(i.color, null);
+  });
+}
+
 console.log(`shop catalog: ${checks} checks passed`);

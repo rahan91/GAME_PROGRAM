@@ -181,16 +181,17 @@
 
     function swatchHTML(item) {
       if (item.slot === 'cursor') {
-        var c = window.Shop.hexToRgba(item.color, 1);
-        var dk = window.Shop.hexToRgba(item.color, 0.6);
+        var c = item.color || '#f0f0f0';
+        var dk = item.color ? window.Shop.hexToRgba(item.color, 0.6) : '#4a4a4a';
         return '<div class="swatch cursor"><svg viewBox="0 0 25 40" width="100%" height="100%">' +
           '<path d="M1 1 L1 29 L8 22 L14 37 L17 35 L11 20 L19 17 Z" ' +
           'fill="' + c + '" stroke="' + dk + '" stroke-width="1.5" stroke-linejoin="round"/></svg></div>';
       }
       if (item.slot === 'target') {
-        return '<div class="swatch target"><img src="assets/target.png" alt="target"><div class="tint" style="background:' + item.color + ';"></div></div>';
+        var tint = item.color ? '<div class="tint" style="background:' + item.color + ';"></div>' : '';
+        return '<div class="swatch target"><img src="assets/target.png" alt="target">' + tint + '</div>';
       }
-      return '<div class="swatch maze" style="background:' + item.color + '"></div>';
+      return '<div class="swatch maze" style="background:' + (item.color || '#b4c88c') + '"></div>';
     }
 
     function renderItems() {
@@ -203,27 +204,29 @@
         var card = document.createElement('div');
         card.className = 'item';
 
-        var owned = state.owned.indexOf(item.key) !== -1;
-        var isEquipped = equipped === item.key;
+        var isDefault = !!item.default;
+        var owned = isDefault || state.owned.indexOf(item.key) !== -1;
+        var isEquipped = equipped === item.key || (isDefault && !equipped);
 
         if (isEquipped) card.classList.add('equipped');
         card.innerHTML = swatchHTML(item) +
-          '<div class="name">' + item.name + '</div>' +
-          '<div class="price">' + item.price + ' pts</div>';
+          '<div class="name">' + (item.name === 'Default' ? 'Default' : item.name) + '</div>' +
+          '<div class="price">' + (isDefault ? 'Original' : item.price + ' pts') + '</div>';
 
         var action = document.createElement('div');
         if (isEquipped) {
           action.innerHTML = '<div class="tag">Equipped</div>';
-          var un = document.createElement('button');
-          un.className = 'unequip';
-          un.textContent = 'remove';
-          un.addEventListener('click', function () {
-            window.Shop.equip(activeSlot, null).then(function () {
-              setStatus('Removed ' + window.ShopCatalog.slotName(activeSlot).toLowerCase() + ' item');
+        } else if (isDefault) {
+          var eq = document.createElement('button');
+          eq.className = 'equip';
+          eq.textContent = 'Equip';
+          eq.addEventListener('click', function () {
+            window.Shop.equip(activeSlot, item.key).then(function () {
+              setStatus('Equipped ' + window.ShopCatalog.slotName(activeSlot).toLowerCase() + ' default');
               return refresh();
             }).catch(function (e) { setStatus(e.message, true); });
           });
-          action.appendChild(un);
+          action.appendChild(eq);
         } else if (owned) {
           var eq = document.createElement('button');
           eq.className = 'equip';

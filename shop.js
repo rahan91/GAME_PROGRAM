@@ -1,5 +1,6 @@
 (function () {
   var ITEMS = [
+    { key: 'maze:default', default: true, slot: 'maze',   name: 'Default',    color: null, price: 0 },
     { key: 'maze:dark-green', slot: 'maze',   name: 'Dark Green', color: '#2f7a4d', price: 1000 },
     { key: 'maze:teal',       slot: 'maze',   name: 'Teal',       color: '#17a2a6', price: 1200 },
     { key: 'maze:aqua',       slot: 'maze',   name: 'Aqua',       color: '#26d0d6', price: 1500 },
@@ -10,6 +11,7 @@
     { key: 'maze:orange',     slot: 'maze',   name: 'Orange',     color: '#f97316', price: 2200 },
     { key: 'maze:yellow',     slot: 'maze',   name: 'Yellow',     color: '#eab308', price: 2500 },
 
+    { key: 'cursor:default', default: true, slot: 'cursor', name: 'Default',    color: null, price: 0 },
     { key: 'cursor:black',    slot: 'cursor', name: 'Black',      color: '#141414', price: 500 },
     { key: 'cursor:red',      slot: 'cursor', name: 'Red',        color: '#e5484d', price: 1000 },
     { key: 'cursor:orange',   slot: 'cursor', name: 'Orange',     color: '#f97316', price: 1100 },
@@ -23,6 +25,7 @@
     { key: 'cursor:violet',   slot: 'cursor', name: 'Violet',     color: '#8b5cf6', price: 1900 },
     { key: 'cursor:pink',     slot: 'cursor', name: 'Pink',       color: '#ec4899', price: 2000 },
 
+    { key: 'target:default', default: true, slot: 'target', name: 'Default',    color: null, price: 0 },
     { key: 'target:orange',   slot: 'target', name: 'Orange',     color: '#f97316', price: 2000 },
     { key: 'target:yellow',   slot: 'target', name: 'Yellow',     color: '#eab308', price: 2100 },
     { key: 'target:green',    slot: 'target', name: 'Green',      color: '#22c55e', price: 2300 },
@@ -148,6 +151,7 @@
     buy: function (key) {
       var item = window.ShopCatalog.item(key);
       if (!item) return Promise.reject(new Error('Unknown item'));
+      if (item.default) return Promise.reject(new Error('Default items are free'));
       return serverState().then(function (s) {
         if (s) {
           return fetch('/api/shop/buy', {
@@ -186,7 +190,7 @@
         if (key) {
           var item = window.ShopCatalog.item(key);
           if (!item || item.slot !== slot) throw new Error('Invalid item');
-          if (d.owned.indexOf(key) === -1) throw new Error('You do not own this item');
+          if (!item.default && d.owned.indexOf(key) === -1) throw new Error('You do not own this item');
           d.equipped[slot] = key;
         } else {
           delete d.equipped[slot];

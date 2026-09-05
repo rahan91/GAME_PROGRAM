@@ -18,7 +18,7 @@ export async function onRequestPost(context) {
     const owned = await context.env.DATABASE.prepare(
       'SELECT 1 FROM purchases WHERE user_id = ? AND item_key = ?'
     ).bind(user.id, itemKey).first();
-    if (!owned) return json({ error: 'You do not own this item' }, 400);
+    if (!item.default && !owned) return json({ error: 'You do not own this item' }, 400);
     await context.env.DATABASE.prepare(
       `INSERT INTO equips (user_id, slot, item_key) VALUES (?, ?, ?)
        ON CONFLICT(user_id, slot) DO UPDATE SET item_key = excluded.item_key`

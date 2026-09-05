@@ -865,9 +865,12 @@
     try {
       const s = await Shop.state();
       const m = Shop.installed(s.equipped, Shop.MAZE);
-      if (m) {
+      if (m && m.color) {
         playerColor = Shop.hexToRgba(m.color, 0.9);
         playerShadow = Shop.hexToRgba(m.color, 0.5);
+      } else {
+        playerColor = 'rgba(180,200,140,0.9)';
+        playerShadow = 'rgba(180,200,140,0.5)';
       }
     } catch (e) {}
     if (grid) draw();

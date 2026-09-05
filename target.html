@@ -325,9 +325,9 @@
     try {
       const s = await Shop.state();
       const cur = Shop.installed(s.equipped, Shop.CURSOR);
-      cursorfx.style.filter = cur ? Shop.cursorFilterCss(cur.color) : '';
+      cursorfx.style.filter = (cur && cur.color) ? Shop.cursorFilterCss(cur.color) : '';
       const tgt = Shop.installed(s.equipped, Shop.TARGET);
-      targetTint.style.background = tgt ? tgt.color : 'transparent';
+      targetTint.style.background = (tgt && tgt.color) ? tgt.color : 'transparent';
     } catch (e) {}
   }
 

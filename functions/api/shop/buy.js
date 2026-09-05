@@ -10,6 +10,7 @@ export async function onRequestPost(context) {
 
   const item = getItem(String((body && body.item_key) || ''));
   if (!item) return json({ error: 'Unknown item' }, 400);
+  if (item.default) return json({ error: 'Default items are free' }, 400);
 
   const scores = await context.env.DATABASE.prepare(
     'SELECT total, spent FROM scores WHERE user_id = ?'
