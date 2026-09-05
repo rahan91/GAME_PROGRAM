@@ -130,6 +130,7 @@
     pointer-events: none;
     z-index: 100;
     will-change: transform;
+    image-rendering: pixelated;
     transform: translate3d(0, 0, 0);
   }
   #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0; }
@@ -252,10 +253,23 @@
   const cursorfx = document.getElementById('cursorfx');
   let realX = window.innerWidth / 2, realY = window.innerHeight / 2;
   let curX = realX, curY = realY;
+  let cursorSpritesState = null;
   document.addEventListener('pointermove', (e) => {
     realX = e.clientX;
     realY = e.clientY;
   });
+
+  function paintCursor() {
+    if (cursorSpritesState && cursorSpritesState.arrow) {
+      const finger = cursorfx.className === 'finger';
+      cursorfx.style.backgroundImage = 'url("' + (finger ? cursorSpritesState.finger : cursorSpritesState.arrow) + '")';
+      cursorfx.style.backgroundRepeat = 'no-repeat';
+      cursorfx.style.filter = cursorSpritesState.border || '';
+    } else {
+      cursorfx.style.backgroundImage = '';
+      cursorfx.style.filter = '';
+    }
+  }
 
   function overButton(x, y) {
     const r = btn.getBoundingClientRect();
@@ -267,6 +281,7 @@
     curY += (realY - curY) * 0.24;
     const over = overButton(curX, curY);
     cursorfx.className = over ? 'finger' : 'arrow';
+    paintCursor();
     const hotX = over ? 11 : 1;
     cursorfx.style.transform = 'translate3d(' + (curX - hotX) + 'px,' + curY + 'px,0)';
     requestAnimationFrame(cursorTick);
@@ -277,7 +292,8 @@
     try {
       const s = await Shop.state();
       const cur = Shop.installed(s.equipped, Shop.CURSOR);
-      cursorfx.style.filter = (cur && cur.color) ? Shop.cursorFilterCss(cur.color) : '';
+      cursorSpritesState = (cur && cur.color) ? await Shop.cursorSprites(cur.color) : { arrow: null, finger: null, border: '' };
+      paintCursor();
     } catch (e) {}
   }
 

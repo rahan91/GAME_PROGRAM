@@ -93,6 +93,91 @@
 
   var LOCAL_KEY = 'shopLocal';
 
+  var RECOLOR_CACHE = {};
+  var CURSOR_PAIR_CACHE = {};
+  var WHITE_BORDER_FILTER =
+    'drop-shadow(-1px 0 0 #fff) drop-shadow(1px 0 0 #fff) ' +
+    'drop-shadow(0 -1px 0 #fff) drop-shadow(0 1px 0 #fff)';
+
+  function luma(r, g, b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
+
+  function isBlackColor(hex) {
+    var c = hexToRgb(hex);
+    return luma(c.r, c.g, c.b) < 45;
+  }
+
+  // Recolor a sprite's opaque pixels to `hex`. When keepWhite is true, bright
+  // pixels (the target's white rings) are left untouched so the result is a
+  // vivid colored target with white highlights. Resolution is kept native so
+  // the pixelated cursor stays crisp.
+  function recolorSprite(path, hex, keepWhite) {
+    var cacheKey = path + '|' + (hex || '') + '|' + (keepWhite ? 'w' : 's');
+    if (RECOLOR_CACHE[cacheKey]) return RECOLOR_CACHE[cacheKey];
+    var p;
+    if (!hex) {
+      p = Promise.resolve(null);
+    } else {
+      p = new Promise(function (resolve, reject) {
+        var img = new Image();
+        img.onload = function () {
+          try {
+            var cv = document.createElement('canvas');
+            cv.width = img.naturalWidth || img.width;
+            cv.height = img.naturalHeight || img.height;
+            var ctx = cv.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, 0, 0);
+            var data = ctx.getImageData(0, 0, cv.width, cv.height).data;
+            var c = hexToRgb(hex);
+            for (var i = 0; i < data.length; i += 4) {
+              if (data[i + 3] === 0) continue;
+              var L = luma(data[i], data[i + 1], data[i + 2]);
+              if (keepWhite && L > 200) continue;
+              var f = keepWhite ? (0.5 + 0.5 * (L / 255)) : 1;
+              data[i] = Math.min(255, Math.round(c.r * f));
+              data[i + 1] = Math.min(255, Math.round(c.g * f));
+              data[i + 2] = Math.min(255, Math.round(c.b * f));
+            }
+            ctx.putImageData(new ImageData(data, cv.width, cv.height), 0, 0);
+            resolve(cv.toDataURL('image/png'));
+          } catch (e) { reject(e); }
+        };
+        img.onerror = function () { reject(new Error('sprite load failed: ' + path)); };
+        img.src = path;
+      });
+    }
+    RECOLOR_CACHE[cacheKey] = p;
+    return p;
+  }
+
+  // Both cursor sprites filled solid with the equip color. Black gets a white
+  // border so it stays visible against dark backgrounds.
+  function cursorSprites(color) {
+    var key = color || '';
+    if (CURSOR_PAIR_CACHE[key]) return CURSOR_PAIR_CACHE[key];
+    var p;
+    if (!color) {
+      p = Promise.resolve({ arrow: null, finger: null, border: '' });
+    } else {
+      p = Promise.all([
+        recolorSprite('assets/cursor-arrow.png', color, false),
+        recolorSprite('assets/cursor-finger.png', color, false)
+      ]).then(function (urls) {
+        return {
+          arrow: urls[0],
+          finger: urls[1],
+          border: isBlackColor(color) ? WHITE_BORDER_FILTER : ''
+        };
+      }).catch(function () { return { arrow: null, finger: null, border: '' }; });
+    }
+    CURSOR_PAIR_CACHE[key] = p;
+    return p;
+  }
+
+  function targetSprite(color) {
+    return recolorSprite('assets/target.png', color, true);
+  }
+
   function localLoad() {
     try { return JSON.parse(localStorage.getItem(LOCAL_KEY)) || {}; }
     catch (e) { return {}; }
@@ -125,6 +210,8 @@
     TARGET: 'target',
     hexToRgba: hexToRgba,
     cursorFilterCss: cursorFilterCss,
+    cursorSprites: cursorSprites,
+    targetSprite: targetSprite,
 
     state: function () {
       return serverState().then(function (s) {

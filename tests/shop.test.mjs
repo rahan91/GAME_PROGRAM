@@ -6,16 +6,16 @@ let checks = 0;
 const check = (name, fn) => { fn(); checks++; };
 
 const MAZE_PRICES = {
-  'dark-green': 1000, teal: 1200, aqua: 1500, blue: 1670,
-  indigo: 1700, violet: 1800, red: 2000, orange: 2200, yellow: 2500,
+  'dark-green': 7000, teal: 8400, aqua: 10500, blue: 11690,
+  indigo: 11900, violet: 12600, red: 14000, orange: 15400, yellow: 17500,
 };
 const CURSOR_PRICES = {
-  black: 500, red: 1000, orange: 1100, yellow: 1200, lime: 1300,
-  green: 1400, teal: 1500, aqua: 1600, blue: 1700, indigo: 1800,
-  violet: 1900, pink: 2000,
+  black: 3500, red: 7000, orange: 7700, yellow: 8400, lime: 9100,
+  green: 9800, teal: 10500, aqua: 11200, blue: 11900, indigo: 12600,
+  violet: 13300, pink: 14000,
 };
 const TARGET_PRICES = {
-  orange: 2000, yellow: 2100, green: 2300, aqua: 2500, blue: 2700, purple: 3000,
+  orange: 14000, yellow: 14700, green: 16100, aqua: 17500, blue: 18900, purple: 21000,
 };
 
 for (const [color, price] of Object.entries(MAZE_PRICES)) {
