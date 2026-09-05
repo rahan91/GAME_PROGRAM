@@ -129,6 +129,7 @@
   let hits = 0;
   let misses = 0;
   let isLoggedIn = false;
+  let missGuard = false;
 
   function currentPlayer() {
     return nameInput.textContent.trim() || 'anonymous';
@@ -167,7 +168,8 @@
     target.style.height = TARGET_SIZE + 'px';
   }
 
-  target.addEventListener('click', (e) => {
+  target.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
     e.stopPropagation();
     if (!started) {
       started = true;
@@ -176,6 +178,8 @@
       hits = 1;
       hitsDisplay.textContent = hits;
       spawn();
+      missGuard = true;
+      setTimeout(() => missGuard = false, 250);
       refreshScoreDisplay();
       return;
     }
@@ -194,10 +198,13 @@
     refreshScoreDisplay();
 
     spawn();
+    missGuard = true;
+    setTimeout(() => missGuard = false, 250);
   });
 
   document.addEventListener('click', (e) => {
     if (e.target === target) return;
+    if (missGuard) return;
     if (!started) return;
     misses += 1;
     missesDisplay.textContent = misses;
