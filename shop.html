@@ -182,7 +182,9 @@
 
     function swatchHTML(item) {
       if (item.slot === 'cursor') {
-        return '<div class="swatch cursor"><img src="assets/cursor-arrow.png" alt="cursor" style="filter:' + window.Shop.cursorFilterCss(item.color) + ';"></div>';
+        return '<div class="swatch cursor"><svg viewBox="0 0 25 40" width="100%" height="100%">' +
+          '<path d="M1 1 L1 29 L8 22 L14 37 L17 35 L11 20 L19 17 Z" ' +
+          'fill="' + item.color + '" stroke="rgba(0,0,0,0.5)" stroke-width="1.5" stroke-linejoin="round"/></svg></div>';
       }
       if (item.slot === 'target') {
         return '<div class="swatch target"><img src="assets/target.png" alt="target"><div class="tint" style="background:' + item.color + ';"></div></div>';
