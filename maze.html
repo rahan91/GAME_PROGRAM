@@ -626,13 +626,12 @@
     const elapsed = Math.max((Date.now() - startTime) / 1000, 0.01);
     const optimal = shortestPathLength();
     const efficiency = Math.min(optimal / Math.max(moves, 1), 1);
-    const mazeSize = cols * rows;
-    const sizeFactor = Math.min(1, Math.sqrt(mazeSize / 400));
-    const difficultyMultiplier = 1 + (currentDifficulty().mult - 1) * sizeFactor * sizeFactor;
-    const efficiencyMultiplier = 0.5 + efficiency * 0.5;
-    const timeMultiplier = 1 + 1 / Math.sqrt(Math.max(elapsed, 1)) * 0.5;
-    const baseScore = 250;
-    const points = Math.max(10, Math.round(baseScore * difficultyMultiplier * sizeFactor * efficiencyMultiplier * timeMultiplier));
+    const mazeCells = cols * rows;
+    const diffMult = currentDifficulty().mult;
+    const pathBonus = 0.5 + 0.5 * (optimal / Math.max(moves, 1));
+    const timeBonus = 1 + 0.5 * Math.exp(-elapsed / 60);
+    const points = Math.round(Math.min(5000,
+      (100 + 2.5 * Math.sqrt(mazeCells)) * diffMult * pathBonus * timeBonus));
     addScore(points);
     statusEl.textContent = 'You escaped in ' + moves + ' moves! +' + points +
       ' pts (' + Math.round(efficiency * 100) + '% efficiency, ' +
