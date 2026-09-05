@@ -18,7 +18,7 @@
     font-family: 'IBM Plex Mono', 'Courier New', monospace;
     overflow: hidden;
     user-select: none;
-    cursor: url('assets/cursor-arrow.png') 1 0, auto;
+    cursor: none;
   }
 
   .orb {
@@ -72,13 +72,24 @@
     width: 96px; height: 96px;
     border-radius: 50%;
     object-fit: cover;
-    cursor: url('assets/cursor-finger.png') 11 0, crosshair;
+    cursor: none;
     z-index: 5;
     box-shadow: 0 0 30px rgba(140,180,150,0.4);
     transition: width 0.12s, height 0.12s;
     transform: translate(-50%, -50%);
   }
   #target:active { width: 90px; height: 90px; }
+
+  #cursorfx {
+    position: fixed; top: 0; left: 0;
+    width: 31px; height: 40px;
+    pointer-events: none;
+    z-index: 100;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+  }
+  #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0; }
+  #cursorfx.finger { background: url('assets/cursor-finger.png') no-repeat 0 0; }
 
   .hint {
     position: fixed; bottom: 20px; left: 0; right: 0;
@@ -116,6 +127,8 @@
 </div>
 
 <img id="target" src="assets/target.png" alt="target">
+
+<div id="cursorfx" class="arrow"></div>
 
 <div id="runStatus"></div>
 <div class="hint">Click the target &middot; Clicking the background counts as a miss &middot; 20 hits per run</div>
@@ -205,10 +218,47 @@
     spawnedAt = now;
   }
 
-  target.addEventListener('pointerdown', (e) => {
+  // The drawn cursor trails the pointer slightly (sluggish aim). Hits resolve
+  // at the drawn cursor's position, so what you see is what you hit.
+  const cursorfx = document.getElementById('cursorfx');
+  let realX = window.innerWidth / 2, realY = window.innerHeight / 2;
+  let curX = realX, curY = realY;
+  document.addEventListener('pointermove', (e) => {
+    realX = e.clientX;
+    realY = e.clientY;
+  });
+
+  function cursorTick() {
+    curX += (realX - curX) * 0.24;
+    curY += (realY - curY) * 0.24;
+    const over = hitTest(curX, curY);
+    cursorfx.className = over ? 'finger' : 'arrow';
+    const hotX = over ? 11 : 1;
+    cursorfx.style.transform = 'translate3d(' + (curX - hotX) + 'px,' + curY + 'px,0)';
+    requestAnimationFrame(cursorTick);
+  }
+
+  function hitTest(x, y) {
+    const r = target.getBoundingClientRect();
+    const dx = x - (r.left + r.width / 2);
+    const dy = y - (r.top + r.height / 2);
+    return (dx * dx + dy * dy) <= (r.width * r.width) / 4;
+  }
+
+  document.addEventListener('pointerdown', (e) => {
+    if (e.target.closest && e.target.closest('a')) return;
     e.preventDefault();
-    e.stopPropagation();
     const now = Date.now();
+    const x = e.pointerType === 'touch' ? e.clientX : curX;
+    const y = e.pointerType === 'touch' ? e.clientY : curY;
+
+    if (!hitTest(x, y)) {
+      if (missGuard || !running) return;
+      misses += 1;
+      updateRunDisplay();
+      return;
+    }
+
     if (!running) {
       running = true;
       hits = 0; misses = 0; runScore = 0;
@@ -232,13 +282,7 @@
     setTimeout(() => missGuard = false, 250);
   });
 
-  document.addEventListener('click', (e) => {
-    if (e.target === target) return;
-    if (missGuard) return;
-    if (!running) return;
-    misses += 1;
-    updateRunDisplay();
-  });
+  requestAnimationFrame(cursorTick);
 
   setInterval(() => {
     if (!running) return;

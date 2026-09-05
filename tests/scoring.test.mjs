@@ -61,7 +61,7 @@ assert(S.targetRunScore(-50) === 0, 'negative run -> 0');
 
 let perfectRun = 0;
 for (let i = 1; i <= S.RUN_TARGETS; i++) perfectRun += hit(30, i, 0);
-between(S.targetRunScore(perfectRun), 3000, 5000, 'perfect blazing 20-hit run approaches cap');
+between(S.targetRunScore(perfectRun), 300, 500, 'perfect blazing 20-hit run scores well below 4 digits');
 let slowRun = 0;
 for (let i = 1; i <= S.RUN_TARGETS; i++) slowRun += hit(700, i, 4);
 between(S.targetRunScore(slowRun), 0, 2500, 'slow/mediocre run stays moderate');

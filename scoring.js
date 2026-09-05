@@ -28,7 +28,7 @@
     'insane':    2.30,
     'extreme':   2.50
   };
-  var MAZE_BASE_SCORE = 2000; // raw reference score for a nominal medium run
+  var MAZE_BASE_SCORE = 200; // raw reference score for a nominal medium run
   var MAZE_REF_CELLS = 400;   // the default 20x20 maze
   var MAZE_SIZE_MIN = 0.6;
   var MAZE_SIZE_MAX = 1.6;    // diminishing returns: sqrt(cells / 400)
@@ -58,7 +58,7 @@
   // by hitting more targets. Nothing in the formula depends on elapsed session
   // time, so simply keeping the page open cannot raise future scores.
   var RUN_TARGETS = 20;
-  var TARGET_BASE_HIT = 130;      // nominal per-hit score at reference speed + perfect acc
+  var TARGET_BASE_HIT = 13;       // nominal per-hit score at reference speed + perfect acc
   var TARGET_REF_REACTION = 400;  // reference reaction time in ms
   var TARGET_SPEED_MIN = 0.5;     // floor: too slow buys nothing extra
   var TARGET_SPEED_MAX = 1.5;     // ceiling: sub-~267ms reactions gain nothing more
