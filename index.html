@@ -300,6 +300,8 @@
     <button class="auth-btn" id="authBtn">Login</button>
   </div>
 
+  <a href="leaderboard.html" class="auth-btn" id="lbLink" style="position:fixed;top:20px;left:20px;z-index:10;text-decoration:none;">Leaderboard</a>
+
   <div class="modal-overlay" id="authModal">
     <div class="modal">
       <button class="close" id="closeAuth">&times;</button>
@@ -404,20 +406,24 @@
       }
     }
 
+    let serverTotal = null;
     function currentPointsPlayer() {
       return (window.__user && window.__user.username) ? window.__user.username : null;
     }
     function refreshPoints() {
       const player = currentPointsPlayer();
-      const total = player ? (ScoreBoard.get(player).total || 0) : 0;
+      const local = player ? (ScoreBoard.get(player).total || 0) : 0;
+      const total = (player && serverTotal != null) ? serverTotal : local;
       document.getElementById('pointsTotal').textContent = Math.round(total * 100) / 100;
       document.getElementById('resetPointsBtn').style.display = player ? '' : 'none';
     }
-    document.getElementById('resetPointsBtn').addEventListener('click', () => {
+    document.getElementById('resetPointsBtn').addEventListener('click', async () => {
       const name = currentPointsPlayer();
       if (!name) return;
       if (!confirm('Reset ' + name + "'s score to 0? This cannot be undone.")) return;
       ScoreBoard.reset(name);
+      serverTotal = 0;
+      try { await fetch('/api/score/reset', { method: 'POST' }); } catch {}
       refreshPoints();
     });
 
@@ -431,6 +437,7 @@
       if (user) {
         await fetch('/api/logout', { method: 'POST' });
         window.__user = null;
+        serverTotal = null;
         renderAuthState(null);
         refreshPoints();
         return;
@@ -472,8 +479,9 @@
         const res = await fetch('/api/me');
         const data = await res.json();
         window.__user = data.user || null;
+        serverTotal = (window.__user && Number.isFinite(window.__user.total)) ? window.__user.total : null;
         renderAuthState(window.__user);
-      } catch { window.__user = null; renderAuthState(null); }
+      } catch { window.__user = null; serverTotal = null; renderAuthState(null); }
       refreshPoints();
     }
     initAuth();

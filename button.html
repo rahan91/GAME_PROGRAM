@@ -174,18 +174,26 @@
   let holding = false;
   let downAt = 0;
   let isLoggedIn = false;
+  let serverTotal = null;
 
   function currentPlayer() {
     return nameInput.textContent.trim() || 'anonymous';
   }
   function refreshScoreDisplay() {
-    const total = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
+    const local = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
+    const total = (isLoggedIn && serverTotal != null) ? serverTotal : local;
     scoreDisplay.textContent = Math.round(total * 100) / 100;
   }
   function addScore(points) {
     if (!isLoggedIn) return;
     ScoreBoard.add(currentPlayer(), points);
-    refreshScoreDisplay();
+    fetch('/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points })
+    }).then(r => r.json()).then((d) => {
+      if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
+    }).catch(() => {});
   }
 
   function tick() {
@@ -259,6 +267,7 @@
       const user = data.user || null;
       isLoggedIn = !!(user && user.username);
       if (user && user.username) nameInput.textContent = user.username;
+      serverTotal = (user && Number.isFinite(user.total)) ? user.total : null;
     } catch {
       isLoggedIn = false;
     }

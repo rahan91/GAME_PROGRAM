@@ -81,18 +81,24 @@ assert(S.targetRunScore(perfectRun + (1e9)) <= 5000, 'adding waiting time cannot
 
 console.log('\n=== Button scoring ===');
 const btn = S.buttonScore;
-// sec<=30: 7*sec | sec<=60: 210+4*(sec-30) | sec>60: 330+2*(sec-60)
+// t<=15:7t | <=45:105+6(t-15) | <=90:285+4.5(t-45) | <=180:510+3(t-90) | <=300:780+2(t-180) | else 1020+(t-300)
 assert(btn(0) === 0, 'zero hold scores nothing');
-assert(btn(10000) === 70, '10s hold = 70 (tier 1)');
-assert(btn(30000) === 210, '30s hold hits tier boundary = 210');
-assert(btn(31000) === 214, '31s hold = 214 (tier 2 slope 4)');
-assert(btn(60000) === 330, '60s hold hits tier boundary = 330');
-assert(btn(61000) === 332, '61s hold = 332 (tier 3 slope 2)');
+assert(btn(10000) === 70, '10s hold = 70 (slope 7)');
+assert(btn(14000) - btn(13000) === 7, 'tier 1 slope is 7/s');
+assert(btn(15000) === 105, '15s boundary = 105');
+assert(btn(21000) === 141, '21s = 105 + 6*6 = 141');
+assert(btn(45000) === 285, '45s boundary = 285');
+assert(btn(51000) === 312, '51s = 285 + 4.5*6 = 312');
+assert(btn(90000) === 488, '90s boundary = 285 + 4.5*45 (rounded)');
+assert(btn(91000) === 513, '91s forks into 510 + 3*1 = 513');
+assert(btn(120000) - btn(110000) === 30, 'tier 3 slope is 3/s');
+assert(btn(180000) === 780, '180s = 510 + 3*90 = 780');
+assert(btn(181000) === 782, '181s = 780 + 2*1 = 782');
+assert(btn(300000) === 1020, '300s = 780 + 2*120 = 1020');
+assert(btn(350000) - btn(340000) === 10, 'tier 5 slope is 1/s');
+assert(btn(400000) === 1120, '400s = 1020 + 100 = 1120');
 assert(btn(20000) > btn(10000), 'longer hold scores more');
-assert(btn(100000) > btn(60000), 'very long hold keeps climbing (no hard cap)');
-const t1Gain = btn(10000) - btn(0);
-const t3Gain = btn(61000) - btn(60000);
-assert(t3Gain < t1Gain, 'later tiers pay less per second');
+assert(btn(100000) > btn(90000), 'keeps climbing across tiers');
 assert(btn(NaN) === 0, 'NaN hold -> 0');
 assert(btn(-50) === 0, 'negative hold -> 0');
 assert(btn(Infinity) === 0, 'infinite hold -> 0 (non-finite sanitized)');
@@ -120,8 +126,9 @@ function btnRepr(label, holdMs) {
 }
 btnRepr('hold 10s', 10000);
 btnRepr('hold 30s', 30000);
-btnRepr('hold 45s', 45000);
-btnRepr('hold 90s', 90000);
+btnRepr('hold 60s', 60000);
+btnRepr('hold 2m', 120000);
+btnRepr('hold 5m', 300000);
 
 console.log('\n' + (failures === 0 ? 'ALL ' + checks + ' CHECKS PASSED' : failures + ' OF ' + checks + ' CHECKS FAILED'));
 process.exit(failures === 0 ? 0 : 1);

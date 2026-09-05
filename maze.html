@@ -304,15 +304,24 @@
     return nameInput.textContent.trim() || 'anonymous';
   }
 
+  let serverTotal = null;
+
   function refreshScoreDisplay() {
-    const total = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
+    const local = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
+    const total = (isLoggedIn && serverTotal != null) ? serverTotal : local;
     scoreDisplay.textContent = 'Score: ' + Math.round(total * 100) / 100;
   }
 
   function addScore(points) {
     if (!isLoggedIn) return;
     ScoreBoard.add(currentPlayer(), points);
-    refreshScoreDisplay();
+    fetch('/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points })
+    }).then(r => r.json()).then((d) => {
+      if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
+    }).catch(() => {});
   }
 
   function shortestPathLength() {
@@ -798,6 +807,7 @@
       const data = await res.json();
       isLoggedIn = !!(data.user && data.user.username);
       nameInput.textContent = data.user ? data.user.username : 'anonymous';
+      serverTotal = (data.user && Number.isFinite(data.user.total)) ? data.user.total : null;
     } catch {
       isLoggedIn = false;
       nameInput.textContent = 'anonymous';

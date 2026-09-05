@@ -83,20 +83,28 @@
 
   // ---------------- Button ----------------
   // Piecewise, by seconds held:
-  //   sec <= 30   -> 7 * sec
-  //   30 < sec    -> 210 + 4 * (sec - 30)
-  //   sec > 60    -> 330 + 2 * (sec - 60)
+  //   t <= 15                -> 7 * t
+  //   15 <  t <= 45          -> 105 + 6 * (t - 15)
+  //   45 <  t <= 90          -> 285 + 4.5 * (t - 45)
+  //   90 <  t <= 180         -> 510 + 3 * (t - 90)
+  //   180 < t <= 300         -> 780 + 2 * (t - 180)
+  //   t > 300                -> 1020 + 1 * (t - 300)
   function buttonScore(holdMs) {
     if (!Number.isFinite(holdMs)) return 0;
-    holdMs = Math.max(0, holdMs);
-    var sec = holdMs / 1000;
+    var t = Math.max(0, holdMs) / 1000;
     var raw;
-    if (sec <= 30) {
-      raw = 7 * sec;
-    } else if (sec <= 60) {
-      raw = 210 + 4 * (sec - 30);
+    if (t <= 15) {
+      raw = 7 * t;
+    } else if (t <= 45) {
+      raw = 105 + 6 * (t - 15);
+    } else if (t <= 90) {
+      raw = 285 + 4.5 * (t - 45);
+    } else if (t <= 180) {
+      raw = 510 + 3 * (t - 90);
+    } else if (t <= 300) {
+      raw = 780 + 2 * (t - 180);
     } else {
-      raw = 330 + 2 * (sec - 60);
+      raw = 1020 + (t - 300);
     }
     return Math.max(0, Math.round(raw));
   }

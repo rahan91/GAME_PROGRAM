@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LEADERBOARD</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: #1c1c1c;
+      overflow: hidden;
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    }
+    .orb { position: fixed; border-radius: 50%; animation: float 12s ease-in-out infinite; }
+    .orb--1 { width: 800px; height: 800px; background: radial-gradient(circle, rgba(80,100,90,0.3) 0%, rgba(80,100,90,0.1) 40%, transparent 70%); top: 5%; left: 5%; }
+    .orb--2 { width: 700px; height: 700px; background: radial-gradient(circle, rgba(70,95,80,0.25) 0%, rgba(70,95,80,0.08) 40%, transparent 70%); bottom: 0%; right: 0%; animation-delay: -4s; }
+    .orb--3 { width: 650px; height: 650px; background: radial-gradient(circle, rgba(90,110,95,0.22) 0%, rgba(90,110,95,0.06) 40%, transparent 70%); bottom: 0%; left: 25%; animation-delay: -8s; }
+    .vignette { position: fixed; inset: 0; background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.4) 100%); pointer-events: none; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-30px) scale(1.05); }
+    }
+    .back {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      padding: 8px 18px;
+      border: 1px solid rgba(140,180,150,0.4);
+      border-radius: 6px;
+      background: rgba(80,100,90,0.2);
+      color: rgba(140,180,150,0.9);
+      font-family: inherit;
+      font-size: 14px;
+      text-decoration: none;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: background 0.2s;
+    }
+    .back:hover { background: rgba(80,100,90,0.4); }
+    .title {
+      position: fixed;
+      left: 0; right: 0;
+      top: 26px;
+      text-align: center;
+      z-index: 2;
+    }
+    .title h1 {
+      font-size: 2rem;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(140,180,150,0.85);
+      text-shadow: 0 0 60px rgba(100,160,120,0.3);
+    }
+    .wrap {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      padding: 120px 20px 60px;
+    }
+    .board {
+      width: min(560px, 100%);
+      max-height: 100%;
+      overflow-y: auto;
+    }
+    .head, .row {
+      display: grid;
+      grid-template-columns: 64px 1fr 90px 100px;
+      align-items: center;
+      padding: 10px 18px;
+    }
+    .head {
+      color: rgba(140,180,150,0.4);
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(140,180,150,0.2);
+    }
+    .row {
+      color: rgba(200,220,205,0.9);
+      font-size: 0.95rem;
+      border-bottom: 1px solid rgba(140,180,150,0.08);
+    }
+    .row .rank { color: rgba(140,180,150,0.5); text-align: right; padding-right: 12px; }
+    .row .plays { color: rgba(140,180,150,0.45); font-size: 0.8rem; text-align: right; padding-right: 12px; }
+    .row .pts { text-align: right; color: rgba(220,240,225,0.95); }
+    .row.me {
+      background: rgba(140,180,150,0.14);
+      border-color: rgba(140,180,150,0.35);
+    }
+    .row.me .pts { color: rgba(160,220,180,1); }
+    .rank-medal { color: rgba(230,200,120,0.9); }
+    #status {
+      color: rgba(140,180,150,0.5);
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-align: center;
+      padding: 24px 0;
+    }
+  </style>
+  <link rel="stylesheet" href="crt.css">
+  <script defer src="crt.js"></script>
+</head>
+<body>
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
+  <div class="orb orb--3"></div>
+  <div class="vignette"></div>
+
+  <a class="back" href="index.html">&larr; Gallery</a>
+  <div class="title"><h1>Leaderboard</h1></div>
+
+  <div class="wrap">
+    <div class="board">
+      <div class="head">
+        <div style="text-align:right;padding-right:12px;">#</div>
+        <div>Player</div>
+        <div style="text-align:right;padding-right:12px;">Plays</div>
+        <div style="text-align:right;">Points</div>
+      </div>
+      <div id="rows"><div id="status">Loading&hellip;</div></div>
+    </div>
+  </div>
+
+  <script>
+    (async function () {
+      let me = null;
+      try {
+        const r = await fetch('/api/me');
+        const d = await r.json();
+        me = (d.user && d.user.username) ? d.user.username : null;
+      } catch {}
+      let rows;
+      try {
+        const r = await fetch('/api/leaderboard?limit=100');
+        const d = await r.json();
+        rows = d.leaderboard || [];
+      } catch {
+        rows = null;
+      }
+      const status = document.getElementById('status');
+      const container = document.getElementById('rows');
+      if (!rows) {
+        status.textContent = 'Could not load the leaderboard.';
+        return;
+      }
+      if (!rows.length) {
+        status.textContent = 'No scores yet. Play a game, then come back.';
+        return;
+      }
+      const medals = ['1', '2', '3'];
+      container.innerHTML = rows.map((row, i) => {
+        const medal = i < 3 ? 'rank-medal' : '';
+        return '<div class="row' + (row.username === me ? ' me' : '') + '">' +
+          '<div class="rank ' + medal + '">' + (i + 1) + '</div>' +
+          '<div>' + row.username + (row.username === me ? ' &middot; you' : '') + '</div>' +
+          '<div class="plays">' + row.plays + '</div>' +
+          '<div class="pts">' + (row.total !== undefined ? Math.round(row.total * 100) / 100 : 0) + '</div>' +
+          '</div>';
+      }).join('');
+      container.appendChild(status);
+      status.textContent = '';
+      void 0;
+    })();
+  </script>
+</body>
+</html>
