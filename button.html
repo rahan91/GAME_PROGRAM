@@ -94,6 +94,23 @@
     cursor: none;
     z-index: 5;
     touch-action: none;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  #progress {
+    position: fixed;
+    left: 50%;
+    top: calc(55% + 86px);
+    transform: translateX(-50%);
+    width: 260px; height: 6px;
+    border-radius: 3px;
+    background: rgba(80,100,90,0.3);
+    overflow: hidden;
+    pointer-events: none; z-index: 5;
+  }
+  #fill {
+    height: 100%; width: 0%;
+    background: rgba(140,180,150,0.85);
   }
 
   #progress {
@@ -158,8 +175,6 @@
 
 <button id="btn3d" type="button">Hold Me</button>
 
-<div id="progress"><div id="fill"></div></div>
-
 <div id="status"></div>
 <div class="hint">Hold the button &middot; score grows the longer you hold &middot; release to bank it</div>
 
@@ -172,7 +187,6 @@
   const scoreDisplay = document.getElementById('scoreDisplay');
   const holdDisplay = document.getElementById('holdDisplay');
   const gainDisplay = document.getElementById('gainDisplay');
-  const fill = document.getElementById('fill');
   const status = document.getElementById('status');
 
   let holding = false;
@@ -200,7 +214,6 @@
     holdDisplay.textContent = (holdMs / 1000).toFixed(1) + 's';
     const gain = Scoring.buttonScore(holdMs);
     gainDisplay.textContent = '+' + gain;
-    fill.style.width = Math.min(100, holdMs / 50000 * 100) + '%';
     requestAnimationFrame(tick);
   }
 
@@ -220,7 +233,6 @@
     btn.style.setProperty('--press', '0');
     holdDisplay.textContent = '0.0s';
     gainDisplay.textContent = '+0';
-    fill.style.width = '0%';
   }
 
   btn.addEventListener('pointerdown', (e) => {
