@@ -184,7 +184,7 @@
     const accuracyFactor = 0.4 + 0.6 * (hits / (hits + misses));
     const sessionTimeSec = (now - sessionStart) / 1000;
     const sessionFactor = clamp(0.75 + 0.25 * Math.sqrt(sessionTimeSec / 60), 0.75, 1.5);
-    const added = Math.ceil(Math.min(5000, 100 * reactionFactor * accuracyFactor * sessionFactor));
+    const added = Math.ceil(Math.min(100, 20 * reactionFactor * accuracyFactor * sessionFactor));
     addScore(added);
     refreshScoreDisplay();
 
