@@ -190,7 +190,7 @@
     const accuracy = hits / (hits + misses) * 100;
     const sessionTimeSec = (now - sessionStart) / 1000;
     const sizeMult = Math.sqrt(96 / TARGET_SIZE);
-    const added = Math.ceil((1000 / betweenMs) * Math.pow(accuracy, 2.25) * sessionTimeSec * sizeMult);
+    const added = Math.ceil(1000 * (500 / betweenMs) * Math.pow(accuracy, 2.25) * sizeMult * (1 + sessionTimeSec / 600));
     addScore(added);
     refreshScoreDisplay();
 
