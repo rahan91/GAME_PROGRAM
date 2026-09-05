@@ -4,7 +4,17 @@ export async function onRequestGet(context) {
   const user = await getUserFromRequest(context.env, context.request);
   if (!user) return json({ user: null });
   const row = await context.env.DATABASE.prepare(
-    'SELECT total, plays FROM scores WHERE user_id = ?'
+    'SELECT total, plays, spent FROM scores WHERE user_id = ?'
   ).bind(user.id).first();
-  return json({ user: { ...user, total: row ? row.total : 0, plays: row ? row.plays : 0 } });
+  const total = row ? row.total : 0;
+  const spent = row ? row.spent : 0;
+  return json({
+    user: {
+      ...user,
+      total,
+      plays: row ? row.plays : 0,
+      spent,
+      balance: total - spent,
+    },
+  });
 }

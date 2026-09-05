@@ -149,6 +149,7 @@
   <script defer src="crt.js"></script>
   <script src="score.js"></script>
   <script src="scoring.js"></script>
+  <script src="shop.js"></script>
 </head>
 <body>
 
@@ -203,7 +204,8 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ points })
     }).then(r => r.json()).then((d) => {
-      if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
+      if (d && Number.isFinite(d.balance)) { serverTotal = d.balance; refreshScoreDisplay(); }
+      else if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
     }).catch(() => {});
   }
 
@@ -271,6 +273,14 @@
   }
   requestAnimationFrame(cursorTick);
 
+  async function applyCosmetics() {
+    try {
+      const s = await Shop.state();
+      const cur = Shop.installed(s.equipped, Shop.CURSOR);
+      cursorfx.style.filter = cur ? Shop.cursorFilterCss(cur.color) : '';
+    } catch (e) {}
+  }
+
   async function loadPlayerAndScore() {
     try {
       const res = await fetch('/api/me');
@@ -278,10 +288,13 @@
       const user = data.user || null;
       isLoggedIn = !!(user && user.username);
       if (user && user.username) nameInput.textContent = user.username;
-      serverTotal = (user && Number.isFinite(user.total)) ? user.total : null;
+      serverTotal = (user && Number.isFinite(user.balance))
+        ? user.balance
+        : (user && Number.isFinite(user.total)) ? user.total : null;
     } catch {
       isLoggedIn = false;
     }
+    await applyCosmetics();
     refreshScoreDisplay();
   }
   loadPlayerAndScore();

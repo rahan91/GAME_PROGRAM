@@ -7,7 +7,7 @@
     "dev": "wrangler pages dev . --d1 DATABASE",
     "deploy:db": "wrangler d1 migrations apply DATABASE",
     "deploy": "wrangler pages deploy .",
-    "test": "node tests/scoring.test.mjs"
+    "test": "node tests/scoring.test.mjs && node tests/shop.test.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

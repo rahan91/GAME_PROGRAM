@@ -615,7 +615,9 @@
         const res = await fetch('/api/me');
         const data = await res.json();
         window.__user = data.user || null;
-        serverTotal = (window.__user && Number.isFinite(window.__user.total)) ? window.__user.total : null;
+        serverTotal = (window.__user && Number.isFinite(window.__user.balance))
+          ? window.__user.balance
+          : (window.__user && Number.isFinite(window.__user.total)) ? window.__user.total : null;
         renderAuthState(window.__user);
       } catch { window.__user = null; serverTotal = null; renderAuthState(null); }
       refreshPoints();

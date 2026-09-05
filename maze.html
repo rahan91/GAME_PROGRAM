@@ -236,6 +236,7 @@
   <script defer src="crt.js"></script>
   <script src="score.js"></script>
   <script src="scoring.js"></script>
+  <script src="shop.js"></script>
 </head>
 <body>
 
@@ -293,6 +294,8 @@
   const PADDING = 2;
   let selectedDifficulty = 'medium';
   let scored = false;
+  let playerColor = 'rgba(180,200,140,0.9)';
+  let playerShadow = 'rgba(180,200,140,0.5)';
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -332,7 +335,8 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ points })
     }).then(r => r.json()).then((d) => {
-      if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
+      if (d && Number.isFinite(d.balance)) { serverTotal = d.balance; refreshScoreDisplay(); }
+      else if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
     }).catch(() => {});
   }
 
@@ -573,8 +577,8 @@
 
     if (!won) {
       const size = cellSize * 0.52;
-      ctx.fillStyle = 'rgba(180,200,140,0.9)';
-      ctx.shadowColor = 'rgba(180,200,140,0.5)';
+      ctx.fillStyle = playerColor;
+      ctx.shadowColor = playerShadow;
       ctx.shadowBlur = 4;
       roundedSquarePath(player.x * cellSize + cellSize / 2, player.y * cellSize + cellSize / 2, size, size * 0.3);
       ctx.fill();
@@ -844,15 +848,30 @@
       const data = await res.json();
       isLoggedIn = !!(data.user && data.user.username);
       nameInput.textContent = data.user ? data.user.username : 'anonymous';
-      serverTotal = (data.user && Number.isFinite(data.user.total)) ? data.user.total : null;
+      serverTotal = (data.user && Number.isFinite(data.user.balance))
+        ? data.user.balance
+        : (data.user && Number.isFinite(data.user.total)) ? data.user.total : null;
     } catch {
       isLoggedIn = false;
       nameInput.textContent = 'anonymous';
     }
+    await applyCosmetics();
     refreshScoreDisplay();
   }
   loadPlayerAndScore();
   window.addEventListener('pageshow', loadPlayerAndScore);
+
+  async function applyCosmetics() {
+    try {
+      const s = await Shop.state();
+      const m = Shop.installed(s.equipped, Shop.MAZE);
+      if (m) {
+        playerColor = Shop.hexToRgba(m.color, 0.9);
+        playerShadow = Shop.hexToRgba(m.color, 0.5);
+      }
+    } catch (e) {}
+    if (grid) draw();
+  }
 
   updateDifficultyGlow();
   generateMaze(20, 20);

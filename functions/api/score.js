@@ -28,8 +28,13 @@ export async function onRequestPost(context) {
   ).bind(user.id, user.username, points, now).run();
 
   const row = await context.env.DATABASE.prepare(
-    'SELECT total, plays FROM scores WHERE user_id = ?'
+    'SELECT total, plays, spent FROM scores WHERE user_id = ?'
   ).bind(user.id).first();
 
-  return json({ total: row.total, plays: row.plays });
+  return json({
+    total: row.total,
+    plays: row.plays,
+    spent: row.spent,
+    balance: row.total - row.spent,
+  });
 }
