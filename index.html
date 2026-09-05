@@ -166,7 +166,10 @@
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
       backdrop-filter: blur(3px);
       padding: 18px 0 10px;
+      opacity: 0;
+      transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .lb.active { opacity: 1; }
     .lb-title {
       font-size: 0.95rem;
       font-weight: 300;
@@ -488,6 +491,7 @@
       triggered = true;
       document.getElementById('title').classList.add('active');
       document.querySelectorAll('.card').forEach(c => c.classList.add('active'));
+      document.querySelector('.lb').classList.add('active');
     }
     document.addEventListener('keydown', activate);
     document.addEventListener('click', activate);
