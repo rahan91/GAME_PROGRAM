@@ -1,7 +1,8 @@
 import { json } from '../_lib/auth.js';
 
 export async function onRequestGet(context) {
-  const limitRaw = Number(context.request.url.searchParams.get('limit'));
+  const url = new URL(context.request.url);
+  const limitRaw = Number(url.searchParams.get('limit'));
   const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, Math.round(limitRaw))) : 20;
 
   const rows = await context.env.DATABASE.prepare(
