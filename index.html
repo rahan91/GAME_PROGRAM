@@ -85,7 +85,10 @@
     }
     .grid {
       position: fixed;
-      inset: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 350px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -93,13 +96,13 @@
     }
     .grid-inner {
       display: grid;
-      grid-template-columns: repeat(3, 140px);
-      grid-template-rows: repeat(2, 140px);
-      gap: 24px;
+      grid-template-columns: repeat(3, 175px);
+      grid-template-rows: repeat(2, 175px);
+      gap: 26px;
     }
     .card {
-      width: 140px;
-      height: 140px;
+      width: 175px;
+      height: 175px;
       border-radius: 10px;
       background: rgba(80, 100, 90, 0.15);
       border: 1px solid rgba(140, 180, 150, 0.15);
@@ -123,7 +126,7 @@
       border-color: rgba(140, 180, 150, 0.3);
     }
     .card .icon {
-      font-size: 2rem;
+      font-size: 2.4rem;
       margin-bottom: 8px;
       opacity: 0.7;
       display: flex;
@@ -150,6 +153,70 @@
     @keyframes float {
       0%, 100% { transform: translateY(0) scale(1); }
       50% { transform: translateY(-30px) scale(1.05); }
+    }
+    .lb {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 350px;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(20, 24, 22, 0.45);
+      border-right: 1px solid rgba(140, 180, 150, 0.18);
+      backdrop-filter: blur(3px);
+    }
+    .lb-title {
+      font-size: 1rem;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(140, 180, 150, 0.85);
+      margin-bottom: 18px;
+      text-shadow: 0 0 30px rgba(100, 160, 120, 0.3);
+    }
+    .lb-board {
+      width: 88%;
+      max-height: 70vh;
+      overflow-y: auto;
+      border: 1px solid rgba(140, 180, 150, 0.2);
+      border-radius: 10px;
+      background: rgba(30, 38, 34, 0.7);
+      padding: 12px 0;
+    }
+    .lb-head, .lb-row {
+      display: grid;
+      grid-template-columns: 34px 1fr 48px 64px;
+      align-items: center;
+      padding: 6px 14px;
+    }
+    .lb-head {
+      color: rgba(140, 180, 150, 0.35);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(140, 180, 150, 0.18);
+      margin-bottom: 6px;
+    }
+    .lb-row {
+      color: rgba(200, 220, 205, 0.85);
+      font-size: 0.78rem;
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    }
+    .lb-row .rk { color: rgba(140, 180, 150, 0.45); text-align: right; padding-right: 8px; }
+    .lb-row .pl { color: rgba(140, 180, 150, 0.35); text-align: right; padding-right: 8px; font-size: 0.7rem; }
+    .lb-row .pt { text-align: right; color: rgba(220, 240, 225, 0.95); }
+    .lb-row.me { background: rgba(140, 180, 150, 0.14); }
+    .lb-row.me .pt { color: rgba(160, 220, 180, 1); }
+    .lb-row .rk.top { color: rgba(230, 200, 120, 0.9); }
+    .lb-status {
+      color: rgba(140, 180, 150, 0.45);
+      font-size: 0.75rem;
+      text-align: center;
+      padding: 18px 0;
     }
     .auth-btn {
       position: fixed;
@@ -300,8 +367,6 @@
     <button class="auth-btn" id="authBtn">Login</button>
   </div>
 
-  <a href="leaderboard.html" class="auth-btn" id="lbLink" style="position:fixed;top:20px;left:20px;z-index:10;text-decoration:none;">Leaderboard</a>
-
   <div class="modal-overlay" id="authModal">
     <div class="modal">
       <button class="close" id="closeAuth">&times;</button>
@@ -323,15 +388,15 @@
   <div class="grid">
     <div class="grid-inner">
       <a class="card" href="maze.html">
-        <div class="icon"><img src="assets/maze.png" alt="Maze" width="48" height="48"></div>
+        <div class="icon"><img src="assets/maze.png" alt="Maze" width="56" height="56"></div>
         <div class="label">Maze</div>
       </a>
       <a class="card" href="target.html">
-        <div class="icon"><img src="assets/target-icon.png" alt="Target" width="48" height="48"></div>
+        <div class="icon"><img src="assets/target-icon.png" alt="Target" width="56" height="56"></div>
         <div class="label">Target</div>
       </a>
       <a class="card" href="button.html">
-        <div class="icon"><img src="assets/button-icon.png" alt="Button" width="48" height="48"></div>
+        <div class="icon"><img src="assets/button-icon.png" alt="Button" width="56" height="56"></div>
         <div class="label">Button</div>
       </a>
       <div class="card">
@@ -346,6 +411,19 @@
         <div class="icon">&#11206;</div>
         <div class="label">Coming Soon</div>
       </div>
+    </div>
+  </div>
+
+  <div class="lb">
+    <div class="lb-title">Leaderboard</div>
+    <div class="lb-board">
+      <div class="lb-head">
+        <div style="text-align:right;padding-right:8px;">#</div>
+        <div>Player</div>
+        <div style="text-align:right;padding-right:8px;">Pl</div>
+        <div style="text-align:right;">Pts</div>
+      </div>
+      <div id="lbRows"><div class="lb-status">Loading&hellip;</div></div>
     </div>
   </div>
 
@@ -425,6 +503,7 @@
       serverTotal = 0;
       try { await fetch('/api/score/reset', { method: 'POST' }); } catch {}
       refreshPoints();
+      loadLeaderboard();
     });
 
     function openModal() {
@@ -440,6 +519,7 @@
         serverTotal = null;
         renderAuthState(null);
         refreshPoints();
+        loadLeaderboard();
         return;
       }
       openModal();
@@ -469,6 +549,7 @@
         renderAuthState(data.user);
         modal.classList.remove('open');
         refreshPoints();
+        loadLeaderboard();
       } catch (err) {
         authErr.textContent = 'Network error';
       }
@@ -485,7 +566,44 @@
       refreshPoints();
     }
     initAuth();
-    window.addEventListener('pageshow', initAuth);
+
+    // ---- Universal leaderboard ----
+    async function loadLeaderboard() {
+      const container = document.getElementById('lbRows');
+      let me = null;
+      try {
+        const mr = await fetch('/api/me');
+        const md = await mr.json();
+        me = (md.user && md.user.username) ? md.user.username : null;
+      } catch {}
+      let rows;
+      try {
+        const res = await fetch('/api/leaderboard?limit=100');
+        const data = await res.json();
+        rows = data.leaderboard || null;
+      } catch {
+        rows = null;
+      }
+      if (!rows) {
+        container.innerHTML = '<div class="lb-status">Could not load the leaderboard.</div>';
+        return;
+      }
+      if (!rows.length) {
+        container.innerHTML = '<div class="lb-status">No scores yet. Play a game, then come back.</div>';
+        return;
+      }
+      const meUser = me;
+      container.innerHTML = rows.map((row, i) =>
+        '<div class="lb-row' + (row.username === meUser ? ' me' : '') + '">' +
+        '<div class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</div>' +
+        '<div>' + row.username + '</div>' +
+        '<div class="pl">' + row.plays + '</div>' +
+        '<div class="pt">' + (row.total !== undefined ? Math.round(row.total * 100) / 100 : 0) + '</div>' +
+        '</div>'
+      ).join('');
+    }
+    loadLeaderboard();
+    window.addEventListener('pageshow', () => { initAuth(); loadLeaderboard(); });
   </script>
 </body>
 </html>
