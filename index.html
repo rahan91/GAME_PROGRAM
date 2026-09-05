@@ -200,10 +200,12 @@
       font-size: 0.78rem;
       font-family: 'IBM Plex Mono', 'Courier New', monospace;
     }
-    .lb-row .rk { color: rgba(140, 180, 150, 0.45); text-align: right; padding-right: 8px; }
-    .lb-row .pl { color: rgba(140, 180, 150, 0.35); text-align: right; padding-right: 8px; font-size: 0.7rem; }
-    .lb-row .pt { text-align: right; color: rgba(220, 240, 225, 0.95); }
-    .lb-head .rk, .lb-head .pl, .lb-head .pt { font-size: inherit; }
+    .lb-head .rk, .lb-head .pl, .lb-head .pt,
+    .lb-row .rk, .lb-row .pl, .lb-row .pt { text-align: right; }
+    .lb-head .rk, .lb-head .pl, .lb-row .rk, .lb-row .pl { padding-right: 8px; }
+    .lb-row .rk { color: rgba(140, 180, 150, 0.45); }
+    .lb-row .pl { color: rgba(140, 180, 150, 0.35); font-size: 0.7rem; }
+    .lb-row .pt { color: rgba(220, 240, 225, 0.95); }
     .lb-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .lb-row.me { background: rgba(140, 180, 150, 0.14); }
     .lb-row.me .pt { color: rgba(160, 220, 180, 1); }
