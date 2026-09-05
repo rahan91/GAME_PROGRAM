@@ -121,8 +121,6 @@
 
   const TARGET_SIZE = 96;
 
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
   let started = false;
   let sessionStart = 0;
   let lastHitAt = 0;
@@ -189,11 +187,10 @@
     hits += 1;
     hitsDisplay.textContent = hits;
 
-    const reactionFactor = clamp(500 / betweenMs, 0.5, 3.0);
-    const accuracyFactor = 0.4 + 0.6 * (hits / (hits + misses));
+    const accuracy = hits / (hits + misses) * 100;
     const sessionTimeSec = (now - sessionStart) / 1000;
-    const sessionFactor = clamp(0.75 + 0.25 * Math.sqrt(sessionTimeSec / 60), 0.75, 1.5);
-    const added = Math.ceil(Math.min(100, 20 * reactionFactor * accuracyFactor * sessionFactor));
+    const sizeMult = Math.sqrt(96 / TARGET_SIZE);
+    const added = Math.ceil((1000 / betweenMs) * Math.pow(accuracy, 2.25) * sessionTimeSec * sizeMult);
     addScore(added);
     refreshScoreDisplay();
 
