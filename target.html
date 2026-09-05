@@ -144,16 +144,18 @@
   }
 
   function randomPosition() {
+    const radius = TARGET_SIZE / 2;
     const margin = TARGET_SIZE + 8;
-    const maxX = Math.max(margin, window.innerWidth - margin);
-    const maxY = Math.max(margin, window.innerHeight - margin);
-    const yMin = margin;
     const hud = document.getElementById('hud').getBoundingClientRect();
-    const hudBottom = hud.bottom + 12;
-    const topAreaMaxY = Math.max(yMin, hudBottom);
-    const actualMaxY = Math.max(topAreaMaxY, window.innerHeight - margin);
-    const x = Math.random() * (maxX - margin) + margin;
-    const y = Math.random() * (actualMaxY - topAreaMaxY) + topAreaMaxY;
+    const topClear = Math.max(margin, hud.bottom + 12 + radius);
+    const hint = document.querySelector('.hint').getBoundingClientRect();
+    const bottomClear = Math.min(window.innerHeight - margin, hint.top - 12 - radius);
+    const minY = topClear;
+    const maxY = Math.max(minY, bottomClear);
+    const minX = margin;
+    const maxX = Math.max(margin, window.innerWidth - margin);
+    const x = Math.random() * (maxX - minX) + minX;
+    const y = Math.random() * (maxY - minY) + minY;
     return { x, y };
   }
 
