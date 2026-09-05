@@ -247,9 +247,47 @@
     }
     .modal { position: relative; }
     .user-chip { color: rgba(140,180,150,0.9); }
+    #pointsWrap {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(80, 100, 90, 0.2);
+      border: 1px solid rgba(140, 180, 150, 0.25);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      color: rgba(140, 180, 150, 0.7);
+    }
+    #pointsTotal {
+      color: rgba(220, 240, 225, 0.95);
+      font-weight: 300;
+    }
+    #resetPointsBtn {
+      border: 1px solid rgba(140, 180, 150, 0.25);
+      border-radius: 6px;
+      background: transparent;
+      color: rgba(200, 140, 160, 0.75);
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    #resetPointsBtn:hover {
+      background: rgba(200, 140, 160, 0.08);
+      border-color: rgba(200, 140, 160, 0.5);
+    }
   </style>
   <link rel="stylesheet" href="crt.css">
   <script defer src="crt.js"></script>
+  <script src="score.js"></script>
 </head>
 <body>
   <div class="orb orb--1"></div>
@@ -307,6 +345,13 @@
       </div>
     </div>
   </div>
+
+  <div id="pointsWrap">
+    <span id="pointsTotal">0</span>
+    POINTS
+    <button id="resetPointsBtn">Reset</button>
+  </div>
+
   <script>
     let triggered = false;
     function activate() {
@@ -358,6 +403,20 @@
       }
     }
 
+    function currentPointsPlayer() {
+      return (window.__user && window.__user.username) ? window.__user.username : 'anonymous';
+    }
+    function refreshPoints() {
+      const total = ScoreBoard.get(currentPointsPlayer()).total || 0;
+      document.getElementById('pointsTotal').textContent = Math.round(total * 100) / 100;
+    }
+    document.getElementById('resetPointsBtn').addEventListener('click', () => {
+      const name = currentPointsPlayer();
+      if (!confirm('Reset ' + name + "'s score to 0? This cannot be undone.")) return;
+      ScoreBoard.reset(name);
+      refreshPoints();
+    });
+
     function openModal() {
       setMode('login');
       modal.classList.add('open');
@@ -369,6 +428,7 @@
         await fetch('/api/logout', { method: 'POST' });
         window.__user = null;
         renderAuthState(null);
+        refreshPoints();
         return;
       }
       openModal();
@@ -397,6 +457,7 @@
         window.__user = data.user;
         renderAuthState(data.user);
         modal.classList.remove('open');
+        refreshPoints();
       } catch (err) {
         authErr.textContent = 'Network error';
       }
@@ -408,7 +469,8 @@
         const data = await res.json();
         window.__user = data.user || null;
         renderAuthState(window.__user);
-      } catch { window.__user = null; renderAuthState(null); }
+        refreshPoints();
+      } catch { window.__user = null; renderAuthState(null); refreshPoints(); }
     })();
   </script>
 </body>

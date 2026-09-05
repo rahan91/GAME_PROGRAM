@@ -218,25 +218,10 @@
     font-weight: 600;
     color: rgba(140,180,150,0.85);
   }
-
-  #resetScoreBtn {
-    padding: 5px 14px;
-    border: 1px solid rgba(140,180,150,0.2);
-    border-radius: 6px;
-    background: transparent;
-    color: rgba(200,140,160,0.7);
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-  }
-
-  #resetScoreBtn:hover {
-    background: rgba(200,140,160,0.08);
-    border-color: rgba(200,140,160,0.5);
-  }
 </style>
   <link rel="stylesheet" href="crt.css">
   <script defer src="crt.js"></script>
+  <script src="score.js"></script>
 </head>
 <body>
 
@@ -248,7 +233,6 @@
   <label for="playerName">Player</label>
   <span id="playerName" title="Logged-in user">anonymous</span>
   <span id="scoreDisplay">Score: 0</span>
-  <button id="resetScoreBtn">Reset Score</button>
 </div>
 
 <div class="controls">
@@ -293,7 +277,6 @@
 
   let cols, rows, cellSize, grid, player, won, moves, trail, startTime, wallsLayer, trailLayer, trailCtx;
   const PADDING = 2;
-  const STORAGE_KEY = 'mazeGameScores';
   let selectedDifficulty = 'medium';
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -312,31 +295,17 @@
     return DIFFICULTIES[selectedDifficulty] || DIFFICULTIES['medium'];
   }
 
-  function loadScores() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
-    catch { return {}; }
-  }
-
-  function saveScores(scores) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
-  }
-
   function currentPlayer() {
     return nameInput.textContent.trim() || 'anonymous';
   }
 
   function refreshScoreDisplay() {
-    const scores = loadScores();
-    scoreDisplay.textContent = 'Score: ' + (scores[currentPlayer()]?.total ?? 0);
+    const total = ScoreBoard.get(currentPlayer()).total || 0;
+    scoreDisplay.textContent = 'Score: ' + Math.round(total * 100) / 100;
   }
 
   function addScore(points) {
-    const scores = loadScores();
-    const name = currentPlayer();
-    if (!scores[name]) scores[name] = { total: 0, plays: 0 };
-    scores[name].total += points;
-    scores[name].plays += 1;
-    saveScores(scores);
+    ScoreBoard.add(currentPlayer(), points);
     refreshScoreDisplay();
   }
 
@@ -818,14 +787,6 @@
 
   document.addEventListener('click', () => {
     difficultySelect.classList.remove('open');
-  });
-
-  document.getElementById('resetScoreBtn').addEventListener('click', () => {
-    const name = currentPlayer();
-    if (!confirm(`Reset ${name}'s score to 0? This cannot be undone.`)) return;
-    const scores = loadScores();
-    if (scores[name]) { scores[name].total = 0; saveScores(scores); }
-    refreshScoreDisplay();
   });
 
   (async () => {

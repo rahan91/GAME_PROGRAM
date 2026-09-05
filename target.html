@@ -86,6 +86,7 @@
 </style>
   <link rel="stylesheet" href="crt.css">
   <script defer src="crt.js"></script>
+  <script src="score.js"></script>
 </head>
 <body>
 
@@ -117,7 +118,6 @@
   const missesDisplay = document.getElementById('missesDisplay');
   const timeDisplay = document.getElementById('timeDisplay');
 
-  const STORAGE_KEY = 'targetGameScores';
   const TARGET_SIZE = 96;
 
   let started = false;
@@ -125,30 +125,17 @@
   let lastHitAt = 0;
   let hits = 0;
   let misses = 0;
-  let runScore = 0;
 
-  function loadScores() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
-    catch { return {}; }
-  }
-  function saveScores(scores) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(scores));
-  }
   function currentPlayer() {
     return nameInput.textContent.trim() || 'anonymous';
   }
   function refreshScoreDisplay() {
-    const name = currentPlayer();
-    const base = (loadScores()[name]?.total ?? 0) + runScore;
-    scoreDisplay.textContent = Math.round(base * 100) / 100;
+    const total = ScoreBoard.get(currentPlayer()).total || 0;
+    scoreDisplay.textContent = Math.round(total * 100) / 100;
   }
   function addScore(points) {
-    const scores = loadScores();
-    const name = currentPlayer();
-    if (!scores[name]) scores[name] = { total: 0, plays: 0 };
-    scores[name].total += points;
-    scores[name].plays += 1;
-    saveScores(scores);
+    ScoreBoard.add(currentPlayer(), points);
+    refreshScoreDisplay();
   }
 
   function randomPosition() {
@@ -194,7 +181,6 @@
     const accuracy = hits / (hits + misses) * 100;
     const sessionTimeSec = (now - sessionStart) / 1000;
     const added = (1000 / betweenMs) * Math.pow(accuracy, 2.25) * (1 + 0.25 * Math.sqrt(sessionTimeSec / 60));
-    runScore += added;
     addScore(added);
     refreshScoreDisplay();
 
