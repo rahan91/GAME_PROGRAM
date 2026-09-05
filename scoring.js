@@ -81,6 +81,16 @@
     return safeScore(rawRunTotal);
   }
 
+  // ---------------- Button ----------------
+  // PLACEHOLDER formula: +1 point per whole second held, soft cap at 500.
+  var BUTTON_SOFT_CAP = 500;
+
+  function buttonScore(holdMs) {
+    if (!Number.isFinite(holdMs)) return 0;
+    holdMs = Math.max(0, holdMs);
+    return Math.min(BUTTON_SOFT_CAP, Math.floor(holdMs / 1000));
+  }
+
   global.Scoring = {
     MAX_RUN_SCORE: MAX_RUN_SCORE,
     clamp: clamp,
@@ -91,6 +101,8 @@
     targetRunScore: targetRunScore,
     RUN_TARGETS: RUN_TARGETS,
     TARGET_REF_REACTION: TARGET_REF_REACTION,
-    TARGET_SPEED_MAX: TARGET_SPEED_MAX
+    TARGET_SPEED_MAX: TARGET_SPEED_MAX,
+    buttonScore: buttonScore,
+    BUTTON_SOFT_CAP: BUTTON_SOFT_CAP
   };
 })(typeof window !== 'undefined' ? window : globalThis);

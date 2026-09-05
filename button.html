@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUTTON</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #1c1c1c;
+    color: #e0e0e0;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+    cursor: none;
+    -webkit-touch-callout: none;
+  }
+  a, .back { cursor: none; }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    animation: float 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .orb--1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(80,100,90,0.18) 0%, transparent 70%);
+    top: 0%; left: 5%;
+  }
+  .orb--2 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(70,95,80,0.14) 0%, transparent 70%);
+    bottom: 0%; right: 0%;
+    animation-delay: -4s;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.03); }
+  }
+
+  .back {
+    position: fixed; top: 20px; left: 20px; z-index: 10;
+    color: rgba(140,180,150,0.6); text-decoration: none;
+    font-size: 14px; transition: color 0.2s;
+  }
+  .back:hover { color: rgba(140,180,150,1); }
+
+  h1 {
+    position: fixed; top: 20px; left: 0; right: 0;
+    text-align: center; pointer-events: none;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 6px;
+    text-transform: uppercase; color: rgba(140,180,150,0.85);
+  }
+
+  #hud {
+    position: fixed; top: 68px; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: center;
+    gap: 24px; pointer-events: none; z-index: 8;
+    font-size: 14px; color: rgba(140,180,150,0.75);
+  }
+  #hud .stat { letter-spacing: 0.1em; }
+  #hud b { color: rgba(200,230,210,0.95); }
+
+  #btn3d {
+    position: fixed;
+    left: 50%; top: 55%;
+    transform: translate(-50%, -50%) perspective(400px)
+      rotateX(calc(var(--press, 0) * 14deg))
+      translateY(calc(var(--press, 0) * 10px));
+    width: 260px; height: 96px;
+    border-radius: 16px;
+    border: 2px solid rgba(140,180,150,0.35);
+    background: linear-gradient(180deg, #87a795 0%, #4a6a58 45%, #38534a 100%);
+    box-shadow:
+      0 calc(10px - var(--press, 0) * 8px) 0 #22332a,
+      0 calc(16px - var(--press, 0) * 6px) 24px rgba(0,0,0,0.45),
+      inset 0 2px 0 rgba(255,255,255,0.25),
+      inset 0 -3px 6px rgba(0,0,0,0.3);
+    color: rgba(220,240,225,0.95);
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    display: flex; align-items: center; justify-content: center;
+    cursor: none;
+    z-index: 5;
+    touch-action: none;
+  }
+
+  #progress {
+    position: fixed;
+    left: 50%;
+    top: calc(55% + 86px);
+    transform: translateX(-50%);
+    width: 260px; height: 6px;
+    border-radius: 3px;
+    background: rgba(80,100,90,0.3);
+    overflow: hidden;
+    pointer-events: none; z-index: 5;
+  }
+  #fill {
+    height: 100%; width: 0%;
+    background: rgba(140,180,150,0.85);
+  }
+
+  .hint {
+    position: fixed; bottom: 20px; left: 0; right: 0;
+    text-align: center; color: rgba(140,180,150,0.35);
+    font-size: 13px; pointer-events: none; z-index: 6;
+  }
+
+  #status {
+    position: fixed; bottom: 44px; left: 0; right: 0;
+    text-align: center; color: rgba(140,180,150,0.7);
+    font-size: 13px; pointer-events: none; z-index: 6;
+  }
+
+  #cursorfx {
+    position: fixed; top: 0; left: 0;
+    width: 31px; height: 40px;
+    pointer-events: none;
+    z-index: 100;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+  }
+  #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0; }
+  #cursorfx.finger { background: url('assets/cursor-finger.png') no-repeat 0 0; }
+</style>
+  <link rel="stylesheet" href="crt.css">
+  <script defer src="crt.js"></script>
+  <script src="score.js"></script>
+  <script src="scoring.js"></script>
+</head>
+<body>
+
+<div class="orb orb--1"></div>
+<div class="orb orb--2"></div>
+
+<a class="back" href="index.html">&larr; Gallery</a>
+
+<h1>Button</h1>
+
+<div id="hud">
+  <span class="stat">Player <b id="playerName">anonymous</b></span>
+  <span class="stat">Score <b id="scoreDisplay">0</b></span>
+  <span class="stat">Hold <b id="holdDisplay">0.0s</b></span>
+  <span class="stat">Gain <b id="gainDisplay">+0</b></span>
+</div>
+
+<button id="btn3d" type="button">Hold Me</button>
+
+<div id="progress"><div id="fill"></div></div>
+
+<div id="status"></div>
+<div class="hint">Hold the button &middot; score grows the longer you hold &middot; release to bank it</div>
+
+<div id="cursorfx" class="arrow"></div>
+
+<script>
+(() => {
+  const btn = document.getElementById('btn3d');
+  const nameInput = document.getElementById('playerName');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const holdDisplay = document.getElementById('holdDisplay');
+  const gainDisplay = document.getElementById('gainDisplay');
+  const fill = document.getElementById('fill');
+  const status = document.getElementById('status');
+
+  let holding = false;
+  let downAt = 0;
+  let isLoggedIn = false;
+
+  function currentPlayer() {
+    return nameInput.textContent.trim() || 'anonymous';
+  }
+  function refreshScoreDisplay() {
+    const total = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
+    scoreDisplay.textContent = Math.round(total * 100) / 100;
+  }
+  function addScore(points) {
+    if (!isLoggedIn) return;
+    ScoreBoard.add(currentPlayer(), points);
+    refreshScoreDisplay();
+  }
+
+  function tick() {
+    if (!holding) return;
+    const holdMs = Date.now() - downAt;
+    const p = Math.min(1, holdMs / 5000);
+    btn.style.setProperty('--press', String(p));
+    holdDisplay.textContent = (holdMs / 1000).toFixed(1) + 's';
+    const gain = Scoring.buttonScore(holdMs);
+    gainDisplay.textContent = '+' + gain;
+    fill.style.width = Math.min(100, holdMs / 50000 * 100) + '%';
+    requestAnimationFrame(tick);
+  }
+
+  function startHold() {
+    holding = true;
+    downAt = Date.now();
+    tick();
+  }
+
+  function endHold() {
+    if (!holding) return;
+    holding = false;
+    const holdMs = Date.now() - downAt;
+    const gain = Scoring.buttonScore(holdMs);
+    status.textContent = 'Held ' + (holdMs / 1000).toFixed(1) + 's · +' + gain + ' pts';
+    addScore(gain);
+    btn.style.setProperty('--press', '0');
+    holdDisplay.textContent = '0.0s';
+    gainDisplay.textContent = '+0';
+    fill.style.width = '0%';
+  }
+
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    startHold();
+  });
+  window.addEventListener('pointerup', endHold);
+  window.addEventListener('pointercancel', endHold);
+  window.addEventListener('blur', endHold);
+
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // Sluggish drawn cursor (finger on hover over the button).
+  const cursorfx = document.getElementById('cursorfx');
+  let realX = window.innerWidth / 2, realY = window.innerHeight / 2;
+  let curX = realX, curY = realY;
+  document.addEventListener('pointermove', (e) => {
+    realX = e.clientX;
+    realY = e.clientY;
+  });
+
+  function overButton(x, y) {
+    const r = btn.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  }
+
+  function cursorTick() {
+    curX += (realX - curX) * 0.24;
+    curY += (realY - curY) * 0.24;
+    const over = overButton(curX, curY);
+    cursorfx.className = over ? 'finger' : 'arrow';
+    const hotX = over ? 11 : 1;
+    cursorfx.style.transform = 'translate3d(' + (curX - hotX) + 'px,' + curY + 'px,0)';
+    requestAnimationFrame(cursorTick);
+  }
+  requestAnimationFrame(cursorTick);
+
+  async function loadPlayerAndScore() {
+    try {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      const user = data.user || null;
+      isLoggedIn = !!(user && user.username);
+      if (user && user.username) nameInput.textContent = user.username;
+    } catch {
+      isLoggedIn = false;
+    }
+    refreshScoreDisplay();
+  }
+  loadPlayerAndScore();
+  window.addEventListener('pageshow', loadPlayerAndScore);
+})();
+</script>
+</body>
+</html>

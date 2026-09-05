@@ -79,6 +79,21 @@ assert(runWith(400, 2) === runWith(400, 2), 'baseline stable');
 assert(runWith(100000, 2) === runWith(800, 2), 'waiting simply floors reaction speed - no extra score');
 assert(S.targetRunScore(perfectRun + (1e9)) <= 5000, 'adding waiting time cannot raise a run');
 
+console.log('\n=== Button scoring ===');
+const btn = S.buttonScore;
+assert(btn(0) === 0, 'zero hold scores nothing');
+assert(btn(1500) === 1, 'one whole second = 1 point (floor)');
+assert(btn(2500) === 2, 'partial second does not round up');
+assert(btn(5000) === 5, '5s hold = 5 points');
+assert(btn(2000) > btn(1000), 'longer hold scores more');
+assert(btn(490000) === 490, 'just below cap still builds');
+assert(btn(500000) === S.BUTTON_SOFT_CAP, '500s hits the soft cap exactly');
+assert(btn(600000) === S.BUTTON_SOFT_CAP, 'longer than cap stays capped');
+assert(btn(1e9) <= S.BUTTON_SOFT_CAP, 'score never exceeds the soft cap');
+assert(btn(NaN) === 0, 'NaN hold -> 0');
+assert(btn(-50) === 0, 'negative hold -> 0');
+assert(btn(Infinity) <= S.BUTTON_SOFT_CAP, 'infinite hold bounded by soft cap');
+
 console.log('\n=== Calibration comparison ===');
 function mazeRepr(label, cells, diff, optimal, actual, time) {
   const sc = stickler(cells, S.MAZE_DIFF_MULT[diff], optimal, actual, time);
@@ -97,6 +112,13 @@ tgtRepr('poor', 700, 8);
 tgtRepr('average', 450, 3);
 tgtRepr('excellent', 350, 1);
 tgtRepr('exceptional', 220, 0);
+function btnRepr(label, holdMs) {
+  console.log('  ' + label.padEnd(14) + ' button: ' + String(S.buttonScore(holdMs)).padStart(5));
+}
+btnRepr('tap 1s', 1000);
+btnRepr('hold 3s', 3000);
+btnRepr('hold 6s', 6000);
+btnRepr('hold 12s', 12000);
 
 console.log('\n' + (failures === 0 ? 'ALL ' + checks + ' CHECKS PASSED' : failures + ' OF ' + checks + ' CHECKS FAILED'));
 process.exit(failures === 0 ? 0 : 1);
