@@ -193,7 +193,7 @@
 
     const accuracy = hits / (hits + misses) * 100;
     const sessionTimeSec = (now - sessionStart) / 1000;
-    const added = (1 / betweenMs) * Math.pow(accuracy, 2.25) * Math.sqrt(sessionTimeSec);
+    const added = (1000 / betweenMs) * Math.pow(accuracy, 2.25) * (1 + 0.25 * Math.sqrt(sessionTimeSec / 60));
     runScore += added;
     addScore(added);
     refreshScoreDisplay();
