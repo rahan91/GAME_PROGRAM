@@ -191,7 +191,7 @@
     hits += 1;
     hitsDisplay.textContent = hits;
 
-    const accuracy = hits / (hits + misses);
+    const accuracy = hits / (hits + misses) * 100;
     const sessionTimeSec = (now - sessionStart) / 1000;
     const added = (1 / betweenMs) * Math.pow(accuracy, 2.25) * Math.sqrt(sessionTimeSec);
     runScore += added;
