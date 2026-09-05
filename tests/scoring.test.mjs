@@ -81,13 +81,13 @@ assert(S.targetRunScore(perfectRun + (1e9)) <= 5000, 'adding waiting time cannot
 
 console.log('\n=== Button scoring ===');
 const btn = S.buttonScore;
-// sec<=30: 10*sec | sec<=60: 300+5*(sec-30) | sec>60: 450+2*(sec-60)
+// sec<=30: 7*sec | sec<=60: 210+4*(sec-30) | sec>60: 330+2*(sec-60)
 assert(btn(0) === 0, 'zero hold scores nothing');
-assert(btn(10000) === 100, '10s hold = 100 (tier 1)');
-assert(btn(30000) === 300, '30s hold hits tier boundary = 300');
-assert(btn(31000) === 305, '31s hold = 305 (tier 2 slope 5)');
-assert(btn(60000) === 450, '60s hold hits tier boundary = 450');
-assert(btn(61000) === 452, '61s hold = 452 (tier 3 slope 2)');
+assert(btn(10000) === 70, '10s hold = 70 (tier 1)');
+assert(btn(30000) === 210, '30s hold hits tier boundary = 210');
+assert(btn(31000) === 214, '31s hold = 214 (tier 2 slope 4)');
+assert(btn(60000) === 330, '60s hold hits tier boundary = 330');
+assert(btn(61000) === 332, '61s hold = 332 (tier 3 slope 2)');
 assert(btn(20000) > btn(10000), 'longer hold scores more');
 assert(btn(100000) > btn(60000), 'very long hold keeps climbing (no hard cap)');
 const t1Gain = btn(10000) - btn(0);
