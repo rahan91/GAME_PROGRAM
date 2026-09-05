@@ -84,10 +84,17 @@
     text-align: center; color: rgba(140,180,150,0.35);
     font-size: 13px; pointer-events: none; z-index: 6;
   }
+
+  #runStatus {
+    position: fixed; bottom: 44px; left: 0; right: 0;
+    text-align: center; color: rgba(140,180,150,0.7);
+    font-size: 13px; pointer-events: none; z-index: 6;
+  }
 </style>
   <link rel="stylesheet" href="crt.css">
   <script defer src="crt.js"></script>
   <script src="score.js"></script>
+  <script src="scoring.js"></script>
 </head>
 <body>
 
@@ -103,12 +110,14 @@
   <span class="stat">Score <b id="scoreDisplay">0</b></span>
   <span class="stat">Hits <b id="hitsDisplay">0</b></span>
   <span class="stat">Misses <b id="missesDisplay">0</b></span>
+  <span class="stat">Run <b id="runDisplay">0/20</b></span>
   <span class="stat">Time <b id="timeDisplay">0.0s</b></span>
 </div>
 
 <img id="target" src="assets/target.png" alt="target">
 
-<div class="hint">Click the target &middot; Clicking the background counts as a miss</div>
+<div id="runStatus"></div>
+<div class="hint">Click the target &middot; Clicking the background counts as a miss &middot; 20 hits per run</div>
 
 <script>
 (() => {
@@ -118,14 +127,20 @@
   const hitsDisplay = document.getElementById('hitsDisplay');
   const missesDisplay = document.getElementById('missesDisplay');
   const timeDisplay = document.getElementById('timeDisplay');
+  const runDisplay = document.getElementById('runDisplay');
+  const runStatus = document.getElementById('runStatus');
 
   const TARGET_SIZE = 96;
+  const RUN_TARGETS = Scoring.RUN_TARGETS;
 
-  let started = false;
-  let sessionStart = 0;
-  let lastHitAt = 0;
+  // A "run" is a fixed set of RUN_TARGETS hits, and the only time points are
+  // submitted to the leaderboard (once, at the end of the run).
+  let running = false;
   let hits = 0;
   let misses = 0;
+  let runScore = 0;
+  let spawnedAt = 0;  // when the current target appeared -> reaction window start
+  let runStart = 0;   // when the current run started (Time stat)
   let isLoggedIn = false;
   let missGuard = false;
 
@@ -141,6 +156,11 @@
     ScoreBoard.add(currentPlayer(), points);
     refreshScoreDisplay();
   }
+  function updateRunDisplay() {
+    runDisplay.textContent = hits + '/' + RUN_TARGETS;
+    hitsDisplay.textContent = hits;
+    missesDisplay.textContent = misses;
+  }
 
   function randomPosition() {
     const radius = TARGET_SIZE / 2;
@@ -148,7 +168,9 @@
     const hud = document.getElementById('hud').getBoundingClientRect();
     const topClear = Math.max(margin, hud.bottom + 12 + radius);
     const hint = document.querySelector('.hint').getBoundingClientRect();
-    const bottomClear = Math.min(window.innerHeight - margin, hint.top - 12 - radius);
+    const status = document.getElementById('runStatus').getBoundingClientRect();
+    const lowestOverlayTop = Math.min(hint.top, status.top);
+    const bottomClear = Math.min(window.innerHeight - margin, lowestOverlayTop - 12 - radius);
     const minY = topClear;
     const maxY = Math.max(minY, bottomClear);
     const minX = margin;
@@ -166,35 +188,45 @@
     target.style.height = TARGET_SIZE + 'px';
   }
 
+  // End of a run: submit its total exactly once, then prepare the next run.
+  function endRun(now) {
+    const points = Scoring.targetRunScore(runScore);
+    addScore(points);
+    const total = hits + misses;
+    const acc = total > 0 ? Math.round(hits / total * 100) : 0;
+    runStatus.textContent = 'Run complete: +' + points +
+      ' pts (' + hits + ' hits, ' + misses + ' misses, ' + acc + '% accuracy)';
+    running = false;
+    hits = 0; misses = 0; runScore = 0; runStart = 0;
+    updateRunDisplay();
+    timeDisplay.textContent = '0.0s';
+    spawn();
+    spawnedAt = now;
+  }
+
   target.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!started) {
-      started = true;
-      sessionStart = Date.now();
-      lastHitAt = Date.now();
-      hits = 1;
-      hitsDisplay.textContent = hits;
-      spawn();
-      missGuard = true;
-      setTimeout(() => missGuard = false, 250);
-      refreshScoreDisplay();
+    const now = Date.now();
+    if (!running) {
+      running = true;
+      hits = 0; misses = 0; runScore = 0;
+      runStart = now;
+      runStatus.textContent = '';
+    }
+    // Reaction window: from when this target appeared until it was hit.
+    const reactionMs = now - spawnedAt;
+    hits += 1;
+    const hitScore = Scoring.targetHitScore(reactionMs, hits, misses);
+    runScore += hitScore;
+    updateRunDisplay();
+
+    if (hits >= RUN_TARGETS) {
+      endRun(now);
       return;
     }
-    const now = Date.now();
-    const betweenMs = Math.max(now - lastHitAt, 0.001);
-    lastHitAt = now;
-    hits += 1;
-    hitsDisplay.textContent = hits;
-
-    const accuracy = hits / (hits + misses) * 100;
-    const sessionTimeSec = (now - sessionStart) / 1000;
-    const sizeMult = Math.sqrt(96 / TARGET_SIZE);
-    const added = Math.ceil(1000 * (500 / betweenMs) * Math.pow(accuracy, 2.25) * sizeMult * (1 + sessionTimeSec / 600));
-    addScore(added);
-    refreshScoreDisplay();
-
     spawn();
+    spawnedAt = now;
     missGuard = true;
     setTimeout(() => missGuard = false, 250);
   });
@@ -202,20 +234,19 @@
   document.addEventListener('click', (e) => {
     if (e.target === target) return;
     if (missGuard) return;
-    if (!started) return;
+    if (!running) return;
     misses += 1;
-    missesDisplay.textContent = misses;
-    refreshScoreDisplay();
+    updateRunDisplay();
   });
 
   setInterval(() => {
-    if (!started) return;
-    const sec = (Date.now() - sessionStart) / 1000;
+    if (!running) return;
+    const sec = (Date.now() - runStart) / 1000;
     timeDisplay.textContent = sec.toFixed(1) + 's';
   }, 100);
 
-  target.style.left = '50%';
-  target.style.top = '50%';
+  spawn();
+  spawnedAt = Date.now();
 
   async function loadPlayerAndScore() {
     try {

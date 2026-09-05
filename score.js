@@ -37,7 +37,8 @@ window.ScoreBoard = (function () {
   function add(name, points) {
     var s = load();
     if (!s[name]) s[name] = { total: 0, plays: 0 };
-    s[name].total += points;
+    var pts = Number.isFinite(points) ? Math.max(0, Math.round(points)) : 0;
+    s[name].total += pts;
     s[name].plays += 1;
     save(s);
     return s[name];

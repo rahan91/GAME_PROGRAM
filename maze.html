@@ -223,6 +223,7 @@
   <link rel="stylesheet" href="crt.css">
   <script defer src="crt.js"></script>
   <script src="score.js"></script>
+  <script src="scoring.js"></script>
 </head>
 <body>
 
@@ -279,17 +280,18 @@
   let cols, rows, cellSize, grid, player, won, moves, trail, startTime, wallsLayer, trailLayer, trailCtx;
   const PADDING = 2;
   let selectedDifficulty = 'medium';
+  let scored = false;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
   const DIFFICULTIES = {
-    'very easy': { mult: 1.0, candidates: 8, bias: 0.75, braid: 0.95, target: 'easy' },
-    'easy':      { mult: 1.5, candidates: 10, bias: 0.55, braid: 0.65, target: 'easy' },
-    'medium':    { mult: 2.5, candidates: 14, bias: 0.30, braid: 0.25, target: 'hard' },
-    'hard':      { mult: 4.0, candidates: 18, bias: 0.12, braid: 0.05, target: 'hard' },
-    'very hard': { mult: 5.5, candidates: 22, bias: 0.04, braid: 0.00, target: 'hard' },
-    'insane':    { mult: 7.5, candidates: 28, bias: 0.01, braid: 0.00, target: 'hard' },
-    'extreme':   { mult: 10.0, candidates: 35, bias: 0.00, braid: 0.00, target: 'extreme' }
+    'very easy': { mult: 1.00, candidates: 8, bias: 0.75, braid: 0.95, target: 'easy' },
+    'easy':      { mult: 1.20, candidates: 10, bias: 0.55, braid: 0.65, target: 'easy' },
+    'medium':    { mult: 1.45, candidates: 14, bias: 0.30, braid: 0.25, target: 'hard' },
+    'hard':      { mult: 1.75, candidates: 18, bias: 0.12, braid: 0.05, target: 'hard' },
+    'very hard': { mult: 2.05, candidates: 22, bias: 0.04, braid: 0.00, target: 'hard' },
+    'insane':    { mult: 2.30, candidates: 28, bias: 0.01, braid: 0.00, target: 'hard' },
+    'extreme':   { mult: 2.50, candidates: 35, bias: 0.00, braid: 0.00, target: 'extreme' }
   };
 
   function currentDifficulty() {
@@ -486,6 +488,7 @@
 
     player = { x: 0, y: 0 };
     won = false; moves = 0;
+    scored = false;
     trail = [{ x: 0, y: 0 }];
     startTime = Date.now();
     statusEl.textContent = 'Moves: 0';
@@ -615,6 +618,8 @@
   }
 
   function finishRun() {
+    if (scored) return;
+    scored = true;
     won = true;
     const aiWasSolving = aiTimer !== null;
     stopAI();
@@ -622,20 +627,15 @@
       const aiElapsed = Math.max((Date.now() - startTime) / 1000, 0.01);
       const optimal = shortestPathLength();
       const accuracy = Math.min(optimal / Math.max(moves, 1), 1);
-      addScore(1);
-      statusEl.textContent = 'AI solved it in ' + moves + ' moves! +1 pt (' +
-        Math.round(accuracy * 100) + '% accuracy, ' + formatElapsed(aiElapsed) + 's)';
+      statusEl.textContent = 'AI solved it in ' + moves + ' moves (' +
+        Math.round(accuracy * 100) + '% efficiency, ' + formatElapsed(aiElapsed) + 's) - no points for AI solvers';
       return;
     }
     const elapsed = Math.max((Date.now() - startTime) / 1000, 0.01);
     const optimal = shortestPathLength();
-    const efficiency = Math.min(optimal / Math.max(moves, 1), 1);
     const mazeCells = cols * rows;
-    const diffMult = currentDifficulty().mult;
-    const pathBonus = 0.5 + 0.5 * (optimal / Math.max(moves, 1));
-    const timeBonus = 1 + 0.5 * Math.exp(-elapsed / 60);
-    const points = Math.round(Math.min(5000,
-      (100 + 2.5 * Math.sqrt(mazeCells)) * diffMult * pathBonus * timeBonus));
+    const points = Scoring.mazeScore(mazeCells, currentDifficulty().mult, optimal, moves, elapsed);
+    const efficiency = Math.min(optimal / Math.max(moves, 1), 1);
     addScore(points);
     statusEl.textContent = 'You escaped in ' + moves + ' moves! +' + points +
       ' pts (' + Math.round(efficiency * 100) + '% efficiency, ' +
