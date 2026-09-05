@@ -93,7 +93,6 @@
     }
     .swatch.maze { border-radius: 8px; }
     .swatch.cursor { width: 48px; height: 48px; }
-    .swatch.cursor img { height: 100%; width: auto; }
     .swatch.target { position: relative; border-radius: 50%; }
     .swatch.target img { width: 100%; height: 100%; display: block; }
     .swatch.target .tint { position: absolute; inset: 0; mix-blend-mode: color; pointer-events: none; }
@@ -182,9 +181,11 @@
 
     function swatchHTML(item) {
       if (item.slot === 'cursor') {
+        var c = window.Shop.hexToRgba(item.color, 1);
+        var dk = window.Shop.hexToRgba(item.color, 0.6);
         return '<div class="swatch cursor"><svg viewBox="0 0 25 40" width="100%" height="100%">' +
           '<path d="M1 1 L1 29 L8 22 L14 37 L17 35 L11 20 L19 17 Z" ' +
-          'fill="' + item.color + '" stroke="rgba(0,0,0,0.5)" stroke-width="1.5" stroke-linejoin="round"/></svg></div>';
+          'fill="' + c + '" stroke="' + dk + '" stroke-width="1.5" stroke-linejoin="round"/></svg></div>';
       }
       if (item.slot === 'target') {
         return '<div class="swatch target"><img src="assets/target.png" alt="target"><div class="tint" style="background:' + item.color + ';"></div></div>';
