@@ -178,9 +178,13 @@
   }
 
   canvas {
+    display: block;
     border: 2px solid rgba(140,180,150,0.2);
     border-radius: 8px;
     cursor: default;
+    touch-action: none;
+    max-width: 100%;
+    height: auto;
   }
 
   .hint {
@@ -218,6 +222,14 @@
     font-size: 18px;
     font-weight: 600;
     color: rgba(140,180,150,0.85);
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    h1 { font-size: 1.25rem; letter-spacing: 4px; }
+    #scoreDisplay { font-size: 15px; }
+    #status, .hint { font-size: 12px; }
+    .controls input { width: 58px; }
   }
 </style>
   <link rel="stylesheet" href="crt.css">
@@ -679,6 +691,31 @@
     const now = performance.now();
     if (now >= nextMoveTime) { move(...KEY_TO_DIR[key]); nextMoveTime = now + REPEAT_INTERVAL; }
   }, 15);
+
+  // Touch / drag controls: swipe across the canvas to move through the maze.
+  // Cross a cell-sized threshold to step, then keep dragging to chain moves.
+  let dragStart = null;
+  canvas.addEventListener('pointerdown', (e) => {
+    if (aiTimer) return;
+    dragStart = { x: e.clientX, y: e.clientY };
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    e.preventDefault();
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!dragStart || aiTimer) return;
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    const rect = canvas.getBoundingClientRect();
+    const cellPx = Math.max(14, rect.width / cols);
+    const th = cellPx * 0.6;
+    if (Math.abs(dx) < th && Math.abs(dy) < th) return;
+    if (Math.abs(dx) > Math.abs(dy)) move(Math.sign(dx), 0);
+    else move(0, Math.sign(dy));
+    dragStart = { x: e.clientX, y: e.clientY };
+  });
+  const endDrag = () => { dragStart = null; };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
 
   let aiTimer = null;
   function stopAI() { if (aiTimer) { clearInterval(aiTimer); aiTimer = null; } }

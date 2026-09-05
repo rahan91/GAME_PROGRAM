@@ -60,8 +60,9 @@
 
   #hud {
     position: fixed; top: 68px; left: 0; right: 0;
-    display: flex; align-items: center; justify-content: center;
-    gap: 24px; pointer-events: none; z-index: 8;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 6px 18px; padding: 0 12px;
+    pointer-events: none; z-index: 8;
     font-size: 14px; color: rgba(140,180,150,0.75);
   }
   #hud .stat { letter-spacing: 0.1em; }
@@ -101,6 +102,15 @@
     position: fixed; bottom: 44px; left: 0; right: 0;
     text-align: center; color: rgba(140,180,150,0.7);
     font-size: 13px; pointer-events: none; z-index: 6;
+  }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 1.25rem; letter-spacing: 4px; }
+    #hud { top: 58px; font-size: 12px; gap: 3px 14px; }
+    #runStatus, .hint { font-size: 12px; }
+  }
+  @media (pointer: coarse) {
+    #cursorfx { display: none; }
   }
 </style>
   <link rel="stylesheet" href="crt.css">
