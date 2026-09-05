@@ -350,6 +350,56 @@
       background: rgba(200, 140, 160, 0.08);
       border-color: rgba(200, 140, 160, 0.5);
     }
+
+    @media (max-width: 1100px) {
+      body { overflow-y: auto; overflow-x: hidden; }
+      .title {
+        position: static;
+        top: auto;
+        transform: none;
+        padding: 84px 16px 8px;
+        transition: none;
+      }
+      .title.active { top: auto; transform: none; }
+      .title h1 { font-size: 1.6rem; }
+      .title.active h1 { font-size: 1.6rem; }
+      .grid {
+        position: static;
+        display: flex;
+        padding: 12px 16px 8px;
+      }
+      .grid-inner {
+        width: min(528px, calc(100vw - 32px));
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: none;
+        gap: 14px;
+      }
+      .card {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1 / 1;
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+      .card.active { opacity: 1; transform: none; }
+      .card .icon { font-size: 1.5rem; margin-bottom: 4px; }
+      .card .icon img { width: 44px; height: 44px; }
+      .card .label { font-size: 0.68rem; }
+      .card .coming { font-size: 0.5rem; }
+      .lb {
+        position: static;
+        transform: none;
+        width: min(440px, calc(100vw - 32px));
+        margin: 20px auto 72px;
+        padding: 16px 0 8px;
+      }
+      #pointsWrap {
+        max-width: calc(100vw - 24px);
+        font-size: 13px;
+        padding: 6px 12px;
+      }
+    }
   </style>
   <link rel="stylesheet" href="crt.css">
   <script defer src="crt.js"></script>
