@@ -45,6 +45,20 @@
     50% { transform: translateY(-20px) scale(1.03); }
   }
 
+  .enter {
+    animation: enterIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes enterIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes enterFade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  #btn3d.enter { animation: enterFade 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  #hud.enter, #status.enter, .hint.enter, .back.enter, h1.enter { animation-duration: 0.22s; }
+
   .back {
     position: fixed; top: 20px; left: 20px; z-index: 10;
     color: rgba(140,180,150,0.6); text-decoration: none;
@@ -97,38 +111,6 @@
     transition: transform 0.12s ease, box-shadow 0.12s ease;
   }
 
-  #progress {
-    position: fixed;
-    left: 50%;
-    top: calc(55% + 86px);
-    transform: translateX(-50%);
-    width: 260px; height: 6px;
-    border-radius: 3px;
-    background: rgba(80,100,90,0.3);
-    overflow: hidden;
-    pointer-events: none; z-index: 5;
-  }
-  #fill {
-    height: 100%; width: 0%;
-    background: rgba(140,180,150,0.85);
-  }
-
-  #progress {
-    position: fixed;
-    left: 50%;
-    top: calc(55% + 86px);
-    transform: translateX(-50%);
-    width: 260px; height: 6px;
-    border-radius: 3px;
-    background: rgba(80,100,90,0.3);
-    overflow: hidden;
-    pointer-events: none; z-index: 5;
-  }
-  #fill {
-    height: 100%; width: 0%;
-    background: rgba(140,180,150,0.85);
-  }
-
   .hint {
     position: fixed; bottom: 20px; left: 0; right: 0;
     text-align: center; color: rgba(140,180,150,0.35);
@@ -162,21 +144,21 @@
 <div class="orb orb--1"></div>
 <div class="orb orb--2"></div>
 
-<a class="back" href="index.html">&larr; Gallery</a>
+<a class="back enter" href="index.html">&larr; Gallery</a>
 
-<h1>Button</h1>
+<h1 class="enter">Button</h1>
 
-<div id="hud">
+<div id="hud" class="enter">
   <span class="stat">Player <b id="playerName">anonymous</b></span>
   <span class="stat">Score <b id="scoreDisplay">0</b></span>
   <span class="stat">Hold <b id="holdDisplay">0.0s</b></span>
   <span class="stat">Gain <b id="gainDisplay">+0</b></span>
 </div>
 
-<button id="btn3d" type="button">Hold Me</button>
+<button id="btn3d" class="enter" type="button">Hold Me</button>
 
-<div id="status"></div>
-<div class="hint">Hold the button &middot; score grows the longer you hold &middot; release to bank it</div>
+<div id="status" class="enter"></div>
+<div class="hint enter">Hold the button &middot; score grows the longer you hold &middot; release to bank it</div>
 
 <div id="cursorfx" class="arrow"></div>
 
