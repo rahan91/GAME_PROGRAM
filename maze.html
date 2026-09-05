@@ -295,16 +295,19 @@
     return DIFFICULTIES[selectedDifficulty] || DIFFICULTIES['medium'];
   }
 
+  let isLoggedIn = false;
+
   function currentPlayer() {
     return nameInput.textContent.trim() || 'anonymous';
   }
 
   function refreshScoreDisplay() {
-    const total = ScoreBoard.get(currentPlayer()).total || 0;
+    const total = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
     scoreDisplay.textContent = 'Score: ' + Math.round(total * 100) / 100;
   }
 
   function addScore(points) {
+    if (!isLoggedIn) return;
     ScoreBoard.add(currentPlayer(), points);
     refreshScoreDisplay();
   }
@@ -792,8 +795,10 @@
     try {
       const res = await fetch('/api/me');
       const data = await res.json();
+      isLoggedIn = !!(data.user && data.user.username);
       nameInput.textContent = data.user ? data.user.username : 'anonymous';
     } catch {
+      isLoggedIn = false;
       nameInput.textContent = 'anonymous';
     }
     refreshScoreDisplay();

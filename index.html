@@ -404,14 +404,17 @@
     }
 
     function currentPointsPlayer() {
-      return (window.__user && window.__user.username) ? window.__user.username : 'anonymous';
+      return (window.__user && window.__user.username) ? window.__user.username : null;
     }
     function refreshPoints() {
-      const total = ScoreBoard.get(currentPointsPlayer()).total || 0;
+      const player = currentPointsPlayer();
+      const total = player ? (ScoreBoard.get(player).total || 0) : 0;
       document.getElementById('pointsTotal').textContent = Math.round(total * 100) / 100;
+      document.getElementById('resetPointsBtn').style.display = player ? '' : 'none';
     }
     document.getElementById('resetPointsBtn').addEventListener('click', () => {
       const name = currentPointsPlayer();
+      if (!name) return;
       if (!confirm('Reset ' + name + "'s score to 0? This cannot be undone.")) return;
       ScoreBoard.reset(name);
       refreshPoints();

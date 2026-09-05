@@ -127,15 +127,17 @@
   let lastHitAt = 0;
   let hits = 0;
   let misses = 0;
+  let isLoggedIn = false;
 
   function currentPlayer() {
     return nameInput.textContent.trim() || 'anonymous';
   }
   function refreshScoreDisplay() {
-    const total = ScoreBoard.get(currentPlayer()).total || 0;
+    const total = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
     scoreDisplay.textContent = Math.round(total * 100) / 100;
   }
   function addScore(points) {
+    if (!isLoggedIn) return;
     ScoreBoard.add(currentPlayer(), points);
     refreshScoreDisplay();
   }
@@ -213,8 +215,11 @@
       const res = await fetch('/api/me');
       const data = await res.json();
       const user = data.user || null;
+      isLoggedIn = !!(user && user.username);
       if (user && user.username) nameInput.textContent = user.username;
-    } catch {}
+    } catch {
+      isLoggedIn = false;
+    }
     refreshScoreDisplay();
   }
   loadPlayerAndScore();
