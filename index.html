@@ -463,15 +463,17 @@
       }
     });
 
-    (async () => {
+    async function initAuth() {
       try {
         const res = await fetch('/api/me');
         const data = await res.json();
         window.__user = data.user || null;
         renderAuthState(window.__user);
-        refreshPoints();
-      } catch { window.__user = null; renderAuthState(null); refreshPoints(); }
-    })();
+      } catch { window.__user = null; renderAuthState(null); }
+      refreshPoints();
+    }
+    initAuth();
+    window.addEventListener('pageshow', initAuth);
   </script>
 </body>
 </html>

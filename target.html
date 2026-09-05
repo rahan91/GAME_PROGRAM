@@ -208,7 +208,7 @@
   target.style.left = '50%';
   target.style.top = '50%';
 
-  (async () => {
+  async function loadPlayerAndScore() {
     try {
       const res = await fetch('/api/me');
       const data = await res.json();
@@ -216,7 +216,9 @@
       if (user && user.username) nameInput.textContent = user.username;
     } catch {}
     refreshScoreDisplay();
-  })();
+  }
+  loadPlayerAndScore();
+  window.addEventListener('pageshow', loadPlayerAndScore);
 })();
 </script>
 </body>
