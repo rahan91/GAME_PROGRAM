@@ -57,38 +57,10 @@
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
   }
 
-  function rgbToHsl(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    var max = Math.max(r, g, b), min = Math.min(r, g, b);
-    var h = 0, s = 0, l = (max + min) / 2;
-    if (max !== min) {
-      var d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      if (max === r) h = ((g - b) / d + (g < b ? 6 : 0));
-      else if (max === g) h = (b - r) / d + 2;
-      else h = (r - g) / d + 4;
-      h *= 60;
-    }
-    return { h: h, s: s, l: l };
-  }
-
   function hexToRgba(hex, alpha) {
     var c = hexToRgb(hex);
     alpha = alpha == null ? 1 : alpha;
     return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + alpha + ')';
-  }
-
-  // White cursor sprites -> solid color: turn to black, invert to white, sepia,
-  // oversaturate to a pure hue, then rotate to the target hue and scale lightness.
-  function cursorFilterCss(hex) {
-    var c = hexToRgb(hex);
-    var hsl = rgbToHsl(c.r, c.g, c.b);
-    var hue = Math.round(hsl.h);
-    var sat = Math.round(400 + hsl.s * 800);
-    var bright = Math.round(85 + hsl.l * 170);
-    bright = Math.max(12, Math.min(260, bright));
-    return 'brightness(0) invert(1) sepia(1) saturate(' + sat +
-      '%) hue-rotate(' + hue + 'deg) brightness(' + bright + '%) contrast(1.05)';
   }
 
   var LOCAL_KEY = 'shopLocal';
@@ -212,7 +184,6 @@
     CURSOR: 'cursor',
     TARGET: 'target',
     hexToRgba: hexToRgba,
-    cursorFilterCss: cursorFilterCss,
     cursorSprites: cursorSprites,
     targetSprite: targetSprite,
 

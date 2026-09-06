@@ -84,12 +84,6 @@
     cursor: none;
     box-shadow: 0 0 30px rgba(140,180,150,0.4);
   }
-  #targetTint {
-    position: absolute; inset: 0;
-    border-radius: 50%;
-    mix-blend-mode: color;
-    pointer-events: none;
-  }
 
   #cursorfx {
     position: fixed; top: 0; left: 0;
@@ -150,7 +144,6 @@
 
 <div id="targetWrap">
   <img id="target" src="assets/target.png" alt="target">
-  <div id="targetTint" style="background:transparent;"></div>
 </div>
 
 <div id="cursorfx" class="arrow"></div>
@@ -162,7 +155,6 @@
 (() => {
   const target = document.getElementById('target');
   const targetWrap = document.getElementById('targetWrap');
-  const targetTint = document.getElementById('targetTint');
   const nameInput = document.getElementById('playerName');
   const scoreDisplay = document.getElementById('scoreDisplay');
   const hitsDisplay = document.getElementById('hitsDisplay');
@@ -345,7 +337,6 @@
       const tgt = Shop.installed(s.equipped, Shop.TARGET);
       const turl = (tgt && tgt.color) ? await Shop.targetSprite(tgt.color) : null;
       target.src = turl || 'assets/target.png';
-      targetTint.style.background = 'transparent';
     } catch (e) {}
   }
 
