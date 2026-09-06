@@ -256,7 +256,7 @@
     if (e.key === 'Escape') hideCtx();
   });
 
-  document.getElementById('ctxAdd').addEventListener('click', doCtxAdjust);
+  document.getElementById('ctxAdd').addEventListener('click', function () { doCtxAdjust(false); });
   document.getElementById('ctxSub').addEventListener('click', function () {
     doCtxAdjust(true);
   });
