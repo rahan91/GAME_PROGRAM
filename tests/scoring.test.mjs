@@ -81,14 +81,14 @@ assert(S.targetRunScore(perfectRun + (1e9)) <= 5000, 'adding waiting time cannot
 
 console.log('\n=== Button scoring ===');
 const btn = S.buttonScore;
-// score(t) = 450 * (1 - e^(-0.06t))^2.5   (t in seconds held)
+// score(t) = 450 * (1 - e^(-0.0428t))^2.3   (t in seconds held)
 assert(btn(0) === 0, 'zero hold scores nothing');
-assert(btn(5000) === 15, '5s hold = 15 (steep early growth)');
-assert(btn(10000) === 62, '10s hold = 62');
-assert(btn(30000) === 286, '30s hold = 286');
-assert(btn(60000) === 420, '60s hold = 420');
-assert(btn(90000) === 445, '90s hold = 445');
-assert(btn(120000) === 449, '120s hold = 449');
+assert(btn(5000) === 10, '5s hold = 10');
+assert(btn(10000) === 40, '10s hold = 40');
+assert(btn(30000) === 213, '30s hold = 213');
+assert(btn(60000) === 375, '60s hold = 375');
+assert(btn(90000) === 428, '90s hold = 428');
+assert(btn(120000) === 444, '120s hold = 444');
 assert(btn(180000) === 450, '180s hold = 450 (asymptote)');
 assert(btn(300000) === 450, '300s hold = 450 (never exceeds cap)');
 assert(btn(600000) === 450, '600s hold still capped at 450');

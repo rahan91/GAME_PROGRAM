@@ -83,11 +83,11 @@
 
   // ---------------- Button ----------------
   // Score grows with hold time on a single saturating curve:
-  //   score(t) = 450 * (1 - e^(-0.06 * t))^2.5     (t in seconds)
+  //   score(t) = 450 * (1 - e^(-0.0428 * t))^2.3     (t in seconds)
   // Fast early gains that taper off; never exceeds 450.
   var BUTTON_SCORE_MAX = 450;
-  var BUTTON_SCORE_RATE = 0.06;
-  var BUTTON_SCORE_POWER = 2.5;
+  var BUTTON_SCORE_RATE = 0.0428;
+  var BUTTON_SCORE_POWER = 2.3;
 
   function buttonScore(holdMs) {
     if (!Number.isFinite(holdMs)) return 0;
