@@ -70,10 +70,6 @@
   var WHITE_BORDER_FILTER =
     'drop-shadow(-1px 0 0 #fff) drop-shadow(1px 0 0 #fff) ' +
     'drop-shadow(0 -1px 0 #fff) drop-shadow(0 1px 0 #fff)';
-  var BLACK_BORDER_FILTER =
-    'drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) ' +
-    'drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000)';
-
   function luma(r, g, b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
 
   function isBlackColor(hex) {
@@ -83,8 +79,8 @@
 
   // Recolor a sprite's opaque pixels to `hex`. When keepWhite is true, bright
   // pixels (the target's white rings) are left untouched so the result is a
-  // vivid colored target with white highlights. Resolution is kept native so
-  // the pixelated cursor stays crisp.
+  // vivid colored target with white highlights. When false, shading is
+  // preserved so the result looks like the original design tinted to `hex`.
   function recolorSprite(path, hex, keepWhite) {
     var cacheKey = path + '|' + (hex || '') + '|' + (keepWhite ? 'w' : 's');
     if (RECOLOR_CACHE[cacheKey]) return RECOLOR_CACHE[cacheKey];
@@ -108,7 +104,7 @@
               if (data[i + 3] === 0) continue;
               var L = luma(data[i], data[i + 1], data[i + 2]);
               if (keepWhite && L > 200) continue;
-              var f = keepWhite ? (0.5 + 0.5 * (L / 255)) : 1;
+              var f = keepWhite ? (0.5 + 0.5 * (L / 255)) : (0.15 + 0.85 * (L / 255));
               data[i] = Math.min(255, Math.round(c.r * f));
               data[i + 1] = Math.min(255, Math.round(c.g * f));
               data[i + 2] = Math.min(255, Math.round(c.b * f));
@@ -125,8 +121,8 @@
     return p;
   }
 
-  // Both cursor sprites filled solid with the equip color. Black gets a white
-  // border so it stays visible against dark backgrounds.
+  // Both cursor sprites shaded with the equip color. Very dark colors get a
+  // white border so they stay visible against dark backgrounds.
   function cursorSprites(color) {
     var key = color || '';
     if (CURSOR_PAIR_CACHE[key]) return CURSOR_PAIR_CACHE[key];
@@ -141,7 +137,7 @@
         return {
           arrow: urls[0],
           finger: urls[1],
-          border: isBlackColor(color) ? WHITE_BORDER_FILTER : BLACK_BORDER_FILTER
+          border: isBlackColor(color) ? WHITE_BORDER_FILTER : ''
         };
       }).catch(function () { return { arrow: null, finger: null, border: '' }; });
     }
@@ -236,27 +232,40 @@
     },
 
     equip: function (slot, key) {
-      return serverState().then(function (s) {
-        if (s) {
-          return fetch('/api/shop/equip', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ slot: slot, item_key: key })
-          }).then(function (r) { return r.json(); }).then(function (d) {
-            if (d && d.error) throw new Error(d.error);
-            return d;
-          });
+      return fetch('/api/shop/equip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slot: slot, item_key: key })
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d && d.error) {
+          if (d.error === 'Not logged in') {
+            var dd = localData();
+            if (key) {
+              var item = window.ShopCatalog.item(key);
+              if (!item || item.slot !== slot) throw new Error('Invalid item');
+              if (!item.default && dd.owned.indexOf(key) === -1) throw new Error('You do not own this item');
+              dd.equipped[slot] = key;
+            } else {
+              delete dd.equipped[slot];
+            }
+            localSave(dd);
+            return { slot: slot, item_key: key };
+          }
+          throw new Error(d.error);
         }
-        var d = localData();
+        return d;
+      }).catch(function (e) {
+        if (e.message === 'Invalid item' || e.message === 'You do not own this item') throw e;
+        var dd = localData();
         if (key) {
           var item = window.ShopCatalog.item(key);
           if (!item || item.slot !== slot) throw new Error('Invalid item');
-          if (!item.default && d.owned.indexOf(key) === -1) throw new Error('You do not own this item');
-          d.equipped[slot] = key;
+          if (!item.default && dd.owned.indexOf(key) === -1) throw new Error('You do not own this item');
+          dd.equipped[slot] = key;
         } else {
-          delete d.equipped[slot];
+          delete dd.equipped[slot];
         }
-        localSave(d);
+        localSave(dd);
         return { slot: slot, item_key: key };
       });
     },
