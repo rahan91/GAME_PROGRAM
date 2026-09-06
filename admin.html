@@ -56,7 +56,7 @@
 
   .table-wrap {
     border: 1px solid rgba(140,180,150,0.12);
-    border-radius: 10px; overflow: hidden;
+    border-radius: 0 0 10px 10px; overflow: hidden;
     background: rgba(0,0,0,0.25);
   }
   table { width: 100%; border-collapse: collapse; }
@@ -69,19 +69,24 @@
   td { border-bottom: 1px solid rgba(140,180,150,0.06); }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: rgba(80,100,90,0.08); }
-  tr.statrow th {
-    background: rgba(80,100,90,0.06);
-    border-bottom: 1px solid rgba(140,180,150,0.16);
-    padding: 10px 14px 12px;
-    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-    color: rgba(140,180,150,0.5); font-weight: 400;
+  .stats-bar {
+    display: flex; gap: 1px; margin-bottom: 1px;
+    border-radius: 10px 10px 0 0; overflow: hidden;
+    background: rgba(140,180,150,0.12);
   }
-  tr.statrow th.num { text-align: right; }
-  tr.statrow th .v {
-    display: block; margin-top: 3px;
-    font-size: 17px; font-weight: 600; letter-spacing: 0;
-    text-transform: none; color: rgba(200,220,205,0.95);
-    font-variant-numeric: tabular-nums;
+  .stats-bar .stat {
+    flex: 1; padding: 12px 16px;
+    background: rgba(0,0,0,0.35);
+  }
+  .stats-bar .stat:first-child { border-radius: 10px 0 0 0; }
+  .stats-bar .stat:last-child { border-radius: 0 10px 0 0; }
+  .stats-bar .stat-label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(140,180,150,0.5); margin-bottom: 4px;
+  }
+  .stats-bar .stat-val {
+    font-size: 18px; font-weight: 600; color: rgba(200,220,205,0.95);
+    font-variant-numeric: tabular-nums; letter-spacing: 0;
   }
   td.num {
     text-align: right; font-variant-numeric: tabular-nums;
@@ -92,6 +97,15 @@
   td.user:hover { background: rgba(200,100,90,0.1); }
   td.me { color: rgba(230,200,140,0.95); }
   td.date { color: rgba(140,180,150,0.45); font-size: 12px; }
+  td.items-cell { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+  .strip-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 4px;
+    background: rgba(200,60,50,0.15); border: 1px solid rgba(200,60,50,0.3);
+    color: rgba(255,140,130,0.8); font-size: 12px; line-height: 1;
+    cursor: pointer; transition: background 0.15s; flex-shrink: 0;
+  }
+  .strip-btn:hover { background: rgba(200,60,50,0.35); }
   td.empty { text-align: center; color: rgba(140,180,150,0.35); padding: 32px; font-size: 13px; }
 
   #ctx {
@@ -190,7 +204,7 @@
   input[type=number] { -moz-appearance: textfield; }
 
   @media (max-width: 700px) {
-    th:nth-child(n+6), td:nth-child(n+6), tr.statrow th:nth-child(n+6) { display: none; }
+    th:nth-child(n+6), td:nth-child(n+6) { display: none; }
   }
 </style>
 </head>
@@ -215,19 +229,15 @@
   <div id="panel">
     <div class="section">
       <div class="section-head"><h2>Users</h2><div class="line"></div></div>
+      <div class="stats-bar">
+        <div class="stat"><div class="stat-label">Users</div><div class="stat-val" id="stUsers">-</div></div>
+        <div class="stat"><div class="stat-label">Score Pool</div><div class="stat-val" id="stScore">-</div></div>
+        <div class="stat"><div class="stat-label">Spent</div><div class="stat-val" id="stSpent">-</div></div>
+        <div class="stat"><div class="stat-label">Purchases</div><div class="stat-val" id="stPurchases">-</div></div>
+      </div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr class="statrow">
-              <th>Users <b class="v" id="stUsers">-</b></th>
-              <th></th>
-              <th class="num">Score Pool <b class="v" id="stScore">-</b></th>
-              <th class="num">Spent <b class="v" id="stSpent">-</b></th>
-              <th></th>
-              <th></th>
-              <th class="num">Purchases <b class="v" id="stPurchases">-</b></th>
-              <th></th>
-            </tr>
             <tr>
               <th>#</th><th>Username</th><th class="num">Total</th><th class="num">Spent</th>
               <th class="num">Balance</th><th class="num">Plays</th><th class="num">Items</th>
@@ -370,8 +380,12 @@
     ctx.style.display = 'block';
     var cx = rect.left;
     var cy = rect.bottom + 6;
-    if (cx + 200 > window.innerWidth) cx = window.innerWidth - 210;
-    if (cy + 100 > window.innerHeight) cy = rect.top - 100;
+    var ch = Math.max(90, ctx.offsetHeight);
+    var cw = Math.max(180, ctx.offsetWidth);
+    if (cx + cw > window.innerWidth) cx = window.innerWidth - cw - 8;
+    if (cy + ch > window.innerHeight) cy = rect.top - ch - 6;
+    if (cy < 8) cy = 8;
+    if (cx < 8) cx = 8;
     ctx.style.left = cx + 'px';
     ctx.style.top = cy + 'px';
     ctxDelta.focus();
@@ -388,9 +402,13 @@
     var rect = e.target.getBoundingClientRect();
     gift.style.display = 'block';
     var cx = rect.left;
-    var cy = rect.bottom + 6;
-    if (cx + 240 > window.innerWidth) cx = window.innerWidth - 250;
-    if (cy + 120 > window.innerHeight) cy = rect.top - 120;
+    var cy = rect.bottom + 8;
+    var gh = Math.max(120, gift.offsetHeight);
+    var gw = Math.max(230, gift.offsetWidth);
+    if (cx + gw > window.innerWidth) cx = window.innerWidth - gw - 8;
+    if (cy + gh > window.innerHeight) cy = rect.top - gh - 8;
+    if (cy < 8) cy = 8;
+    if (cx < 8) cx = 8;
     gift.style.left = cx + 'px';
     gift.style.top = cy + 'px';
     giftSelect.focus();
@@ -475,7 +493,7 @@
         '<td class="num">' + u.spent.toLocaleString() + '</td>' +
         '<td class="num">' + u.balance.toLocaleString() + '</td>' +
         '<td class="num">' + u.plays.toLocaleString() + '</td>' +
-        '<td class="num">' + u.items + '</td>' +
+        '<td class="num items-cell"><span>' + u.items + '</span>' + (u.items > 0 && !isMe ? '<button class="strip-btn" title="Strip all items">&times;</button>' : '') + '</td>' +
         '<td class="date">' + date + '</td>';
       tbody.appendChild(tr);
 
@@ -484,6 +502,14 @@
       cells[3].addEventListener('contextmenu', function (e) { showCtx(e, u.username, 'spent', u.spent); });
       cells[5].addEventListener('contextmenu', function (e) { showCtx(e, u.username, 'plays', u.plays); });
       cells[6].addEventListener('contextmenu', function (e) { openGift(e, u.username); });
+      var stripBtn = cells[6].querySelector('.strip-btn');
+      if (stripBtn) stripBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!confirm('Strip all items from ' + u.username + '?')) return;
+        fetch('/api/admin/strip', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: u.username }) })
+          .then(function(r){ return r.json(); })
+          .then(function(d){ if (d.error) { flash(d.error, true); return; } flash(u.username + ': stripped ' + d.items_removed + ' item(s)'); render(); });
+      });
       cells[1].addEventListener('contextmenu', function (e) {
         e.preventDefault(); e.stopPropagation();
         if (isMe) { flash('cannot delete yourself', true); return; }
