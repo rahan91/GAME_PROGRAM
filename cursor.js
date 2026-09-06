@@ -1,6 +1,11 @@
 (function () {
   var INTERACTIVE = 'a, button, input, select, textarea, label, summary, [role="button"], [contenteditable], .card, .tab, .item';
 
+  // Games ease the drawn cursor toward the pointer at 0.24/frame. Outside the
+  // games (or on non-cursor games) the sluggishness is doubled, so the catch-up
+  // rate is halved.
+  var EASE = 0.12;
+
   function init() {
     if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
 
@@ -22,6 +27,8 @@
     var custom = false;
     var over = false;
     var hotX = 1;
+    var realX = window.innerWidth / 2, realY = window.innerHeight / 2;
+    var curX = realX, curY = realY;
 
     function paint() {
       var finger = el.className === 'finger';
@@ -33,6 +40,13 @@
           'url("assets/' + (finger ? 'cursor-finger' : 'cursor-arrow') + '.png")';
         el.style.filter = '';
       }
+    }
+
+    function tick() {
+      curX += (realX - curX) * EASE;
+      curY += (realY - curY) * EASE;
+      el.style.transform = 'translate3d(' + (curX - hotX) + 'px,' + curY + 'px,0)';
+      requestAnimationFrame(tick);
     }
 
     function loadCustom() {
@@ -52,8 +66,10 @@
         .catch(function () {});
     }
 
-    document.addEventListener('mousemove', function (e) {
-      el.style.transform = 'translate3d(' + (e.clientX - hotX) + 'px,' + e.clientY + 'px,0)';
+    document.addEventListener('pointermove', function (e) {
+      realX = e.clientX;
+      realY = e.clientY;
+      hotX = over ? 11 : 1;
     });
 
     document.addEventListener('mouseover', function (e) {
@@ -66,6 +82,7 @@
 
     paint();
     loadCustom();
+    requestAnimationFrame(tick);
   }
 
   if (document.readyState === 'loading') {
