@@ -263,6 +263,7 @@
           '<button class="btn primary" data-act="add">+</button>' +
           '<button class="btn" data-act="sub">&minus;</button>' +
           '<button class="btn danger" data-act="reset">Reset</button>' +
+          (isMe ? '' : '<button class="btn danger" data-act="delete">Delete</button>') +
         '</div>';
       var inp = actions.querySelector('input');
       actions.querySelector('[data-act="add"]').onclick = function () {
@@ -274,6 +275,8 @@
       actions.querySelector('[data-act="reset"]').onclick = function () {
         resetUser(u.username);
       };
+      var delBtn = actions.querySelector('[data-act="delete"]');
+      if (delBtn) delBtn.onclick = function () { deleteUser(u.username); };
       tr.appendChild(actions);
       tbody.appendChild(tr);
     });
@@ -300,6 +303,18 @@
     var d = await res.json();
     if (!res.ok) { flash(d.error || 'failed', true); return; }
     flash(username + ' wiped');
+    render();
+  }
+
+  async function deleteUser(username) {
+    if (!confirm('PERMANENTLY DELETE ' + username + "?\n\nThis removes their account, scores, purchases, and equips. This cannot be undone.")) return;
+    var res = await fetch('/api/admin/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username })
+    });
+    var d = await res.json();
+    if (!res.ok) { flash(d.error || 'failed', true); return; }
+    flash(username + ' deleted');
     render();
   }
 
