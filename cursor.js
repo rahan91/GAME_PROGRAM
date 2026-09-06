@@ -19,7 +19,7 @@
       'background:url("assets/cursor-arrow.png") no-repeat 0 0 / auto 30px;';
     document.body.appendChild(el);
 
-    var TRAIL = 6;
+    var TRAIL = /\/(target|button)/.test(location.pathname) ? 3 : 6;
     var trail = [];
     var trailX = [], trailY = [];
     for (var i = 0; i < TRAIL; i++) {
