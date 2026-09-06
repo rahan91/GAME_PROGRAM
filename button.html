@@ -315,6 +315,20 @@
   let realX = window.innerWidth / 2, realY = window.innerHeight / 2;
   let curX = realX, curY = realY;
   let cursorSpritesState = null;
+  const TRAIL = 3;
+  const trail = [], trailX = [], trailY = [];
+  for (let i = 0; i < TRAIL; i++) {
+    const t = document.createElement('div');
+    t.style.cssText =
+      'position:fixed;top:0;left:0;width:31px;height:40px;pointer-events:none;' +
+      'z-index:99;will-change:transform;image-rendering:pixelated;' +
+      'transform:translate3d(-100px,-100px,0);opacity:' + (0.3 - i * 0.08).toFixed(2) + ';' +
+      'background-size:auto 30px;background-repeat:no-repeat;';
+    document.body.appendChild(t);
+    trail.push(t);
+    trailX.push(realX);
+    trailY.push(realY);
+  }
   document.addEventListener('pointermove', (e) => {
     realX = e.clientX;
     realY = e.clientY;
@@ -345,6 +359,21 @@
     paintCursor();
     const hotX = over ? 8 : 1;
     cursorfx.style.transform = 'translate3d(' + (curX - hotX) + 'px,' + curY + 'px,0)';
+    const url = cursorSpritesState && cursorSpritesState.arrow
+      ? (over ? cursorSpritesState.finger : cursorSpritesState.arrow)
+      : over ? "assets/cursor-finger.png" : "assets/cursor-arrow.png";
+    const filt = cursorSpritesState ? (cursorSpritesState.border || '') : '';
+    for (let i = TRAIL - 1; i > 0; i--) {
+      trailX[i] += (trailX[i - 1] - trailX[i]) * 0.35;
+      trailY[i] += (trailY[i - 1] - trailY[i]) * 0.35;
+    }
+    trailX[0] += (curX - trailX[0]) * 0.4;
+    trailY[0] += (curY - trailY[0]) * 0.4;
+    for (let j = 0; j < TRAIL; j++) {
+      trail[j].style.backgroundImage = 'url("' + url + '")';
+      trail[j].style.filter = filt;
+      trail[j].style.transform = 'translate3d(' + (trailX[j] - hotX) + 'px,' + trailY[j] + 'px,0)';
+    }
     requestAnimationFrame(cursorTick);
   }
   requestAnimationFrame(cursorTick);
