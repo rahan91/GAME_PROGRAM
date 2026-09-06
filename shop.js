@@ -98,6 +98,9 @@
   var WHITE_BORDER_FILTER =
     'drop-shadow(-1px 0 0 #fff) drop-shadow(1px 0 0 #fff) ' +
     'drop-shadow(0 -1px 0 #fff) drop-shadow(0 1px 0 #fff)';
+  var BLACK_BORDER_FILTER =
+    'drop-shadow(-1px 0 0 #000) drop-shadow(1px 0 0 #000) ' +
+    'drop-shadow(0 -1px 0 #000) drop-shadow(0 1px 0 #000)';
 
   function luma(r, g, b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
 
@@ -166,7 +169,7 @@
         return {
           arrow: urls[0],
           finger: urls[1],
-          border: isBlackColor(color) ? WHITE_BORDER_FILTER : ''
+          border: isBlackColor(color) ? WHITE_BORDER_FILTER : BLACK_BORDER_FILTER
         };
       }).catch(function () { return { arrow: null, finger: null, border: '' }; });
     }
