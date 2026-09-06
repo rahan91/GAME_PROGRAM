@@ -17,6 +17,9 @@ const CURSOR_PRICES = {
 const TARGET_PRICES = {
   orange: 26000, yellow: 27300, green: 29900, aqua: 32500, blue: 35100, purple: 39000,
 };
+const ACCENT_PRICES = {
+  aqua: 30000, teal: 33000, blue: 36000, indigo: 39000, violet: 40000, red: 44000, orange: 47000, yellow: 50000,
+};
 
 for (const [color, price] of Object.entries(MAZE_PRICES)) {
   check(`maze ${color} = ${price}`, () => {
@@ -48,7 +51,17 @@ for (const [color, price] of Object.entries(TARGET_PRICES)) {
   });
 }
 
-for (const slot of ['maze', 'cursor', 'target']) {
+for (const [color, price] of Object.entries(ACCENT_PRICES)) {
+  check(`accent ${color} = ${price}`, () => {
+    const i = item(`accent:${color}`);
+    assert.ok(i, `accent:${color} exists`);
+    assert.equal(i.slot, 'accent');
+    assert.equal(i.price, price);
+    assert.match(i.color, /^#[0-9a-f]{6}$/i);
+  });
+}
+
+for (const slot of ['maze', 'cursor', 'target', 'accent']) {
   check(`${slot} default item`, () => {
     const i = item(`${slot}:default`);
     assert.ok(i, `${slot}:default exists`);

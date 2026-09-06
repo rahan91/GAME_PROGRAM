@@ -31,10 +31,20 @@
     { key: 'target:green',    slot: 'target', name: 'Green',      color: '#22c55e', price: 29900 },
     { key: 'target:aqua',     slot: 'target', name: 'Aqua',       color: '#06b6d4', price: 32500 },
     { key: 'target:blue',     slot: 'target', name: 'Blue',       color: '#3b82f6', price: 35100 },
-    { key: 'target:purple',   slot: 'target', name: 'Purple',     color: '#8b5cf6', price: 39000 }
+    { key: 'target:purple',   slot: 'target', name: 'Purple',     color: '#8b5cf6', price: 39000 },
+
+    { key: 'accent:default', default: true, slot: 'accent', name: 'Default',  color: null, price: 0 },
+    { key: 'accent:aqua',    slot: 'accent', name: 'Aqua',    color: '#0ecdf2', price: 30000 },
+    { key: 'accent:teal',    slot: 'accent', name: 'Teal',    color: '#12b8a8', price: 33000 },
+    { key: 'accent:blue',    slot: 'accent', name: 'Blue',    color: '#3d82f5', price: 36000 },
+    { key: 'accent:indigo',  slot: 'accent', name: 'Indigo',  color: '#6c6cf5', price: 39000 },
+    { key: 'accent:violet',  slot: 'accent', name: 'Violet',  color: '#9858f6', price: 40000 },
+    { key: 'accent:red',     slot: 'accent', name: 'Red',     color: '#e5484d', price: 44000 },
+    { key: 'accent:orange',  slot: 'accent', name: 'Orange',  color: '#f97316', price: 47000 },
+    { key: 'accent:yellow',  slot: 'accent', name: 'Yellow',  color: '#eab308', price: 50000 }
   ];
 
-  var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target' };
+  var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent' };
   var BY_KEY = {};
   var BY_SLOT = {};
   ITEMS.forEach(function (i) {
@@ -149,6 +159,75 @@
     return recolorSprite('assets/target.png', color, true);
   }
 
+  var DEFAULT_TONES = {
+    main: [140, 180, 150],
+    dim: [80, 100, 90],
+    bright: [160, 220, 180],
+    text: [200, 220, 205],
+    texthi: [220, 240, 225],
+    btn: [100, 180, 120],
+    panel: [30, 38, 34],
+    orb: [70, 95, 80]
+  };
+  var currentTones = null;
+
+  function clamp255(v) { return v < 0 ? 0 : v > 255 ? 255 : Math.round(v); }
+
+  function accentTones(hex) {
+    var c = hexToRgb(hex || '#8cb496');
+    function scale(f) {
+      return [clamp255(c.r * f), clamp255(c.g * f), clamp255(c.b * f)];
+    }
+    function lighten(f) {
+      return [clamp255(c.r + (255 - c.r) * f), clamp255(c.g + (255 - c.g) * f), clamp255(c.b + (255 - c.b) * f)];
+    }
+    return {
+      main: [c.r, c.g, c.b],
+      dim: scale(0.57),
+      bright: scale(1.2),
+      text: lighten(0.45),
+      texthi: lighten(0.72),
+      btn: scale(1.15),
+      panel: scale(0.2),
+      orb: scale(0.5)
+    };
+  }
+
+  function applyAccent(hex) {
+    var root = document.documentElement;
+    var n = ['--acc-main', '--acc-dim', '--acc-bright', '--acc-text', '--acc-texthi', '--acc-btn', '--acc-panel', '--acc-orb'];
+    if (!hex) {
+      currentTones = null;
+      for (var i = 0; i < n.length; i++) root.style.removeProperty(n[i]);
+      return;
+    }
+    var t = accentTones(hex);
+    currentTones = t;
+    root.style.setProperty('--acc-main', t.main.join(','));
+    root.style.setProperty('--acc-dim', t.dim.join(','));
+    root.style.setProperty('--acc-bright', t.bright.join(','));
+    root.style.setProperty('--acc-text', t.text.join(','));
+    root.style.setProperty('--acc-texthi', t.texthi.join(','));
+    root.style.setProperty('--acc-btn', t.btn.join(','));
+    root.style.setProperty('--acc-panel', t.panel.join(','));
+    root.style.setProperty('--acc-orb', t.orb.join(','));
+    try {
+      if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('pa-theme', { detail: { hex: hex } }));
+    } catch (e) {}
+  }
+
+  function applyAccentFromState(s) {
+    var k = s && s.equipped ? s.equipped.accent : null;
+    var item = k ? window.ShopCatalog.item(k) : null;
+    applyAccent((item && item.color) || null);
+  }
+
+  function accentRgba(alpha, tone) {
+    var t = currentTones || DEFAULT_TONES;
+    var arr = t[tone || 'main'] || t.main;
+    return 'rgba(' + arr.join(',') + ',' + alpha + ')';
+  }
+
   function localLoad() {
     try { return JSON.parse(localStorage.getItem(LOCAL_KEY)) || {}; }
     catch (e) { return {}; }
@@ -179,9 +258,13 @@
     MAZE: 'maze',
     CURSOR: 'cursor',
     TARGET: 'target',
+    ACCENT: 'accent',
     hexToRgba: hexToRgba,
     cursorSprites: cursorSprites,
     targetSprite: targetSprite,
+    applyAccent: applyAccent,
+    applyAccentFromState: applyAccentFromState,
+    accentRgba: accentRgba,
 
     state: function () {
       return serverState().then(function (s) {
@@ -275,4 +358,18 @@
       return key ? window.ShopCatalog.item(key) : null;
     }
   };
+
+  if (typeof document !== 'undefined') {
+    try {
+      applyAccentFromState(localData());
+    } catch (e) {}
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+        serverState().then(function (s) {
+          if (s) applyAccentFromState(s);
+          else applyAccentFromState(localData());
+        }).catch(function () {});
+      } catch (e) {}
+    });
+  }
 })();

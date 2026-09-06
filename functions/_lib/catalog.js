@@ -1,4 +1,4 @@
-export const SLOTS = ['maze', 'cursor', 'target'];
+export const SLOTS = ['maze', 'cursor', 'target', 'accent'];
 
 export const ITEMS = [
   { key: 'maze:default', default: true, slot: 'maze',   name: 'Default',    color: null, price: 0 },
@@ -33,6 +33,16 @@ export const ITEMS = [
   { key: 'target:aqua',     slot: 'target', name: 'Aqua',       color: '#06b6d4', price: 32500 },
   { key: 'target:blue',     slot: 'target', name: 'Blue',       color: '#3b82f6', price: 35100 },
   { key: 'target:purple',   slot: 'target', name: 'Purple',     color: '#8b5cf6', price: 39000 },
+
+  { key: 'accent:default', default: true, slot: 'accent', name: 'Default',   color: null, price: 0 },
+  { key: 'accent:aqua',    slot: 'accent', name: 'Aqua',     color: '#0ecdf2', price: 30000 },
+  { key: 'accent:teal',    slot: 'accent', name: 'Teal',     color: '#12b8a8', price: 33000 },
+  { key: 'accent:blue',    slot: 'accent', name: 'Blue',     color: '#3d82f5', price: 36000 },
+  { key: 'accent:indigo',  slot: 'accent', name: 'Indigo',   color: '#6c6cf5', price: 39000 },
+  { key: 'accent:violet',  slot: 'accent', name: 'Violet',   color: '#9858f6', price: 40000 },
+  { key: 'accent:red',     slot: 'accent', name: 'Red',      color: '#e5484d', price: 44000 },
+  { key: 'accent:orange',  slot: 'accent', name: 'Orange',   color: '#f97316', price: 47000 },
+  { key: 'accent:yellow',  slot: 'accent', name: 'Yellow',   color: '#eab308', price: 50000 },
 ];
 
 export const ITEM_BY_KEY = Object.fromEntries(ITEMS.map((i) => [i.key, i]));

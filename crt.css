@@ -1,3 +1,14 @@
+:root {
+  --acc-main: 140,180,150;
+  --acc-dim: 80,100,90;
+  --acc-bright: 160,220,180;
+  --acc-text: 200,220,205;
+  --acc-texthi: 220,240,225;
+  --acc-btn: 100,180,120;
+  --acc-panel: 30,38,34;
+  --acc-orb: 70,95,80;
+}
+
 .crt {
   pointer-events: none;
   position: fixed;
