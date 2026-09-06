@@ -142,6 +142,7 @@
   #toast.err { background: rgba(140,50,45,0.95); border-color: rgba(230,140,130,0.4); }
 
   #panel { display: none; }
+  #panel.show { display: block; }
 
   @media (max-width: 700px) {
     .stats { grid-template-columns: repeat(2, 1fr); }
@@ -215,13 +216,13 @@
     try { me = (await (await fetch('/api/me')).json()).user; } catch (e) {}
     if (!me || !me.username || me.username.toLowerCase() !== 'ruruskaado') {
       who.textContent = me ? 'signed in as ' + me.username : 'not signed in';
-      panel.style.display = 'none';
+      panel.classList.remove('show');
       notAdmin.style.display = '';
       return;
     }
     who.textContent = me.username;
     notAdmin.style.display = 'none';
-    panel.style.display = '';
+    panel.classList.add('show');
     try { await render(); } catch (e) { flash('Failed to load', true); }
   }
 
