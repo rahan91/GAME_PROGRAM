@@ -41,10 +41,12 @@
     { key: 'accent:violet',  slot: 'accent', name: 'Violet',  color: '#9858f6', price: 40000 },
     { key: 'accent:red',     slot: 'accent', name: 'Red',     color: '#e5484d', price: 44000 },
     { key: 'accent:orange',  slot: 'accent', name: 'Orange',  color: '#f97316', price: 47000 },
-    { key: 'accent:yellow',  slot: 'accent', name: 'Yellow',  color: '#eab308', price: 50000 }
+    { key: 'accent:yellow',  slot: 'accent', name: 'Yellow',  color: '#eab308', price: 50000 },
+
+    { key: 'nameplate:default', default: true, slot: 'nameplate', name: 'Default', color: null, price: 0 }
   ];
 
-  var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent' };
+  var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent', nameplate: 'Nameplate' };
   var BY_KEY = {};
   var BY_SLOT = {};
   ITEMS.forEach(function (i) {
@@ -259,6 +261,7 @@
     CURSOR: 'cursor',
     TARGET: 'target',
     ACCENT: 'accent',
+    NAMEPLATE: 'nameplate',
     hexToRgba: hexToRgba,
     cursorSprites: cursorSprites,
     targetSprite: targetSprite,

@@ -61,7 +61,7 @@ for (const [color, price] of Object.entries(ACCENT_PRICES)) {
   });
 }
 
-for (const slot of ['maze', 'cursor', 'target', 'accent']) {
+for (const slot of ['maze', 'cursor', 'target', 'accent', 'nameplate']) {
   check(`${slot} default item`, () => {
     const i = item(`${slot}:default`);
     assert.ok(i, `${slot}:default exists`);

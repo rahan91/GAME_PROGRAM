@@ -1,4 +1,4 @@
-export const SLOTS = ['maze', 'cursor', 'target', 'accent'];
+export const SLOTS = ['maze', 'cursor', 'target', 'accent', 'nameplate'];
 
 export const ITEMS = [
   { key: 'maze:default', default: true, slot: 'maze',   name: 'Default',    color: null, price: 0 },
@@ -43,6 +43,8 @@ export const ITEMS = [
   { key: 'accent:red',     slot: 'accent', name: 'Red',      color: '#e5484d', price: 44000 },
   { key: 'accent:orange',  slot: 'accent', name: 'Orange',   color: '#f97316', price: 47000 },
   { key: 'accent:yellow',  slot: 'accent', name: 'Yellow',   color: '#eab308', price: 50000 },
+
+  { key: 'nameplate:default', default: true, slot: 'nameplate', name: 'Default', color: null, price: 0 },
 ];
 
 export const ITEM_BY_KEY = Object.fromEntries(ITEMS.map((i) => [i.key, i]));

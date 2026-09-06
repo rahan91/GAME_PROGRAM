@@ -96,7 +96,14 @@
     .swatch.cursor img { width: 31px; height: 40px; image-rendering: pixelated; }
     .swatch.target { position: relative; border-radius: 50%; }
     .swatch.target img { width: 100%; height: 100%; display: block; }
-    .swatch.accent { border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 14px var(--acc-main); }
+    .swatch.accent { border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 14px rgba(var(--acc-main),1); }
+    .swatch.nameplate {
+      width: 64px; height: 22px; border-radius: 4px;
+      background: rgba(20,28,22,0.8);
+      box-shadow: inset 0 0 0 1px rgba(var(--acc-main),0.35);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .swatch.nameplate span { width: 80%; height: 6px; border-radius: 2px; display: block; }
 
     .item .name { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--acc-text),0.9); }
     .item .price { font-size: 12px; color: rgba(230,200,120,0.85); margin-top: 2px; }
@@ -158,7 +165,7 @@
     var balanceEl = document.getElementById('balanceValue');
     var bannerEl = document.getElementById('loginBanner');
     var statusEl = document.getElementById('statusRow');
-    var slots = ['maze', 'cursor', 'target', 'accent'];
+    var slots = ['maze', 'cursor', 'target', 'accent', 'nameplate'];
     var activeSlot = 'maze';
     var state = null;
 
@@ -184,6 +191,9 @@
     function swatchHTML(item) {
       if (item.slot === 'accent') {
         return '<div class="swatch accent" style="background:' + (item.color || '#8cb496') + '"></div>';
+      }
+      if (item.slot === 'nameplate') {
+        return '<div class="swatch nameplate">' + (item.color ? '<span style="background:' + item.color + '"></span>' : '&nbsp;') + '</div>';
       }
       if (item.slot === 'cursor') {
         return '<div class="swatch cursor"><img data-cursor data-color="' + (item.color || '') + '" alt="cursor"></div>';
