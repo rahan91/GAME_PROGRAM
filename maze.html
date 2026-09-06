@@ -197,6 +197,35 @@
     color: #4a5a4a;
   }
 
+  #leaderboard {
+    margin-top: 28px;
+    width: 600px;
+    max-width: 100%;
+    border: 1px solid rgba(140,180,150,0.12);
+    border-radius: 10px;
+    background: rgba(0,0,0,0.25);
+    overflow: hidden;
+  }
+  #leaderboard h3 {
+    font-size: 10px; font-weight: 400; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(140,180,150,0.5);
+    padding: 12px 16px 8px; border-bottom: 1px solid rgba(140,180,150,0.1);
+  }
+  #leaderboard .lb-body { padding: 6px 0; }
+  .lb-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 16px; font-size: 13px;
+  }
+  .lb-row.me { background: rgba(230,200,140,0.08); }
+  .lb-row .rk {
+    width: 22px; color: rgba(140,180,150,0.5);
+    font-variant-numeric: tabular-nums; text-align: right;
+  }
+  .lb-row .rk.top { color: rgba(230,200,140,0.9); font-weight: 600; }
+  .lb-row .nm { flex: 1; color: rgba(200,220,205,0.95); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-row .pt { color: rgba(140,180,150,0.85); font-variant-numeric: tabular-nums; }
+  .lb-status { padding: 14px 16px; font-size: 12px; color: rgba(140,180,150,0.4); }
+
   #scoreboard {
     display: flex;
     align-items: center;
@@ -281,6 +310,11 @@
 <canvas id="mazeCanvas"></canvas>
 <div class="hint">Arrow keys or WASD to move &middot; Click "Generate" for a new maze</div>
 
+<div id="leaderboard">
+  <h3>Maze Leaderboard</h3>
+  <div class="lb-body" id="lbRows"><div class="lb-status">Loading&hellip;</div></div>
+</div>
+
 <script>
 (() => {
   const canvas = document.getElementById('mazeCanvas');
@@ -338,11 +372,35 @@
     fetch('/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ points })
+      body: JSON.stringify({ points, game: 'maze' })
     }).then(r => r.json()).then((d) => {
       if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
       else if (d && Number.isFinite(d.balance)) { serverTotal = d.balance; refreshScoreDisplay(); }
     }).catch(() => {});
+  }
+
+  async function loadLeaderboard() {
+    const container = document.getElementById('lbRows');
+    let me = null;
+    try {
+      const mr = await (await fetch('/api/me')).json();
+      me = (mr.user && mr.user.username) ? mr.user.username : null;
+    } catch {}
+    let rows;
+    try {
+      const res = await fetch('/api/leaderboard?game=maze&limit=10');
+      const data = await res.json();
+      rows = data.leaderboard || null;
+    } catch { rows = null; }
+    if (!rows) { container.innerHTML = '<div class="lb-status">Could not load.</div>'; return; }
+    if (!rows.length) { container.innerHTML = '<div class="lb-status">No scores yet. Finish a maze!</div>'; return; }
+    container.innerHTML = rows.map((row, i) =>
+      '<div class="lb-row' + (row.username === me ? ' me' : '') + '">' +
+      '<span class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>' +
+      '<span class="nm">' + row.username + '</span>' +
+      '<span class="pt">' + row.value.toLocaleString() + '</span>' +
+      '</div>'
+    ).join('');
   }
 
   function shortestPathLength() {
@@ -667,6 +725,7 @@
     const points = Scoring.mazeScore(mazeCells, currentDifficulty().mult, optimal, moves, elapsed);
     const efficiency = Math.min(optimal / Math.max(moves, 1), 1);
     addScore(points);
+    loadLeaderboard();
     statusEl.textContent = 'You escaped in ' + moves + ' moves! +' + points +
       ' pts (' + Math.round(efficiency * 100) + '% efficiency, ' +
       formatElapsed(elapsed) + 's)';
@@ -883,6 +942,8 @@
 
   updateDifficultyGlow();
   generateMaze(20, 20);
+  loadLeaderboard();
+  window.addEventListener('pageshow', loadLeaderboard);
 })();
 </script>
 </body>

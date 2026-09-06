@@ -46,25 +46,7 @@
   }
   .who { margin-left: auto; font-size: 12px; color: rgba(140,180,150,0.5); }
 
-  .stats {
-    max-width: 1100px; margin: 24px auto 0;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-  }
-  .stat {
-    border: 1px solid rgba(140,180,150,0.15);
-    background: rgba(80,100,90,0.1); border-radius: 10px;
-    padding: 14px 16px; text-align: center;
-  }
-  .stat .val {
-    display: block; font-size: 22px; font-weight: 300;
-    color: rgba(140,180,150,0.95); margin-bottom: 4px;
-  }
-  .stat .lbl {
-    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-    color: rgba(140,180,150,0.45);
-  }
-
-  .section { max-width: 1100px; margin: 28px auto 0; }
+  .section { max-width: 1100px; margin: 24px auto 0; }
   .section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .section-head h2 {
     font-size: 12px; font-weight: 400; letter-spacing: 2px;
@@ -87,6 +69,20 @@
   td { border-bottom: 1px solid rgba(140,180,150,0.06); }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: rgba(80,100,90,0.08); }
+  tr.statrow th {
+    background: rgba(80,100,90,0.06);
+    border-bottom: 1px solid rgba(140,180,150,0.16);
+    padding: 10px 14px 12px;
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(140,180,150,0.5); font-weight: 400;
+  }
+  tr.statrow th.num { text-align: right; }
+  tr.statrow th .v {
+    display: block; margin-top: 3px;
+    font-size: 17px; font-weight: 600; letter-spacing: 0;
+    text-transform: none; color: rgba(200,220,205,0.95);
+    font-variant-numeric: tabular-nums;
+  }
   td.num {
     text-align: right; font-variant-numeric: tabular-nums;
     cursor: default; user-select: none;
@@ -141,6 +137,25 @@
   }
   #ctx .ctx-val span:last-child { color: rgba(200,220,205,0.9); }
 
+  #gift {
+    display: none; position: fixed; z-index: 200;
+    background: rgba(20,28,22,0.97); border: 1px solid rgba(140,180,150,0.3);
+    border-radius: 8px; padding: 10px 12px; min-width: 220px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  #gift .gift-title {
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(140,180,150,0.5); margin-bottom: 8px;
+  }
+  #gift select {
+    width: 100%; padding: 6px 8px; margin-bottom: 8px;
+    border: 1px solid rgba(140,180,150,0.2); border-radius: 5px;
+    background: rgba(80,100,90,0.12); color: #e0e0e0;
+    font-family: inherit; font-size: 12px;
+  }
+  #gift select:focus { outline: none; border-color: rgba(140,180,150,0.45); }
+  #gift .gift-row { display: flex; gap: 6px; }
+
   #notAdmin {
     display: none; max-width: 1100px; margin: 60px auto; text-align: center;
   }
@@ -166,8 +181,7 @@
   input[type=number] { -moz-appearance: textfield; }
 
   @media (max-width: 700px) {
-    .stats { grid-template-columns: repeat(2, 1fr); }
-    th:nth-child(n+6), td:nth-child(n+6) { display: none; }
+    th:nth-child(n+6), td:nth-child(n+6), tr.statrow th:nth-child(n+6) { display: none; }
   }
 </style>
 </head>
@@ -190,22 +204,27 @@
   </div>
 
   <div id="panel">
-    <div class="stats">
-      <div class="stat"><span class="val" id="stUsers">-</span><span class="lbl">Users</span></div>
-      <div class="stat"><span class="val" id="stScore">-</span><span class="lbl">Score Pool</span></div>
-      <div class="stat"><span class="val" id="stSpent">-</span><span class="lbl">Spent</span></div>
-      <div class="stat"><span class="val" id="stPurchases">-</span><span class="lbl">Purchases</span></div>
-    </div>
-
     <div class="section">
       <div class="section-head"><h2>Users</h2><div class="line"></div></div>
       <div class="table-wrap">
         <table>
-          <thead><tr>
-            <th>#</th><th>Username</th><th class="num">Total</th><th class="num">Spent</th>
-            <th class="num">Balance</th><th class="num">Plays</th><th class="num">Items</th>
-            <th>Joined</th>
-          </tr></thead>
+          <thead>
+            <tr class="statrow">
+              <th>Users <b class="v" id="stUsers">-</b></th>
+              <th></th>
+              <th class="num">Score Pool <b class="v" id="stScore">-</b></th>
+              <th class="num">Spent <b class="v" id="stSpent">-</b></th>
+              <th></th>
+              <th></th>
+              <th class="num">Purchases <b class="v" id="stPurchases">-</b></th>
+              <th></th>
+            </tr>
+            <tr>
+              <th>#</th><th>Username</th><th class="num">Total</th><th class="num">Spent</th>
+              <th class="num">Balance</th><th class="num">Plays</th><th class="num">Items</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
@@ -219,6 +238,15 @@
       <input type="number" id="ctxDelta" value="1000" step="100">
       <button class="ctx-btn add" id="ctxAdd">+</button>
       <button class="ctx-btn sub" id="ctxSub">&minus;</button>
+    </div>
+  </div>
+
+  <div id="gift">
+    <div class="gift-title" id="giftTitle">Gift</div>
+    <select id="giftSelect"></select>
+    <div class="gift-row">
+      <button class="ctx-btn add" id="giftGo">Gift</button>
+      <button class="ctx-btn" id="giftCancel">Cancel</button>
     </div>
   </div>
 
@@ -236,7 +264,53 @@
   var ctxCur = document.getElementById('ctxCur');
   var ctxDelta = document.getElementById('ctxDelta');
   var ctxTarget = null;
+  var gift = document.getElementById('gift');
+  var giftTitle = document.getElementById('giftTitle');
+  var giftSelect = document.getElementById('giftSelect');
+  var giftGo = document.getElementById('giftGo');
+  var giftTarget = null;
   var toastTimer;
+
+  var GIFT_ITEMS = [
+    { key: 'maze:dark-green', slot: 'maze', name: 'Dark Green', price: 10000 },
+    { key: 'maze:teal', slot: 'maze', name: 'Teal', price: 12000 },
+    { key: 'maze:aqua', slot: 'maze', name: 'Aqua', price: 15000 },
+    { key: 'maze:blue', slot: 'maze', name: 'Blue', price: 16700 },
+    { key: 'maze:indigo', slot: 'maze', name: 'Indigo', price: 17000 },
+    { key: 'maze:violet', slot: 'maze', name: 'Violet', price: 18000 },
+    { key: 'maze:red', slot: 'maze', name: 'Red', price: 20000 },
+    { key: 'maze:orange', slot: 'maze', name: 'Orange', price: 22000 },
+    { key: 'maze:yellow', slot: 'maze', name: 'Yellow', price: 25000 },
+    { key: 'cursor:black', slot: 'cursor', name: 'Black', price: 3500 },
+    { key: 'cursor:red', slot: 'cursor', name: 'Red', price: 7000 },
+    { key: 'cursor:orange', slot: 'cursor', name: 'Orange', price: 7700 },
+    { key: 'cursor:yellow', slot: 'cursor', name: 'Yellow', price: 8400 },
+    { key: 'cursor:lime', slot: 'cursor', name: 'Lime', price: 9100 },
+    { key: 'cursor:green', slot: 'cursor', name: 'Green', price: 9800 },
+    { key: 'cursor:teal', slot: 'cursor', name: 'Teal', price: 10500 },
+    { key: 'cursor:aqua', slot: 'cursor', name: 'Aqua', price: 11200 },
+    { key: 'cursor:blue', slot: 'cursor', name: 'Blue', price: 11900 },
+    { key: 'cursor:indigo', slot: 'cursor', name: 'Indigo', price: 12600 },
+    { key: 'cursor:violet', slot: 'cursor', name: 'Violet', price: 13300 },
+    { key: 'cursor:pink', slot: 'cursor', name: 'Pink', price: 14000 },
+    { key: 'target:orange', slot: 'target', name: 'Orange', price: 26000 },
+    { key: 'target:yellow', slot: 'target', name: 'Yellow', price: 27300 },
+    { key: 'target:green', slot: 'target', name: 'Green', price: 29900 },
+    { key: 'target:aqua', slot: 'target', name: 'Aqua', price: 32500 },
+    { key: 'target:blue', slot: 'target', name: 'Blue', price: 35100 },
+    { key: 'target:purple', slot: 'target', name: 'Purple', price: 39000 }
+  ];
+
+  (function seedGiftSelect() {
+    var i, it;
+    for (i = 0; i < GIFT_ITEMS.length; i++) {
+      it = GIFT_ITEMS[i];
+      var o = document.createElement('option');
+      o.value = it.key;
+      o.textContent = it.slot.toUpperCase() + ' \u00b7 ' + it.name + ' \u00b7 ' + it.price.toLocaleString();
+      giftSelect.appendChild(o);
+    }
+  })();
 
   function flash(msg, isErr) {
     clearTimeout(toastTimer);
@@ -246,10 +320,13 @@
   }
 
   function hideCtx() { ctx.style.display = 'none'; ctxTarget = null; }
+  function hideGift() { gift.style.display = 'none'; giftTarget = null; }
   document.addEventListener('click', hideCtx);
-  document.addEventListener('scroll', hideCtx);
+  document.addEventListener('scroll', function () { hideCtx(); hideGift(); });
+  document.addEventListener('click', hideGift);
 
   ctx.addEventListener('click', function (e) { e.stopPropagation(); });
+  gift.addEventListener('click', function (e) { e.stopPropagation(); });
 
   ctxDelta.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { doCtxAdjust(); e.preventDefault(); }
@@ -288,6 +365,45 @@
     ctxDelta.focus();
     ctxDelta.select();
   }
+
+  function openGift(e, username) {
+    e.preventDefault();
+    e.stopPropagation();
+    hideCtx();
+    giftTarget = { username: username };
+    giftTitle.textContent = 'Gift \u2014 ' + username;
+    giftSelect.selectedIndex = 0;
+    var rect = e.target.getBoundingClientRect();
+    gift.style.display = 'block';
+    var cx = rect.left;
+    var cy = rect.bottom + 6;
+    if (cx + 240 > window.innerWidth) cx = window.innerWidth - 250;
+    if (cy + 120 > window.innerHeight) cy = rect.top - 120;
+    gift.style.left = cx + 'px';
+    gift.style.top = cy + 'px';
+    giftSelect.focus();
+  }
+
+  document.getElementById('giftGo').addEventListener('click', async function () {
+    if (!giftTarget) return;
+    var key = giftSelect.value;
+    if (!key) return;
+    giftGo.disabled = true;
+    try {
+      var res = await fetch('/api/admin/gift', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: giftTarget.username, item_key: key })
+      });
+      var d = await res.json();
+      if (!res.ok) { flash(d.error || 'failed', true); return; }
+      flash('gifted ' + key + ' to ' + giftTarget.username);
+      render();
+    } finally {
+      giftGo.disabled = false;
+      hideGift();
+    }
+  });
+  document.getElementById('giftCancel').addEventListener('click', hideGift);
 
   async function load() {
     var me;
@@ -339,6 +455,7 @@
       cells[2].addEventListener('contextmenu', function (e) { showCtx(e, u.username, 'total', u.total); });
       cells[3].addEventListener('contextmenu', function (e) { showCtx(e, u.username, 'spent', u.spent); });
       cells[5].addEventListener('contextmenu', function (e) { showCtx(e, u.username, 'plays', u.plays); });
+      cells[6].addEventListener('contextmenu', function (e) { openGift(e, u.username); });
       cells[1].addEventListener('contextmenu', function (e) {
         e.preventDefault(); e.stopPropagation();
         if (isMe) { flash('cannot delete yourself', true); return; }

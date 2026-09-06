@@ -31,10 +31,9 @@
   };
   var MAZE_BASE_SCORE = 200; // raw reference score for a nominal medium run
   var MAZE_REF_CELLS = 400;   // the default 20x20 maze
-  var MAZE_SIZE_MIN = 0.6;
-  var MAZE_SIZE_MAX = 1.6;    // diminishing returns: sqrt(cells / 400)
-  var MAZE_EFF_MIN = 0.5;     // wandering costs up to half
+  var MAZE_EFF_MIN = 0.25;    // wandering costs up to 75%: accuracy dominates
   var MAZE_EFF_MAX = 1.0;     // perfect path keeps full value
+  var MAZE_EFF_POWER = 1.5;   // sub-perfect routes decay non-linearly
   var MAZE_TIME_MIN = 0.75;   // slow finish: -25%
   var MAZE_TIME_MAX = 1.25;   // fast finish: +25%, never infinite
 
@@ -45,8 +44,8 @@
     actualMoves = Math.max(1, Math.round(actualMoves));
     optimalMoves = Math.round(clamp(optimalMoves, 1, actualMoves));
 
-    var sizeMult = clamp(Math.sqrt(Math.max(1, cells) / MAZE_REF_CELLS), MAZE_SIZE_MIN, MAZE_SIZE_MAX);
-    var effMult = clamp(optimalMoves / actualMoves, MAZE_EFF_MIN, MAZE_EFF_MAX);
+    var sizeMult = 2 / (1 + Math.pow(MAZE_REF_CELLS / Math.max(1, cells), 1.6));
+    var effMult = clamp(Math.pow(optimalMoves / actualMoves, MAZE_EFF_POWER), MAZE_EFF_MIN, MAZE_EFF_MAX);
     var refTime = clamp(Math.sqrt(Math.max(1, cells)) * 0.75, 5, 45);
     var timeMult = clamp(refTime / Math.max(elapsedSec, 0.001), MAZE_TIME_MIN, MAZE_TIME_MAX);
 

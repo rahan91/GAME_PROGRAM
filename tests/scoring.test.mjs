@@ -32,6 +32,12 @@ assert(S.MAZE_DIFF_MULT.extreme / S.MAZE_DIFF_MULT['very easy'] < 3, 'difficulty
 assert(stickler(400, S.MAZE_DIFF_MULT.extreme, 28, 30, 15) < 5 * stickler(400, S.MAZE_DIFF_MULT['very easy'], 28, 30, 15) + 1, 'extreme does not 5x even very easy');
 between(stickler(25, 1.2, 6, 20, 30), 0, 5000, 'small 5x5 maze bounded');
 between(stickler(6400, 2.5, 160, 160, 45), 0, 5000, 'large 80x80 maze bounded');
+assert(stickler(400, 1.45, 28, 28, 15) === 290, 'perfect 20x20 run unchanged (size=1, eff=1)');
+assert(stickler(25, 1.45, 5, 5, 15) < 30, 'tiny 5x5 maze earns almost nothing');
+assert(stickler(6400, 1.45, 160, 160, 120) > 400, 'large 80x80 pays well above a 20x20');
+assert(stickler(6400, 1.45, 160, 160, 120) < 5000, 'large maze still bounded');
+assert(stickler(400, 1.45, 28, 56, 15) < 0.6 * stickler(400, 1.45, 28, 28, 15), '50% accuracy costs more than 40% (big accuracy effect)');
+assert(stickler(400, 1.45, 28, 100000, 15) === stickler(400, 1.45, 28, 280, 15), 'accuracy floor keeps lazy runs bounded');
 assert(stickler(400, 1.45, 28, 28, 15) > stickler(400, 1.45, 28, 112, 15), 'perfect route beats wandering');
 assert(stickler(400, 1.45, 28, 280, 15) >= stickler(400, 1.45, 28, 100000, 15), 'efficiency floor keeps lazy runs bounded');
 assert(stickler(400, 1.45, 28, 30, 2) >= stickler(400, 1.45, 28, 30, 200), 'fast completion beats slow');

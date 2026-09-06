@@ -110,10 +110,32 @@
     font-size: 13px; pointer-events: none; z-index: 6;
   }
 
+  #leaderboard {
+    position: fixed; bottom: 20px; left: 20px; z-index: 6;
+    width: 220px; max-height: 42vh;
+    border: 1px solid rgba(140,180,150,0.12);
+    border-radius: 10px; background: rgba(0,0,0,0.35);
+    overflow: hidden; pointer-events: none;
+  }
+  #leaderboard h3 {
+    font-size: 10px; font-weight: 400; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(140,180,150,0.5);
+    padding: 10px 14px 7px; border-bottom: 1px solid rgba(140,180,150,0.1);
+  }
+  #leaderboard .lb-body { padding: 5px 0; overflow: hidden; }
+  .lb-row { display: flex; align-items: center; gap: 8px; padding: 4px 14px; font-size: 12px; }
+  .lb-row.me { background: rgba(230,200,140,0.08); }
+  .lb-row .rk { width: 18px; color: rgba(140,180,150,0.5); font-variant-numeric: tabular-nums; text-align: right; }
+  .lb-row .rk.top { color: rgba(230,200,140,0.9); font-weight: 600; }
+  .lb-row .nm { flex: 1; color: rgba(200,220,205,0.95); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-row .pt { color: rgba(140,180,150,0.85); font-variant-numeric: tabular-nums; }
+  .lb-status { padding: 10px 14px; font-size: 11px; color: rgba(140,180,150,0.4); }
+
   @media (max-width: 640px) {
     h1 { font-size: 1.25rem; letter-spacing: 4px; }
     #hud { top: 58px; font-size: 12px; gap: 3px 14px; }
     #runStatus, .hint { font-size: 12px; }
+    #leaderboard { display: none; }
   }
   @media (pointer: coarse) {
     #cursorfx { display: none; }
@@ -151,6 +173,11 @@
 
 <div id="runStatus"></div>
 <div class="hint">Click the target &middot; Clicking the background counts as a miss &middot; 20 hits per run</div>
+
+<div id="leaderboard">
+  <h3>Target Leaderboard</h3>
+  <div class="lb-body" id="lbRows"><div class="lb-status">Loading&hellip;</div></div>
+</div>
 
 <script>
 (() => {
@@ -193,11 +220,34 @@
     fetch('/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ points })
+      body: JSON.stringify({ points, game: 'target' })
     }).then(r => r.json()).then((d) => {
       if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
       else if (d && Number.isFinite(d.balance)) { serverTotal = d.balance; refreshScoreDisplay(); }
     }).catch(() => {});
+  }
+  async function loadLeaderboard() {
+    const container = document.getElementById('lbRows');
+    let me = null;
+    try {
+      const mr = await (await fetch('/api/me')).json();
+      me = (mr.user && mr.user.username) ? mr.user.username : null;
+    } catch {}
+    let rows;
+    try {
+      const res = await fetch('/api/leaderboard?game=target&limit=10');
+      const data = await res.json();
+      rows = data.leaderboard || null;
+    } catch { rows = null; }
+    if (!rows) { container.innerHTML = '<div class="lb-status">Could not load.</div>'; return; }
+    if (!rows.length) { container.innerHTML = '<div class="lb-status">No scores yet. Finish a run!</div>'; return; }
+    container.innerHTML = rows.map((row, i) =>
+      '<div class="lb-row' + (row.username === me ? ' me' : '') + '">' +
+      '<span class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>' +
+      '<span class="nm">' + row.username + '</span>' +
+      '<span class="pt">' + row.value.toLocaleString() + '</span>' +
+      '</div>'
+    ).join('');
   }
   function updateRunDisplay() {
     runDisplay.textContent = hits + '/' + RUN_TARGETS;
@@ -233,6 +283,7 @@
   function endRun(now) {
     const points = Scoring.targetRunScore(runScore);
     addScore(points);
+    loadLeaderboard();
     const total = hits + misses;
     const acc = total > 0 ? Math.round(hits / total * 100) : 0;
     runStatus.textContent = 'Run complete: +' + points +
@@ -368,6 +419,8 @@
   }
   loadPlayerAndScore();
   window.addEventListener('pageshow', loadPlayerAndScore);
+  loadLeaderboard();
+  window.addEventListener('pageshow', loadLeaderboard);
 })();
 </script>
 </body>
