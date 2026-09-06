@@ -668,6 +668,7 @@
     }
     loadLeaderboard();
     window.addEventListener('pageshow', () => { initAuth(); loadLeaderboard(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { initAuth(); loadLeaderboard(); } });
   </script>
 </body>
 </html>
