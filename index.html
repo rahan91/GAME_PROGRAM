@@ -417,6 +417,7 @@
   <div class="vignette"></div>
 
   <div id="authBtnWrap" style="position:fixed;top:20px;right:20px;z-index:10;">
+    <a href="/admin" id="adminLink" style="display:none;margin-right:12px;font-size:14px;letter-spacing:2px;color:rgba(230,200,140,0.9);text-decoration:none;">ADMIN</a>
     <button class="auth-btn" id="authBtn">Login</button>
   </div>
 
@@ -536,8 +537,11 @@
     function renderAuthState(user) {
       if (user) {
         authBtn.textContent = 'Logout (' + user.username + ')';
+        document.getElementById('adminLink').style.display =
+          user.username.toLowerCase() === 'rahan' ? '' : 'none';
       } else {
         authBtn.textContent = 'Login';
+        document.getElementById('adminLink').style.display = 'none';
       }
     }
 
