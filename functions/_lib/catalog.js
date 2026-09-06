@@ -2,15 +2,15 @@ export const SLOTS = ['maze', 'cursor', 'target'];
 
 export const ITEMS = [
   { key: 'maze:default', default: true, slot: 'maze',   name: 'Default',    color: null, price: 0 },
-  { key: 'maze:dark-green', slot: 'maze',   name: 'Dark Green', color: '#2f7a4d', price: 7000 },
-  { key: 'maze:teal',       slot: 'maze',   name: 'Teal',       color: '#17a2a6', price: 8400 },
-  { key: 'maze:aqua',       slot: 'maze',   name: 'Aqua',       color: '#26d0d6', price: 10500 },
-  { key: 'maze:blue',       slot: 'maze',   name: 'Blue',       color: '#3b82f6', price: 11690 },
-  { key: 'maze:indigo',     slot: 'maze',   name: 'Indigo',     color: '#6366f1', price: 11900 },
-  { key: 'maze:violet',     slot: 'maze',   name: 'Violet',     color: '#8b5cf6', price: 12600 },
-  { key: 'maze:red',        slot: 'maze',   name: 'Red',        color: '#e5484d', price: 14000 },
-  { key: 'maze:orange',     slot: 'maze',   name: 'Orange',     color: '#f97316', price: 15400 },
-  { key: 'maze:yellow',     slot: 'maze',   name: 'Yellow',     color: '#eab308', price: 17500 },
+  { key: 'maze:dark-green', slot: 'maze',   name: 'Dark Green', color: '#2f7a4d', price: 10000 },
+  { key: 'maze:teal',       slot: 'maze',   name: 'Teal',       color: '#17a2a6', price: 12000 },
+  { key: 'maze:aqua',       slot: 'maze',   name: 'Aqua',       color: '#26d0d6', price: 15000 },
+  { key: 'maze:blue',       slot: 'maze',   name: 'Blue',       color: '#3b82f6', price: 16700 },
+  { key: 'maze:indigo',     slot: 'maze',   name: 'Indigo',     color: '#6366f1', price: 17000 },
+  { key: 'maze:violet',     slot: 'maze',   name: 'Violet',     color: '#8b5cf6', price: 18000 },
+  { key: 'maze:red',        slot: 'maze',   name: 'Red',        color: '#e5484d', price: 20000 },
+  { key: 'maze:orange',     slot: 'maze',   name: 'Orange',     color: '#f97316', price: 22000 },
+  { key: 'maze:yellow',     slot: 'maze',   name: 'Yellow',     color: '#eab308', price: 25000 },
 
   { key: 'cursor:default', default: true, slot: 'cursor', name: 'Default',    color: null, price: 0 },
   { key: 'cursor:black',    slot: 'cursor', name: 'Black',      color: '#141414', price: 3500 },
@@ -27,12 +27,12 @@ export const ITEMS = [
   { key: 'cursor:pink',     slot: 'cursor', name: 'Pink',       color: '#ec4899', price: 14000 },
 
   { key: 'target:default', default: true, slot: 'target', name: 'Default',    color: null, price: 0 },
-  { key: 'target:orange',   slot: 'target', name: 'Orange',     color: '#f97316', price: 14000 },
-  { key: 'target:yellow',   slot: 'target', name: 'Yellow',     color: '#eab308', price: 14700 },
-  { key: 'target:green',    slot: 'target', name: 'Green',      color: '#22c55e', price: 16100 },
-  { key: 'target:aqua',     slot: 'target', name: 'Aqua',       color: '#06b6d4', price: 17500 },
-  { key: 'target:blue',     slot: 'target', name: 'Blue',       color: '#3b82f6', price: 18900 },
-  { key: 'target:purple',   slot: 'target', name: 'Purple',     color: '#8b5cf6', price: 21000 },
+  { key: 'target:orange',   slot: 'target', name: 'Orange',     color: '#f97316', price: 26000 },
+  { key: 'target:yellow',   slot: 'target', name: 'Yellow',     color: '#eab308', price: 27300 },
+  { key: 'target:green',    slot: 'target', name: 'Green',      color: '#22c55e', price: 29900 },
+  { key: 'target:aqua',     slot: 'target', name: 'Aqua',       color: '#06b6d4', price: 32500 },
+  { key: 'target:blue',     slot: 'target', name: 'Blue',       color: '#3b82f6', price: 35100 },
+  { key: 'target:purple',   slot: 'target', name: 'Purple',     color: '#8b5cf6', price: 39000 },
 ];
 
 export const ITEM_BY_KEY = Object.fromEntries(ITEMS.map((i) => [i.key, i]));
