@@ -27,7 +27,7 @@
     .orb--1 {
       width: 800px;
       height: 800px;
-      background: radial-gradient(circle, rgba(80, 100, 90, 0.3) 0%, rgba(80, 100, 90, 0.1) 40%, transparent 70%);
+      background: radial-gradient(circle, rgba(var(--acc-dim), 0.3) 0%, rgba(var(--acc-dim), 0.1) 40%, transparent 70%);
       top: 5%;
       left: 5%;
       animation-delay: 0s;
@@ -35,7 +35,7 @@
     .orb--2 {
       width: 700px;
       height: 700px;
-      background: radial-gradient(circle, rgba(70, 95, 80, 0.25) 0%, rgba(70, 95, 80, 0.08) 40%, transparent 70%);
+      background: radial-gradient(circle, rgba(var(--acc-orb), 0.25) 0%, rgba(var(--acc-orb), 0.08) 40%, transparent 70%);
       top: 50%;
       right: 0%;
       animation-delay: -4s;
@@ -43,7 +43,7 @@
     .orb--3 {
       width: 650px;
       height: 650px;
-      background: radial-gradient(circle, rgba(90, 110, 95, 0.22) 0%, rgba(90, 110, 95, 0.06) 40%, transparent 70%);
+      background: radial-gradient(circle, rgba(var(--acc-dim), 0.22) 0%, rgba(var(--acc-dim), 0.06) 40%, transparent 70%);
       bottom: 0%;
       left: 30%;
       animation-delay: -8s;
@@ -76,8 +76,8 @@
       font-weight: 700;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(140, 180, 150, 0.85);
-      text-shadow: 0 0 60px rgba(100, 160, 120, 0.3);
+      color: rgba(var(--acc-main), 0.85);
+      text-shadow: 0 0 60px rgba(var(--acc-btn), 0.3);
       transition: font-size 1s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .title.active h1 {
@@ -101,8 +101,8 @@
       width: 175px;
       height: 175px;
       border-radius: 10px;
-      background: rgba(80, 100, 90, 0.15);
-      border: 1px solid rgba(140, 180, 150, 0.15);
+      background: rgba(var(--acc-dim), 0.15);
+      border: 1px solid rgba(var(--acc-main), 0.15);
       opacity: 0;
       transform: translateY(120vh);
       transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
@@ -119,8 +119,8 @@
       transform: translateY(0);
     }
     .card:hover {
-      background: rgba(80, 100, 90, 0.25);
-      border-color: rgba(140, 180, 150, 0.3);
+      background: rgba(var(--acc-dim), 0.25);
+      border-color: rgba(var(--acc-main), 0.3);
     }
     .card .icon {
       font-size: 2.4rem;
@@ -136,12 +136,12 @@
       font-weight: 300;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: rgba(140, 180, 150, 0.7);
+      color: rgba(var(--acc-main), 0.7);
     }
     .card .coming {
       font-family: 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 0.55rem;
-      color: rgba(140, 180, 150, 0.3);
+      color: rgba(var(--acc-main), 0.3);
       margin-top: 4px;
     }
     .card:nth-child(1), .card:nth-child(2) { transition-delay: 0s; }
@@ -160,8 +160,8 @@
       z-index: 3;
       display: flex;
       flex-direction: column;
-      background: rgba(30, 38, 34, 0.82);
-      border: 1px solid rgba(140, 180, 150, 0.2);
+      background: rgba(var(--acc-panel), 0.82);
+      border: 1px solid rgba(var(--acc-main), 0.2);
       border-radius: 12px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
       backdrop-filter: blur(3px);
@@ -175,9 +175,9 @@
       font-weight: 300;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(140, 180, 150, 0.85);
+      color: rgba(var(--acc-main), 0.85);
       margin: 0 auto 10px;
-      text-shadow: 0 0 30px rgba(100, 160, 120, 0.3);
+      text-shadow: 0 0 30px rgba(var(--acc-btn), 0.3);
     }
     .lb-board {
       width: 100%;
@@ -191,30 +191,30 @@
       padding: 6px 18px;
     }
     .lb-head {
-      color: rgba(140, 180, 150, 0.35);
+      color: rgba(var(--acc-main), 0.35);
       font-size: 0.62rem;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      border-bottom: 1px solid rgba(140, 180, 150, 0.18);
+      border-bottom: 1px solid rgba(var(--acc-main), 0.18);
       margin-bottom: 6px;
     }
     .lb-row {
-      color: rgba(200, 220, 205, 0.85);
+      color: rgba(var(--acc-text), 0.85);
       font-size: 0.78rem;
       font-family: 'IBM Plex Mono', 'Courier New', monospace;
     }
     .lb-head .rk, .lb-head .pl, .lb-head .pt,
     .lb-row .rk, .lb-row .pl, .lb-row .pt { text-align: right; }
     .lb-head .rk, .lb-head .pl, .lb-row .rk, .lb-row .pl { padding-right: 8px; }
-    .lb-row .rk { color: rgba(140, 180, 150, 0.45); }
-    .lb-row .pl { color: rgba(140, 180, 150, 0.35); font-size: 0.7rem; }
-    .lb-row .pt { color: rgba(220, 240, 225, 0.95); }
+    .lb-row .rk { color: rgba(var(--acc-main), 0.45); }
+    .lb-row .pl { color: rgba(var(--acc-main), 0.35); font-size: 0.7rem; }
+    .lb-row .pt { color: rgba(var(--acc-texthi), 0.95); }
     .lb-row .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lb-row.me { background: rgba(140, 180, 150, 0.14); }
-    .lb-row.me .pt { color: rgba(160, 220, 180, 1); }
+    .lb-row.me { background: rgba(var(--acc-main), 0.14); }
+    .lb-row.me .pt { color: rgba(var(--acc-bright), 1); }
     .lb-row .rk.top { color: rgba(230, 200, 120, 0.9); }
     .lb-status {
-      color: rgba(140, 180, 150, 0.45);
+      color: rgba(var(--acc-main), 0.45);
       font-size: 0.75rem;
       text-align: center;
       padding: 18px 0;
@@ -324,21 +324,21 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      background: rgba(80, 100, 90, 0.2);
-      border: 1px solid rgba(140, 180, 150, 0.25);
+      background: rgba(var(--acc-dim), 0.2);
+      border: 1px solid rgba(var(--acc-main), 0.25);
       border-radius: 8px;
       padding: 8px 14px;
       font-family: 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 14px;
       letter-spacing: 0.08em;
-      color: rgba(140, 180, 150, 0.7);
+      color: rgba(var(--acc-main), 0.7);
     }
     #pointsTotal {
-      color: rgba(220, 240, 225, 0.95);
+      color: rgba(var(--acc-texthi), 0.95);
       font-weight: 300;
     }
     #resetPointsBtn {
-      border: 1px solid rgba(140, 180, 150, 0.25);
+      border: 1px solid rgba(var(--acc-main), 0.25);
       border-radius: 4px;
       background: transparent;
       color: rgba(200, 140, 160, 0.75);
