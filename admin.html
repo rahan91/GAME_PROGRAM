@@ -70,8 +70,8 @@
   <div id="statusBar"></div>
 
   <div id="notAdmin">
-    Access denied. This panel is restricted to the user <b>Rahan</b> only.
-    <br>Log in as Rahan to continue.
+    Access denied. This panel is restricted to the user <b>ruruskaado</b> only.
+    <br>Log in as ruruskaado to continue.
   </div>
 
   <div id="panel">
@@ -113,7 +113,7 @@
     async function load() {
       var me;
       try { me = (await (await fetch('/api/me')).json()).user; } catch (e) {}
-      if (!me || !me.username || me.username.toLowerCase() !== 'rahan') {
+      if (!me || !me.username || me.username.toLowerCase() !== 'ruruskaado') {
         who.textContent = me ? 'signed in as ' + me.username + ' — not authorized' : 'not signed in';
         panel.style.display = 'none';
         notAdmin.style.display = 'block';
