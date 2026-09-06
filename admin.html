@@ -259,6 +259,7 @@
       <button class="ctx-btn add" id="giftGo">Gift</button>
       <button class="ctx-btn" id="giftCancel">Cancel</button>
     </div>
+    <button class="ctx-btn del" id="giftStrip">Strip Items</button>
   </div>
 
   <div id="toast"></div>
@@ -415,6 +416,22 @@
     }
   });
   document.getElementById('giftCancel').addEventListener('click', hideGift);
+  document.getElementById('giftStrip').addEventListener('click', async function () {
+    if (!giftTarget) return;
+    if (!confirm('STRIP ALL ITEMS FROM ' + giftTarget.username + '?\n\nRemoves every purchase and equip.')) return;
+    try {
+      var res = await fetch('/api/admin/strip', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: giftTarget.username })
+      });
+      var d = await res.json();
+      if (!res.ok) { flash(d.error || 'failed', true); return; }
+      flash(d.username + ': stripped ' + d.items_removed + ' item(s), cleared ' + d.equips_cleared + ' equip(s)');
+      render();
+    } finally {
+      hideGift();
+    }
+  });
 
   async function load() {
     var me;
