@@ -82,30 +82,18 @@
   }
 
   // ---------------- Button ----------------
-  // Piecewise, by seconds held:
-  //   t <= 15                -> 7 * t
-  //   15 <  t <= 45          -> 105 + 6 * (t - 15)
-  //   45 <  t <= 90          -> 285 + 4.5 * (t - 45)
-  //   90 <  t <= 180         -> 510 + 3 * (t - 90)
-  //   180 < t <= 300         -> 780 + 2 * (t - 180)
-  //   t > 300                -> 1020 + 1 * (t - 300)
+  // Score grows with hold time on a single saturating curve:
+  //   score(t) = 450 * (1 - e^(-0.06 * t))^2.5     (t in seconds)
+  // Fast early gains that taper off; never exceeds 450.
+  var BUTTON_SCORE_MAX = 450;
+  var BUTTON_SCORE_RATE = 0.06;
+  var BUTTON_SCORE_POWER = 2.5;
+
   function buttonScore(holdMs) {
     if (!Number.isFinite(holdMs)) return 0;
     var t = Math.max(0, holdMs) / 1000;
-    var raw;
-    if (t <= 15) {
-      raw = 7 * t;
-    } else if (t <= 45) {
-      raw = 105 + 6 * (t - 15);
-    } else if (t <= 90) {
-      raw = 285 + 4.5 * (t - 45);
-    } else if (t <= 180) {
-      raw = 510 + 3 * (t - 90);
-    } else if (t <= 300) {
-      raw = 780 + 2 * (t - 180);
-    } else {
-      raw = 1020 + (t - 300);
-    }
+    var growth = 1 - Math.exp(-BUTTON_SCORE_RATE * t);
+    var raw = BUTTON_SCORE_MAX * Math.pow(growth, BUTTON_SCORE_POWER);
     return Math.max(0, Math.round(raw));
   }
 

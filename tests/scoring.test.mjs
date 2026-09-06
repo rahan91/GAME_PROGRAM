@@ -81,24 +81,19 @@ assert(S.targetRunScore(perfectRun + (1e9)) <= 5000, 'adding waiting time cannot
 
 console.log('\n=== Button scoring ===');
 const btn = S.buttonScore;
-// t<=15:7t | <=45:105+6(t-15) | <=90:285+4.5(t-45) | <=180:510+3(t-90) | <=300:780+2(t-180) | else 1020+(t-300)
+// score(t) = 450 * (1 - e^(-0.06t))^2.5   (t in seconds held)
 assert(btn(0) === 0, 'zero hold scores nothing');
-assert(btn(10000) === 70, '10s hold = 70 (slope 7)');
-assert(btn(14000) - btn(13000) === 7, 'tier 1 slope is 7/s');
-assert(btn(15000) === 105, '15s boundary = 105');
-assert(btn(21000) === 141, '21s = 105 + 6*6 = 141');
-assert(btn(45000) === 285, '45s boundary = 285');
-assert(btn(51000) === 312, '51s = 285 + 4.5*6 = 312');
-assert(btn(90000) === 488, '90s boundary = 285 + 4.5*45 (rounded)');
-assert(btn(91000) === 513, '91s forks into 510 + 3*1 = 513');
-assert(btn(120000) - btn(110000) === 30, 'tier 3 slope is 3/s');
-assert(btn(180000) === 780, '180s = 510 + 3*90 = 780');
-assert(btn(181000) === 782, '181s = 780 + 2*1 = 782');
-assert(btn(300000) === 1020, '300s = 780 + 2*120 = 1020');
-assert(btn(350000) - btn(340000) === 10, 'tier 5 slope is 1/s');
-assert(btn(400000) === 1120, '400s = 1020 + 100 = 1120');
+assert(btn(5000) === 15, '5s hold = 15 (steep early growth)');
+assert(btn(10000) === 62, '10s hold = 62');
+assert(btn(30000) === 286, '30s hold = 286');
+assert(btn(60000) === 420, '60s hold = 420');
+assert(btn(90000) === 445, '90s hold = 445');
+assert(btn(120000) === 449, '120s hold = 449');
+assert(btn(180000) === 450, '180s hold = 450 (asymptote)');
+assert(btn(300000) === 450, '300s hold = 450 (never exceeds cap)');
+assert(btn(600000) === 450, '600s hold still capped at 450');
 assert(btn(20000) > btn(10000), 'longer hold scores more');
-assert(btn(100000) > btn(90000), 'keeps climbing across tiers');
+assert(btn(120000) < 450, 'still just below the cap at 2m');
 assert(btn(NaN) === 0, 'NaN hold -> 0');
 assert(btn(-50) === 0, 'negative hold -> 0');
 assert(btn(Infinity) === 0, 'infinite hold -> 0 (non-finite sanitized)');
