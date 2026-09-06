@@ -88,14 +88,15 @@
   #cursorfx {
     position: fixed; top: 0; left: 0;
     width: 31px; height: 40px;
+    background-size: auto 30px;
     pointer-events: none;
     z-index: 100;
     will-change: transform;
     image-rendering: pixelated;
     transform: translate3d(0, 0, 0);
   }
-  #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0; }
-  #cursorfx.finger { background: url('assets/cursor-finger.png') no-repeat 0 0; }
+  #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0 / auto 30px; }
+  #cursorfx.finger { background: url('assets/cursor-finger.png') no-repeat 0 0 / auto 30px; }
 
   .hint {
     position: fixed; bottom: 20px; left: 0; right: 0;
@@ -273,7 +274,7 @@
     const over = hitTest(curX, curY);
     cursorfx.className = over ? 'finger' : 'arrow';
     paintCursor();
-    const hotX = over ? 11 : 1;
+    const hotX = over ? 8 : 1;
     cursorfx.style.transform = 'translate3d(' + (curX - hotX) + 'px,' + curY + 'px,0)';
     requestAnimationFrame(cursorTick);
   }

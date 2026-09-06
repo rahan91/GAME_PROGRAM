@@ -16,7 +16,7 @@
       'position:fixed;top:0;left:0;width:31px;height:40px;pointer-events:none;' +
       'z-index:2147483646;will-change:transform;image-rendering:pixelated;' +
       'transform:translate3d(-100px,-100px,0);' +
-      'background:url("assets/cursor-arrow.png") no-repeat 0 0;';
+      'background:url("assets/cursor-arrow.png") no-repeat 0 0 / auto 30px;';
     document.body.appendChild(el);
 
     var style = document.createElement('style');
@@ -69,13 +69,13 @@
     document.addEventListener('pointermove', function (e) {
       realX = e.clientX;
       realY = e.clientY;
-      hotX = over ? 11 : 1;
+      hotX = over ? 8 : 1;
     });
 
     document.addEventListener('mouseover', function (e) {
       var t = e.target.closest ? e.target.closest(INTERACTIVE) : null;
       over = !!t;
-      hotX = over ? 11 : 1;
+      hotX = over ? 8 : 1;
       el.className = over ? 'finger' : 'arrow';
       paint();
     });
