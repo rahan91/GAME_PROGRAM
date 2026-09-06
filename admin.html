@@ -117,20 +117,20 @@
   #ctx input::-webkit-inner-spin-button,
   #ctx input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   #ctx input:focus { outline: none; border-color: rgba(140,180,150,0.45); }
-  #ctx .ctx-btn {
+  .ctx-btn {
     padding: 5px 10px; border: 1px solid rgba(140,180,150,0.2);
     border-radius: 5px; background: rgba(80,100,90,0.15);
     color: rgba(200,220,205,0.9); font-family: inherit; font-size: 11px;
     letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer;
     transition: background 0.15s; white-space: nowrap;
   }
-  #ctx .ctx-btn:hover { background: rgba(80,100,90,0.35); }
-  #ctx .ctx-btn.add { background: rgba(100,180,120,0.2); border-color: rgba(100,180,120,0.3); }
-  #ctx .ctx-btn.add:hover { background: rgba(100,180,120,0.4); }
-  #ctx .ctx-btn.sub { background: rgba(200,100,90,0.15); border-color: rgba(200,100,90,0.3); color: rgba(230,170,160,0.9); }
-  #ctx .ctx-btn.sub:hover { background: rgba(200,100,90,0.3); }
-  #ctx .ctx-btn.del { background: rgba(200,60,50,0.2); border-color: rgba(200,60,50,0.4); color: rgba(255,140,130,0.95); margin-top: 6px; width: 100%; text-align: center; }
-  #ctx .ctx-btn.del:hover { background: rgba(200,60,50,0.4); }
+  .ctx-btn:hover { background: rgba(80,100,90,0.35); }
+  .ctx-btn.add { background: rgba(100,180,120,0.2); border-color: rgba(100,180,120,0.3); }
+  .ctx-btn.add:hover { background: rgba(100,180,120,0.4); }
+  .ctx-btn.sub { background: rgba(200,100,90,0.15); border-color: rgba(200,100,90,0.3); color: rgba(230,170,160,0.9); }
+  .ctx-btn.sub:hover { background: rgba(200,100,90,0.3); }
+  .ctx-btn.del { background: rgba(200,60,50,0.2); border-color: rgba(200,60,50,0.4); color: rgba(255,140,130,0.95); margin-top: 6px; width: 100%; text-align: center; }
+  .ctx-btn.del:hover { background: rgba(200,60,50,0.4); }
   #ctx .ctx-val {
     font-size: 12px; color: rgba(140,180,150,0.7); margin-bottom: 8px;
     display: flex; justify-content: space-between;
@@ -140,21 +140,30 @@
   #gift {
     display: none; position: fixed; z-index: 200;
     background: rgba(20,28,22,0.97); border: 1px solid rgba(140,180,150,0.3);
-    border-radius: 8px; padding: 10px 12px; min-width: 220px;
+    border-radius: 8px; padding: 12px 14px; min-width: 230px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   }
   #gift .gift-title {
     font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: rgba(140,180,150,0.5); margin-bottom: 8px;
+    color: rgba(140,180,150,0.55); margin-bottom: 10px;
   }
+  #gift .gift-select-wrap { position: relative; margin-bottom: 10px; }
   #gift select {
-    width: 100%; padding: 6px 8px; margin-bottom: 8px;
-    border: 1px solid rgba(140,180,150,0.2); border-radius: 5px;
-    background: rgba(80,100,90,0.12); color: #e0e0e0;
+    width: 100%; padding: 7px 28px 7px 10px;
+    border: 1px solid rgba(140,180,150,0.25); border-radius: 5px;
+    background: rgba(80,100,90,0.14); color: #e0e0e0;
     font-family: inherit; font-size: 12px;
+    appearance: none; -webkit-appearance: none; cursor: pointer;
   }
-  #gift select:focus { outline: none; border-color: rgba(140,180,150,0.45); }
-  #gift .gift-row { display: flex; gap: 6px; }
+  #gift select:focus { outline: none; border-color: rgba(140,180,150,0.5); }
+  #gift select option { background: #141c16; color: #e0e0e0; }
+  #gift .gift-select-wrap::after {
+    content: '\25BE'; position: absolute; right: 10px; top: 50%;
+    transform: translateY(-50%); color: rgba(140,180,150,0.7);
+    font-size: 10px; pointer-events: none;
+  }
+  #gift .gift-row { display: flex; gap: 8px; }
+  #gift .gift-row .ctx-btn { flex: 1; padding: 7px 10px; text-align: center; }
 
   #notAdmin {
     display: none; max-width: 1100px; margin: 60px auto; text-align: center;
@@ -243,7 +252,9 @@
 
   <div id="gift">
     <div class="gift-title" id="giftTitle">Gift</div>
-    <select id="giftSelect"></select>
+    <div class="gift-select-wrap">
+      <select id="giftSelect"></select>
+    </div>
     <div class="gift-row">
       <button class="ctx-btn add" id="giftGo">Gift</button>
       <button class="ctx-btn" id="giftCancel">Cancel</button>
