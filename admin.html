@@ -7,7 +7,8 @@
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="crt.css">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -15,184 +16,294 @@
     background: #1c1c1c;
     color: #e0e0e0;
     font-family: 'IBM Plex Mono', 'Courier New', monospace;
-    padding: 24px;
+    padding: 20px;
   }
-  .back { color: rgba(140,180,150,0.6); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+
+  .orb { position: fixed; border-radius: 50%; animation: float 12s ease-in-out infinite; pointer-events: none; }
+  .orb--1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(80,100,90,0.18) 0%, transparent 70%); top: 0%; left: 5%; }
+  .orb--2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(70,95,80,0.14) 0%, transparent 70%); bottom: 0%; right: 0%; animation-delay: -4s; }
+  @keyframes float { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.03); } }
+
+  .back {
+    position: fixed; top: 20px; left: 20px; z-index: 10;
+    color: rgba(140,180,150,0.6); text-decoration: none; font-size: 14px; transition: color 0.2s;
+  }
   .back:hover { color: rgba(140,180,150,1); }
+
+  .head {
+    max-width: 1100px; margin: 0 auto; padding: 20px 0 0;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
   h1 {
-    margin: 24px 0 4px;
     font-weight: 700; letter-spacing: 6px; text-transform: uppercase;
-    color: rgba(230,200,140,0.9);
+    color: rgba(230,200,140,0.9); font-size: 1.3rem;
   }
-  .who { font-size: 13px; color: #8a9a8a; margin-bottom: 20px; }
+  .badge {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 20px;
+    background: rgba(230,200,140,0.15); color: rgba(230,200,140,0.8);
+    border: 1px solid rgba(230,200,140,0.25);
+  }
+  .who {
+    margin-left: auto; font-size: 12px; color: rgba(140,180,150,0.5);
+  }
 
-  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .stats {
+    max-width: 1100px; margin: 24px auto 0;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
   .stat {
-    border: 1px solid rgba(140,180,150,0.2);
-    background: rgba(80,100,90,0.12);
-    border-radius: 8px; padding: 10px 16px; min-width: 140px;
+    border: 1px solid rgba(140,180,150,0.15);
+    background: rgba(80,100,90,0.1); border-radius: 10px;
+    padding: 14px 16px; text-align: center;
   }
-  .stat b { display: block; font-size: 20px; font-weight: 300; color: rgba(140,180,150,0.95); }
-  .stat span { font-size: 11px; letter-spacing: 1px; color: #8a9a8a; }
-
-  table { border-collapse: collapse; width: 100%; max-width: 1000px; background: rgba(0,0,0,0.2); }
-  th, td { padding: 8px 12px; text-align: left; font-size: 13px; border-bottom: 1px solid rgba(140,180,150,0.12); white-space: nowrap; }
-  th { color: #8a9a8a; font-weight: 300; letter-spacing: 1px; font-size: 11px; text-transform: uppercase; }
-  td.num, th.num { text-align: right; }
-  tr:hover { background: rgba(80,100,90,0.1); }
-  tr.me td { color: rgba(230,200,140,0.95); }
-  .btn, input.delta {
-    font-family: inherit; font-size: 12px; padding: 4px 10px; border-radius: 6px;
-    background: rgba(80,100,90,0.2); color: #e0e0e0; border: 1px solid rgba(140,180,150,0.25);
-    cursor: pointer; transition: background 0.15s;
+  .stat .val {
+    display: block; font-size: 22px; font-weight: 300;
+    color: rgba(140,180,150,0.95); margin-bottom: 4px;
   }
-  .btn:hover { background: rgba(80,100,90,0.4); }
-  .btn.danger { border-color: rgba(200,120,110,0.4); color: rgba(230,170,160,0.95); }
-  .btn.danger:hover { background: rgba(200,120,110,0.2); }
-  input.delta { width: 90px; text-align: right; }
+  .stat .lbl {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(140,180,150,0.45);
+  }
 
-  #notAdmin, #statusBar { display: none; }
-  #notAdmin { color: rgba(230,170,160,0.95); font-size: 15px; line-height: 1.8; }
-  #statusBar {
+  .section {
+    max-width: 1100px; margin: 28px auto 0;
+  }
+  .section-head {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+  }
+  .section-head h2 {
+    font-size: 12px; font-weight: 400; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(140,180,150,0.5);
+  }
+  .section-head .line { flex: 1; height: 1px; background: rgba(140,180,150,0.12); }
+
+  .table-wrap {
+    border: 1px solid rgba(140,180,150,0.12);
+    border-radius: 10px; overflow: hidden;
+    background: rgba(0,0,0,0.25);
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 14px; text-align: left; font-size: 13px; }
+  th {
+    font-size: 10px; font-weight: 400; letter-spacing: 1.5px;
+    text-transform: uppercase; color: rgba(140,180,150,0.45);
+    background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(140,180,150,0.1);
+  }
+  td { border-bottom: 1px solid rgba(140,180,150,0.06); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(80,100,90,0.08); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.user { color: rgba(200,220,205,0.95); font-weight: 400; }
+  td.me { color: rgba(230,200,140,0.95); }
+  td.date { color: rgba(140,180,150,0.45); font-size: 12px; }
+  td.empty { text-align: center; color: rgba(140,180,150,0.35); padding: 32px; font-size: 13px; }
+
+  .actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  input.delta {
+    width: 72px; padding: 5px 8px; text-align: right;
+    border: 1px solid rgba(140,180,150,0.2); border-radius: 5px;
+    background: rgba(80,100,90,0.12); color: #e0e0e0;
+    font-family: inherit; font-size: 12px;
+  }
+  input.delta:focus { outline: none; border-color: rgba(140,180,150,0.45); }
+  .btn {
+    padding: 5px 12px; border: 1px solid rgba(140,180,150,0.2);
+    border-radius: 5px; background: rgba(80,100,90,0.15);
+    color: rgba(200,220,205,0.9); font-family: inherit; font-size: 11px;
+    letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s; white-space: nowrap;
+  }
+  .btn:hover { background: rgba(80,100,90,0.3); border-color: rgba(140,180,150,0.35); }
+  .btn.primary { background: rgba(100,180,120,0.2); border-color: rgba(100,180,120,0.3); }
+  .btn.primary:hover { background: rgba(100,180,120,0.35); }
+  .btn.danger { background: rgba(200,100,90,0.15); border-color: rgba(200,100,90,0.3); color: rgba(230,170,160,0.9); }
+  .btn.danger:hover { background: rgba(200,100,90,0.3); }
+
+  #notAdmin {
+    display: none; max-width: 1100px; margin: 60px auto; text-align: center;
+  }
+  #notAdmin .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+  #notAdmin .msg {
+    font-size: 15px; color: rgba(230,170,160,0.8); line-height: 1.8;
+  }
+  #notAdmin .hint {
+    font-size: 12px; color: rgba(140,180,150,0.4); margin-top: 12px;
+  }
+
+  #toast {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-    background: rgba(60,90,70,0.95); border: 1px solid rgba(140,180,150,0.4);
-    padding: 8px 16px; border-radius: 8px; font-size: 13px; z-index: 50;
+    background: rgba(50,80,60,0.95); border: 1px solid rgba(140,180,150,0.35);
+    padding: 10px 20px; border-radius: 8px; font-size: 13px;
+    color: rgba(220,240,225,0.95); z-index: 100; pointer-events: none;
+    opacity: 0; transition: opacity 0.2s;
   }
-  #statusBar.err { background: rgba(160,80,70,0.95); border-color: rgba(230,170,160,0.5); }
-  .empty { color: #8a9a8a; padding: 20px; }
+  #toast.show { opacity: 1; }
+  #toast.err { background: rgba(140,50,45,0.95); border-color: rgba(230,140,130,0.4); }
+
+  #panel { display: none; }
+
+  @media (max-width: 700px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    th:nth-child(n+6), td:nth-child(n+6) { display: none; }
+    .actions { flex-direction: column; align-items: stretch; }
+    input.delta { width: 100%; }
+  }
 </style>
 </head>
 <body>
-  <a class="back" href="/gallery">&larr; back to gallery</a>
-  <h1>Admin Panel</h1>
-  <div class="who" id="who"></div>
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
 
-  <div id="statusBar"></div>
+  <a class="back" href="/gallery">&larr; Gallery</a>
+
+  <div class="head">
+    <h1>Admin</h1>
+    <div class="badge">restricted</div>
+    <div class="who" id="who"></div>
+  </div>
 
   <div id="notAdmin">
-    Access denied. This panel is restricted to the user <b>ruruskaado</b> only.
-    <br>Log in as ruruskaado to continue.
+    <div class="icon">&#x1f512;</div>
+    <div class="msg">Access denied.<br>This panel is restricted to <b>ruruskaado</b>.</div>
+    <div class="hint">Log in on the <a href="/gallery" style="color:rgba(230,200,140,0.7);">gallery</a> first.</div>
   </div>
 
   <div id="panel">
     <div class="stats">
-      <div class="stat"><b id="stUsers">-</b><span>USERS</span></div>
-      <div class="stat"><b id="stScore">-</b><span>SCORE POOL</span></div>
-      <div class="stat"><b id="stSpent">-</b><span>SPENT POOL</span></div>
-      <div class="stat"><b id="stPurchases">-</b><span>PURCHASES</span></div>
+      <div class="stat"><span class="val" id="stUsers">-</span><span class="lbl">Users</span></div>
+      <div class="stat"><span class="val" id="stScore">-</span><span class="lbl">Score Pool</span></div>
+      <div class="stat"><span class="val" id="stSpent">-</span><span class="lbl">Spent</span></div>
+      <div class="stat"><span class="val" id="stPurchases">-</span><span class="lbl">Purchases</span></div>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>#</th><th>Username</th><th>Total</th><th>Spent</th><th>Balance</th><th class="num">Plays</th>
-          <th class="num">Items</th><th>Created</th><th>Adjust (delta)</th>
-        </tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
+    <div class="section">
+      <div class="section-head"><h2>Users</h2><div class="line"></div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Username</th><th class="num">Total</th><th class="num">Spent</th>
+            <th class="num">Balance</th><th class="num">Plays</th><th class="num">Items</th>
+            <th>Joined</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
-<script src="/crt.js"></script>
-<script src="/score.js"></script>
-<script src="/cursor.js"></script>
+  <div id="toast"></div>
+
+<script defer src="crt.js"></script>
 <script>
-  (function () {
-    var notAdmin = document.getElementById('notAdmin');
-    var panel = document.getElementById('panel');
-    var who = document.getElementById('who');
-    var statusBar = document.getElementById('statusBar');
+(function () {
+  var notAdmin = document.getElementById('notAdmin');
+  var panel = document.getElementById('panel');
+  var who = document.getElementById('who');
+  var toast = document.getElementById('toast');
+  var toastTimer;
 
-    function flash(msg, isErr) {
-      statusBar.textContent = msg;
-      statusBar.className = isErr ? 'err' : '';
-      statusBar.style.display = 'block';
-      setTimeout(function () { statusBar.style.display = 'none'; }, 2200);
+  function flash(msg, isErr) {
+    clearTimeout(toastTimer);
+    toast.textContent = msg;
+    toast.className = isErr ? 'err show' : 'show';
+    toastTimer = setTimeout(function () { toast.className = ''; }, 2400);
+  }
+
+  async function load() {
+    var me;
+    try { me = (await (await fetch('/api/me')).json()).user; } catch (e) {}
+    if (!me || !me.username || me.username.toLowerCase() !== 'ruruskaado') {
+      who.textContent = me ? 'signed in as ' + me.username : 'not signed in';
+      panel.style.display = 'none';
+      notAdmin.style.display = '';
+      return;
     }
+    who.textContent = me.username;
+    notAdmin.style.display = 'none';
+    panel.style.display = '';
+    try { await render(); } catch (e) { flash('Failed to load', true); }
+  }
 
-    async function load() {
-      var me;
-      try { me = (await (await fetch('/api/me')).json()).user; } catch (e) {}
-      if (!me || !me.username || me.username.toLowerCase() !== 'ruruskaado') {
-        who.textContent = me ? 'signed in as ' + me.username + ' — not authorized' : 'not signed in';
-        panel.style.display = 'none';
-        notAdmin.style.display = 'block';
-        return;
-      }
-      who.textContent = 'signed in as ' + me.username;
-      notAdmin.style.display = 'none';
-      try { await render(); } catch (e) { flash('Failed to load panel', true); }
+  async function render() {
+    var data = await (await fetch('/api/admin/users')).json();
+    if (data.error) { flash(data.error, true); return; }
+
+    document.getElementById('stUsers').textContent = data.stats.users;
+    document.getElementById('stScore').textContent = data.stats.score_pool.toLocaleString();
+    document.getElementById('stSpent').textContent = data.stats.spent_pool.toLocaleString();
+    document.getElementById('stPurchases').textContent = data.stats.purchases;
+
+    var tbody = document.getElementById('rows');
+    tbody.innerHTML = '';
+    if (!data.users || !data.users.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">no users yet</td></tr>';
+      return;
     }
+    data.users.forEach(function (u, i) {
+      var tr = document.createElement('tr');
+      var isMe = u.username.toLowerCase() === data.admin.username.toLowerCase();
+      if (isMe) tr.className = 'me';
+      var date = u.created_at ? new Date(u.created_at * 1000).toISOString().slice(0, 10) : '-';
+      tr.innerHTML =
+        '<td>' + (i + 1) + '</td>' +
+        '<td class="user">' + u.username + '</td>' +
+        '<td class="num">' + u.total.toLocaleString() + '</td>' +
+        '<td class="num">' + u.spent.toLocaleString() + '</td>' +
+        '<td class="num">' + u.balance.toLocaleString() + '</td>' +
+        '<td class="num">' + u.plays + '</td>' +
+        '<td class="num">' + u.items + '</td>' +
+        '<td class="date">' + date + '</td>';
 
-    async function render() {
-      var data = await (await fetch('/api/admin/users')).json();
-      if (data.error) { flash(data.error, true); return; }
-      document.getElementById('stUsers').textContent = data.stats.users;
-      document.getElementById('stScore').textContent = data.stats.score_pool;
-      document.getElementById('stSpent').textContent = data.stats.spent_pool;
-      document.getElementById('stPurchases').textContent = data.stats.purchases;
+      var actions = document.createElement('td');
+      actions.innerHTML =
+        '<div class="actions">' +
+          '<input class="delta" type="number" value="1000" step="100">' +
+          '<button class="btn primary" data-act="add">+</button>' +
+          '<button class="btn" data-act="sub">&minus;</button>' +
+          '<button class="btn danger" data-act="reset">Reset</button>' +
+        '</div>';
+      var inp = actions.querySelector('input');
+      actions.querySelector('[data-act="add"]').onclick = function () {
+        adjust(u.username, Math.round(Number(inp.value) || 0));
+      };
+      actions.querySelector('[data-act="sub"]').onclick = function () {
+        adjust(u.username, -Math.round(Number(inp.value) || 0));
+      };
+      actions.querySelector('[data-act="reset"]').onclick = function () {
+        resetUser(u.username);
+      };
+      tr.appendChild(actions);
+      tbody.appendChild(tr);
+    });
+  }
 
-      var tbody = document.getElementById('rows');
-      tbody.innerHTML = '';
-      if (!data.users || !data.users.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty">no users yet</td></tr>';
-        return;
-      }
-      data.users.forEach(function (u, i) {
-        var meUser = data.admin.username;
-        var tr = document.createElement('tr');
-        if (u.username.toLowerCase() === meUser.toLowerCase()) tr.className = 'me';
-        var created = u.created_at ? new Date(u.created_at * 1000).toISOString().slice(0, 10) : '-';
-        var delta = document.createElement('input');
-        delta.className = 'delta'; delta.type = 'number'; delta.value = '1000';
-        var apply = document.createElement('button');
-        apply.className = 'btn'; apply.textContent = 'Adjust';
-        apply.onclick = function () { adjust(u.username, parseFloat(delta.value)); };
-        var reset = document.createElement('button');
-        reset.className = 'btn danger'; reset.textContent = 'Reset';
-        reset.onclick = function () { resetUser(u.username); };
-        var actions = document.createElement('td');
-        actions.appendChild(delta);
-        actions.appendChild(apply);
-        actions.appendChild(reset);
-        tr.innerHTML =
-          '<td>' + (i + 1) + '</td><td>' + u.username + '</td>' +
-          '<td class="num">' + u.total + '</td><td class="num">' + u.spent + '</td>' +
-          '<td class="num">' + u.balance + '</td><td class="num">' + u.plays + '</td>' +
-          '<td class="num">' + u.items + '</td><td>' + created + '</td>';
-        tr.appendChild(actions);
-        tbody.appendChild(tr);
-      });
-    }
+  async function adjust(username, delta) {
+    if (!delta) { flash('enter an amount', true); return; }
+    var res = await fetch('/api/admin/adjust', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, delta: delta })
+    });
+    var d = await res.json();
+    if (!res.ok) { flash(d.error || 'failed', true); return; }
+    flash(username + ': ' + (d.delta > 0 ? '+' : '') + d.delta + ' \u2192 ' + d.total.toLocaleString() + ' total');
+    render();
+  }
 
-    async function adjust(username, delta) {
-      if (!Number.isFinite(delta)) { flash('enter a numeric delta', true); return; }
-      var res = await fetch('/api/admin/adjust', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username, delta: delta })
-      });
-      var d = await res.json();
-      if (!res.ok) { flash(d.error || 'failed', true); return; }
-      flash(username + ': ' + (d.delta > 0 ? '+' : '') + d.delta + ' → total ' + d.total);
-      render();
-    }
+  async function resetUser(username) {
+    if (!confirm('Wipe ' + username + "'s scores, purchases and equips?")) return;
+    var res = await fetch('/api/admin/reset', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username })
+    });
+    var d = await res.json();
+    if (!res.ok) { flash(d.error || 'failed', true); return; }
+    flash(username + ' wiped');
+    render();
+  }
 
-    async function resetUser(username) {
-      if (!confirm('Reset ' + username + "'s scores, purchases and equips? This cannot be undone.")) return;
-      var res = await fetch('/api/admin/reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username })
-      });
-      var d = await res.json();
-      if (!res.ok) { flash(d.error || 'failed', true); return; }
-      flash(username + ' reset');
-      render();
-    }
-
-    load();
-  })();
+  load();
+})();
 </script>
 </body>
 </html>
