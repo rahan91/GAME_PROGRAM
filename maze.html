@@ -336,8 +336,8 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ points })
     }).then(r => r.json()).then((d) => {
-      if (d && Number.isFinite(d.balance)) { serverTotal = d.balance; refreshScoreDisplay(); }
-      else if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
+      if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
+      else if (d && Number.isFinite(d.balance)) { serverTotal = d.balance; refreshScoreDisplay(); }
     }).catch(() => {});
   }
 
@@ -849,9 +849,9 @@
       const data = await res.json();
       isLoggedIn = !!(data.user && data.user.username);
       nameInput.textContent = data.user ? data.user.username : 'anonymous';
-      serverTotal = (data.user && Number.isFinite(data.user.balance))
-        ? data.user.balance
-        : (data.user && Number.isFinite(data.user.total)) ? data.user.total : null;
+      serverTotal = (data.user && Number.isFinite(data.user.total))
+        ? data.user.total
+        : (data.user && Number.isFinite(data.user.balance)) ? data.user.balance : null;
     } catch {
       isLoggedIn = false;
       nameInput.textContent = 'anonymous';
