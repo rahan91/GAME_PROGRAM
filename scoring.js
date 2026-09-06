@@ -18,15 +18,16 @@
   // ---------------- Maze ----------------
   // Difficulty multiplier is deliberately conservative: generation parameters
   // (candidates/bias/braid) are what genuinely make harder difficulties harder,
-  // the multiplier only adds a modest reward on top.
+  // the multiplier only adds a modest reward on top. It still tilts enough that
+  // very hard pays meaningfully more than easy (easy 1.10 -> very hard 2.25).
   var MAZE_DIFF_MULT = {
     'very easy': 1.00,
-    'easy':      1.20,
+    'easy':      1.10,
     'medium':    1.45,
-    'hard':      1.75,
-    'very hard': 2.05,
-    'insane':    2.30,
-    'extreme':   2.50
+    'hard':      1.85,
+    'very hard': 2.25,
+    'insane':    2.45,
+    'extreme':   2.65
   };
   var MAZE_BASE_SCORE = 200; // raw reference score for a nominal medium run
   var MAZE_REF_CELLS = 400;   // the default 20x20 maze
