@@ -226,7 +226,7 @@
   function refreshScoreDisplay() {
     const local = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
     const total = (isLoggedIn && serverTotal != null) ? serverTotal : local;
-    scoreDisplay.textContent = Math.round(total * 100) / 100;
+    scoreDisplay.textContent = Shop.fmt(total);
   }
   function addScore(points, holdMs) {
     if (!isLoggedIn) return;
@@ -277,7 +277,7 @@
     btn.style.setProperty('--press', String(p));
     holdDisplay.textContent = (holdMs / 1000).toFixed(1) + 's';
     const gain = Scoring.buttonScore(holdMs);
-    gainDisplay.textContent = '+' + gain;
+    gainDisplay.textContent = '+' + Shop.fmt(gain);
     requestAnimationFrame(tick);
   }
 
@@ -292,7 +292,7 @@
     holding = false;
     const holdMs = Date.now() - downAt;
     const gain = Scoring.buttonScore(holdMs);
-    status.textContent = 'Held ' + (holdMs / 1000).toFixed(1) + 's · +' + gain + ' pts';
+    status.textContent = 'Held ' + (holdMs / 1000).toFixed(1) + 's · +' + Shop.fmt(gain) + ' pts';
     addScore(gain, holdMs);
     loadLeaderboard();
     btn.style.setProperty('--press', '0');

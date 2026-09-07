@@ -554,7 +554,7 @@
       const player = currentPointsPlayer();
       const local = player ? (ScoreBoard.get(player).total || 0) : 0;
       const total = (player && serverTotal != null) ? serverTotal : local;
-      document.getElementById('pointsTotal').textContent = Math.round(total * 100) / 100;
+      document.getElementById('pointsTotal').textContent = Shop.fmt(total);
       document.getElementById('resetPointsBtn').style.display = player ? '' : 'none';
     }
     document.getElementById('resetPointsBtn').addEventListener('click', async () => {
@@ -662,7 +662,7 @@
         '<div class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</div>' +
         window.Shop.npHTML(row) +
         '<div class="pl">' + (row.id !== undefined ? row.id : '') + '</div>' +
-        '<div class="pt">' + (row.total !== undefined ? Math.round(row.total * 100) / 100 : 0) + '</div>' +
+        '<div class="pt">' + (row.total !== undefined ? Shop.fmt(row.total) : 0) + '</div>' +
         '</div>'
       ).join('');
     }

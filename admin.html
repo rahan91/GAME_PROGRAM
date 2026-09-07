@@ -331,7 +331,7 @@
       it = GIFT_ITEMS[i];
       var o = document.createElement('option');
       o.value = it.key;
-      o.textContent = it.slot.toUpperCase() + ' \u00b7 ' + it.name + ' \u00b7 ' + it.price.toLocaleString();
+      o.textContent = it.slot.toUpperCase() + ' \u00b7 ' + it.name + ' \u00b7 ' + (window.Shop ? Shop.fmt(it.price) : it.price);
       giftSelect.appendChild(o);
     }
   })();
@@ -377,7 +377,7 @@
     ctxTarget = { username: username, field: field };
     var labels = { total: 'Total', spent: 'Spent', plays: 'Plays' };
     ctxTitle.textContent = (labels[field] || field) + ' \u2014 ' + username;
-    ctxCur.textContent = current.toLocaleString();
+    ctxCur.textContent = Shop.fmt(current);
     var rect = e.target.getBoundingClientRect();
     ctx.style.display = 'block';
     var cx = rect.left;
@@ -473,8 +473,8 @@
     if (data.error) { flash(data.error, true); return; }
 
     document.getElementById('stUsers').textContent = data.stats.users;
-    document.getElementById('stScore').textContent = data.stats.score_pool.toLocaleString();
-    document.getElementById('stSpent').textContent = data.stats.spent_pool.toLocaleString();
+    document.getElementById('stScore').textContent = Shop.fmt(data.stats.score_pool);
+    document.getElementById('stSpent').textContent = Shop.fmt(data.stats.spent_pool);
     document.getElementById('stPurchases').textContent = data.stats.purchases;
 
     var tbody = document.getElementById('rows');
@@ -491,10 +491,10 @@
       tr.innerHTML =
         '<td>' + (i + 1) + '</td>' +
         '<td class="user">' + u.username + '</td>' +
-        '<td class="num">' + u.total.toLocaleString() + '</td>' +
-        '<td class="num">' + u.spent.toLocaleString() + '</td>' +
-        '<td class="num">' + u.balance.toLocaleString() + '</td>' +
-        '<td class="num">' + u.plays.toLocaleString() + '</td>' +
+        '<td class="num">' + Shop.fmt(u.total) + '</td>' +
+        '<td class="num">' + Shop.fmt(u.spent) + '</td>' +
+        '<td class="num">' + Shop.fmt(u.balance) + '</td>' +
+        '<td class="num">' + Shop.fmt(u.plays) + '</td>' +
         '<td class="num items-cell"><span>' + u.items + '</span>' + (u.items > 0 && !isMe ? '<button class="strip-btn" title="Strip all items">&times;</button>' : '') + '</td>' +
         '<td class="date">' + date + '</td>';
       tbody.appendChild(tr);
@@ -527,7 +527,7 @@
     });
     var d = await res.json();
     if (!res.ok) { flash(d.error || 'failed', true); return; }
-    flash(username + ': ' + field + ' ' + (d.delta > 0 ? '+' : '') + d.delta + ' \u2192 ' + d[field].toLocaleString());
+    flash(username + ': ' + field + ' ' + (d.delta > 0 ? '+' : '') + Shop.fmt(d.delta) + ' \u2192 ' + Shop.fmt(d[field]));
     render();
   }
 

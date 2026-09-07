@@ -180,7 +180,7 @@
     }
     function clearStatus() { setStatus(''); }
 
-    function fmt(n) { return Math.round(n * 100) / 100; }
+    function fmt(n) { return window.Shop.fmt(n); }
 
     function renderTabs() {
       tabsEl.innerHTML = '';
@@ -242,7 +242,7 @@
         if (isEquipped) card.classList.add('equipped');
         card.innerHTML = swatchHTML(item) +
           '<div class="name" style="' + (item.slot === 'nameplate' && item.color ? 'color:' + item.color : '') + '">' + (item.name === 'Default' ? 'Default' : item.name) + '</div>' +
-          '<div class="price">' + (isDefault ? 'Original' : item.price + ' pts') + '</div>';
+          '<div class="price">' + (isDefault ? 'Original' : fmt(item.price) + ' pts') + '</div>';
 
         var action = document.createElement('div');
         if (isEquipped) {
@@ -276,7 +276,7 @@
           btn.disabled = balance < item.price;
           btn.addEventListener('click', function () {
             window.Shop.buy(item.key).then(function (d) {
-              setStatus('Purchased ' + item.name + ' \u00b7 spent ' + item.price);
+              setStatus('Purchased ' + item.name + ' \u00b7 spent ' + fmt(item.price));
               return refresh();
             }).catch(function (e) { setStatus(e.message, true); });
           });

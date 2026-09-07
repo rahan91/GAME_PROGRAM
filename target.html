@@ -215,7 +215,7 @@
   function refreshScoreDisplay() {
     const local = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
     const total = (isLoggedIn && serverTotal != null) ? serverTotal : local;
-    scoreDisplay.textContent = Math.round(total * 100) / 100;
+    scoreDisplay.textContent = Shop.fmt(total);
   }
   function addScore(points) {
     if (!isLoggedIn) return;
@@ -248,7 +248,7 @@
       '<div class="lb-row' + (row.username === me ? ' me' : '') + '">' +
       '<span class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>' +
       window.Shop.npHTML(row) +
-      '<span class="pt">' + row.value.toLocaleString() + '</span>' +
+      '<span class="pt">' + Shop.fmt(row.value) + '</span>' +
       '</div>'
     ).join('');
   }
@@ -289,7 +289,7 @@
     loadLeaderboard();
     const total = hits + misses;
     const acc = total > 0 ? Math.round(hits / total * 100) : 0;
-    runStatus.textContent = 'Run complete: +' + points +
+    runStatus.textContent = 'Run complete: +' + Shop.fmt(points) +
       ' pts (' + hits + ' hits, ' + misses + ' misses, ' + acc + '% accuracy)';
     running = false;
     hits = 0; misses = 0; runScore = 0; runStart = 0;

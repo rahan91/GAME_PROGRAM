@@ -1,4 +1,22 @@
 (function () {
+  function fmtNum(n) {
+    var v = Number(n);
+    if (!isFinite(v)) return String(n == null ? '' : n);
+    var sign = v < 0 ? '-' : '';
+    var a = Math.abs(v);
+    function render(x, suffix) {
+      var intDigits = x >= 100 ? 3 : x >= 10 ? 2 : x >= 1 ? 1 : 0;
+      var decimals = Math.max(0, 4 - intDigits);
+      var s = x.toFixed(decimals);
+      if (s.indexOf('.') > -1) s = s.replace(/\.?0+$/, '');
+      return sign + s + suffix;
+    }
+    if (a >= 1e9) return render(a / 1e9, 'b');
+    if (a >= 1e6) return render(a / 1e6, 'm');
+    if (a >= 1e3) return render(a / 1e3, 'k');
+    return sign + (Math.round(a * 100) / 100);
+  }
+
   var ITEMS = [
     { key: 'maze:default', default: true, slot: 'maze',   name: 'Default',    color: null, price: 0 },
     { key: 'maze:dark-green', slot: 'maze',   name: 'Dark Green', color: '#2f7a4d', price: 10000 },
@@ -306,6 +324,7 @@
     TARGET: 'target',
     ACCENT: 'accent',
     NAMEPLATE: 'nameplate',
+    fmt: fmtNum,
     hexToRgba: hexToRgba,
     cursorSprites: cursorSprites,
     targetSprite: targetSprite,
