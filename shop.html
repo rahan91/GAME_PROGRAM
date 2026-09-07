@@ -98,12 +98,17 @@
     .swatch.target img { width: 100%; height: 100%; display: block; }
     .swatch.accent { border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 14px rgba(var(--acc-main),1); }
     .swatch.nameplate {
-      width: 64px; height: 22px; border-radius: 4px;
+      width: 170px; height: 26px; border-radius: 4px;
       background: rgba(20,28,22,0.8);
-      box-shadow: inset 0 0 0 1px rgba(var(--acc-main),0.35);
-      display: flex; align-items: center; justify-content: center;
+      box-shadow: inset 0 0 0 1px rgba(var(--acc-main),0.25);
+      display: flex; align-items: center; padding: 0 8px; gap: 10px;
+      font-size: 12px; letter-spacing: 0.08em;
     }
-    .swatch.nameplate span { width: 80%; height: 6px; border-radius: 2px; display: block; }
+    .swatch.nameplate .np-ex { font-weight: 600; white-space: nowrap; }
+    .swatch.nameplate .np-pts {
+      margin-left: auto; font-variant-numeric: tabular-nums;
+      color: rgba(var(--acc-main),0.6); font-size: 11px;
+    }
 
     .item .name { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--acc-text),0.9); }
     .item .price { font-size: 12px; color: rgba(230,200,120,0.85); margin-top: 2px; }
@@ -193,7 +198,7 @@
         return '<div class="swatch accent" style="background:' + (item.color || '#8cb496') + '"></div>';
       }
       if (item.slot === 'nameplate') {
-        return '<div class="swatch nameplate">' + (item.color ? '<span style="background:' + item.color + '"></span>' : '&nbsp;') + '</div>';
+        return '<div class="swatch nameplate"><span class="np-ex" style="color:' + (item.color || '#828282') + '">PlayerName</span><span class="np-pts">975</span></div>';
       }
       if (item.slot === 'cursor') {
         return '<div class="swatch cursor"><img data-cursor data-color="' + (item.color || '') + '" alt="cursor"></div>';

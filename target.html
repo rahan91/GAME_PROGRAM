@@ -247,7 +247,7 @@
     container.innerHTML = rows.map((row, i) =>
       '<div class="lb-row' + (row.username === me ? ' me' : '') + '">' +
       '<span class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>' +
-      '<span class="nm">' + row.username + '</span>' +
+      '<span class="nm" style="color:' + (row.nameplate || '#828282') + '">' + row.username + '</span>' +
       '<span class="pt">' + row.value.toLocaleString() + '</span>' +
       '</div>'
     ).join('');

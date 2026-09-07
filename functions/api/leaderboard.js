@@ -1,6 +1,24 @@
 import { json } from '../_lib/auth.js';
+import { getItem } from '../_lib/catalog.js';
 
 const GAMES = { maze: 'total', target: 'total', button: 'best' };
+
+async function attachNameplates(env, rows) {
+  if (!rows.length) return rows;
+  const ids = rows.map((r) => r.id);
+  const ph = ids.map(() => '?').join(', ');
+  const eq = await env.DATABASE.prepare(
+    `SELECT user_id, item_key FROM equips WHERE slot = 'nameplate' AND user_id IN (${ph})`
+  ).bind(...ids).all();
+  const colorByUser = {};
+  for (const e of eq.results) {
+    const it = getItem(e.item_key);
+    if (it && it.color) colorByUser[e.user_id] = it.color;
+  }
+  const def = getItem('nameplate:default');
+  for (const r of rows) r.nameplate = colorByUser[r.id] || (def && def.color) || '#828282';
+  return rows;
+}
 
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
@@ -14,7 +32,7 @@ export async function onRequestGet(context) {
     const rows = await context.env.DATABASE.prepare(
       'SELECT user_id AS id, username, total FROM scores WHERE total > 0 ORDER BY total DESC, updated_at ASC LIMIT ?'
     ).bind(limit).all();
-    return json({ leaderboard: rows.results });
+    return json({ leaderboard: await attachNameplates(context.env, rows.results) });
   }
 
   const col = metric === 'best' ? 'best' : 'total';
@@ -26,5 +44,5 @@ export async function onRequestGet(context) {
       LIMIT ?`
   ).bind(game, limit).all();
 
-  return json({ game, metric: col, leaderboard: rows.results });
+  return json({ game, metric: col, leaderboard: await attachNameplates(context.env, rows.results) });
 }
