@@ -68,7 +68,8 @@ for (const slot of ['maze', 'cursor', 'target', 'accent', 'nameplate']) {
     assert.equal(i.slot, slot);
     assert.equal(i.price, 0);
     assert.equal(i.default, true);
-    assert.equal(i.color, null);
+    if (slot === 'nameplate') assert.match(i.color, /^#[0-9a-f]{6}$/i);
+    else assert.equal(i.color, null);
   });
 }
 
