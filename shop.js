@@ -43,7 +43,7 @@
     { key: 'accent:orange',  slot: 'accent', name: 'Orange',  color: '#f97316', price: 47000 },
     { key: 'accent:yellow',  slot: 'accent', name: 'Yellow',  color: '#eab308', price: 50000 },
 
-    { key: 'nameplate:default', default: true, slot: 'nameplate', name: 'Default', color: '#9a9a9a', price: 0 }
+    { key: 'nameplate:default', default: true, slot: 'nameplate', name: 'Default', color: '#828282', price: 0 }
   ];
 
   var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent', nameplate: 'Nameplate' };

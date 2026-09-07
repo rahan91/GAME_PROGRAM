@@ -236,7 +236,7 @@
 
         if (isEquipped) card.classList.add('equipped');
         card.innerHTML = swatchHTML(item) +
-          '<div class="name">' + (item.name === 'Default' ? 'Default' : item.name) + '</div>' +
+          '<div class="name" style="' + (item.slot === 'nameplate' && item.color ? 'color:' + item.color : '') + '">' + (item.name === 'Default' ? 'Default' : item.name) + '</div>' +
           '<div class="price">' + (isDefault ? 'Original' : item.price + ' pts') + '</div>';
 
         var action = document.createElement('div');

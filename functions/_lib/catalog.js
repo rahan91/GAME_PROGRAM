@@ -44,7 +44,7 @@ export const ITEMS = [
   { key: 'accent:orange',  slot: 'accent', name: 'Orange',   color: '#f97316', price: 47000 },
   { key: 'accent:yellow',  slot: 'accent', name: 'Yellow',   color: '#eab308', price: 50000 },
 
-  { key: 'nameplate:default', default: true, slot: 'nameplate', name: 'Default', color: '#9a9a9a', price: 0 },
+  { key: 'nameplate:default', default: true, slot: 'nameplate', name: 'Default', color: '#828282', price: 0 },
 ];
 
 export const ITEM_BY_KEY = Object.fromEntries(ITEMS.map((i) => [i.key, i]));
