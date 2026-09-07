@@ -43,7 +43,24 @@
     { key: 'accent:orange',  slot: 'accent', name: 'Orange',  color: '#f97316', price: 47000 },
     { key: 'accent:yellow',  slot: 'accent', name: 'Yellow',  color: '#eab308', price: 50000 },
 
-    { key: 'nameplate:default', default: true, slot: 'nameplate', name: 'Default', color: '#828282', price: 0 }
+    { key: 'nameplate:default', default: true, slot: 'nameplate', name: 'Default', color: '#828282', price: 0 },
+    { key: 'nameplate:white',        slot: 'nameplate', name: 'White',        color: '#FFFFFF', price: 30000 },
+    { key: 'nameplate:blue',         slot: 'nameplate', name: 'Blue',         color: '#9696FF', price: 60000 },
+    { key: 'nameplate:green',        slot: 'nameplate', name: 'Green',        color: '#96FF96', price: 100000 },
+    { key: 'nameplate:orange',       slot: 'nameplate', name: 'Orange',       color: '#FFC896', price: 140000 },
+    { key: 'nameplate:light-red',    slot: 'nameplate', name: 'Light Red',    color: '#FF9696', price: 180000 },
+    { key: 'nameplate:pink',         slot: 'nameplate', name: 'Pink',         color: '#FF96FF', price: 200000 },
+    { key: 'nameplate:light-purple', slot: 'nameplate', name: 'Light Purple', color: '#D2A0FF', price: 250000 },
+    { key: 'nameplate:lime',         slot: 'nameplate', name: 'Lime',         color: '#96FF0A', price: 300000 },
+    { key: 'nameplate:yellow',       slot: 'nameplate', name: 'Yellow',       color: '#FFFF0A', price: 360000 },
+    { key: 'nameplate:cyan',         slot: 'nameplate', name: 'Cyan',         color: '#05C8FF', price: 400000 },
+    { key: 'nameplate:red',          slot: 'nameplate', name: 'Red',          color: '#FF2864', price: 470000 },
+    { key: 'nameplate:purple',       slot: 'nameplate', name: 'Purple',       color: '#B428FF', price: 500000 },
+    { key: 'nameplate:amber',        slot: 'nameplate', name: 'Amber',        color: '#FFAF00', price: 650000 },
+    { key: 'nameplate:rainbow',      slot: 'nameplate', name: 'Rainbow',      color: null, price: 800000,
+      colors: ['#FF2864', '#FFAF00', '#FFFF0A', '#96FF96', '#05C8FF', '#9696FF', '#B428FF', '#FF96FF'] },
+    { key: 'nameplate:fiery-red',    slot: 'nameplate', name: 'Fiery Red',    color: null, price: 1000000,
+      colors: ['#FF2864', '#FFAF00', '#FFFF0A'] }
   ];
 
   var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent', nameplate: 'Nameplate' };
@@ -256,6 +273,33 @@
       .catch(function () { return null; });
   }
 
+  var _npSheet = null;
+  var _npDefined = {};
+  var _npAnimIds = {};
+  var _npAnimId = 0;
+  function npAnimId(colors) {
+    var key = colors.join('');
+    if (!(key in _npAnimIds)) _npAnimIds[key] = 'npkf' + (++_npAnimId);
+    return _npAnimIds[key];
+  }
+  function npKeyframes(id, colors) {
+    if (_npDefined[id]) return;
+    _npDefined[id] = true;
+    if (!_npSheet) {
+      _npSheet = document.createElement('style');
+      _npSheet.id = 'np-keyframes';
+      document.head.appendChild(_npSheet);
+    }
+    var kfs = colors.map(function (c, i) {
+      return ((i / colors.length) * 100).toFixed(2) + '% { color:' + c + '; }';
+    }).join(' ');
+    kfs += ' 100% { color:' + colors[0] + '; }';
+    _npSheet.textContent += '@keyframes ' + id + ' { ' + kfs + ' } ';
+  }
+  function npDuration(colors) {
+    return (colors.length * 0.5) + 's';
+  }
+
   window.Shop = {
     MAZE: 'maze',
     CURSOR: 'cursor',
@@ -268,6 +312,24 @@
     applyAccent: applyAccent,
     applyAccentFromState: applyAccentFromState,
     accentRgba: accentRgba,
+    npStyle: function (item) {
+      var first = item && (item.color || (item.colors && item.colors[0]));
+      if (item && item.colors && item.colors.length) {
+        var aid = npAnimId(item.colors);
+        npKeyframes(aid, item.colors);
+        return 'color:' + (first || '#828282') + ';animation:' + aid + ' ' + npDuration(item.colors) + ' linear infinite';
+      }
+      return 'color:' + (first || '#828282');
+    },
+    npHTML: function (row) {
+      var uname = (row && row.username) || '';
+      if (row && row.nameplateColors && row.nameplateColors.length) {
+        var aid = npAnimId(row.nameplateColors);
+        npKeyframes(aid, row.nameplateColors);
+        return '<span class="nm" style="animation:' + aid + ' ' + npDuration(row.nameplateColors) + ' linear infinite">' + uname + '</span>';
+      }
+      return '<span class="nm" style="color:' + ((row && row.nameplate) || '#828282') + '">' + uname + '</span>';
+    },
 
     state: function () {
       return serverState().then(function (s) {

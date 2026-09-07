@@ -10,13 +10,23 @@ async function attachNameplates(env, rows) {
   const eq = await env.DATABASE.prepare(
     `SELECT user_id, item_key FROM equips WHERE slot = 'nameplate' AND user_id IN (${ph})`
   ).bind(...ids).all();
-  const colorByUser = {};
+  const byUser = {};
   for (const e of eq.results) {
     const it = getItem(e.item_key);
-    if (it && it.color) colorByUser[e.user_id] = it.color;
+    if (!it) continue;
+    if (it.colors) byUser[e.user_id] = { colors: it.colors };
+    else if (it.color) byUser[e.user_id] = { color: it.color };
   }
   const def = getItem('nameplate:default');
-  for (const r of rows) r.nameplate = colorByUser[r.id] || (def && def.color) || '#828282';
+  for (const r of rows) {
+    const v = byUser[r.id];
+    if (v) {
+      r.nameplate = v.color || null;
+      r.nameplateColors = v.colors || null;
+    } else {
+      r.nameplate = (def && def.color) || '#828282';
+    }
+  }
   return rows;
 }
 

@@ -20,6 +20,11 @@ const TARGET_PRICES = {
 const ACCENT_PRICES = {
   aqua: 30000, teal: 33000, blue: 36000, indigo: 39000, violet: 40000, red: 44000, orange: 47000, yellow: 50000,
 };
+const NAMEPLATE_PRICES = {
+  white: 30000, blue: 60000, green: 100000, orange: 140000, 'light-red': 180000, pink: 200000,
+  'light-purple': 250000, lime: 300000, yellow: 360000, cyan: 400000, red: 470000, purple: 500000,
+  amber: 650000, rainbow: 800000, 'fiery-red': 1000000,
+};
 
 for (const [color, price] of Object.entries(MAZE_PRICES)) {
   check(`maze ${color} = ${price}`, () => {
@@ -58,6 +63,23 @@ for (const [color, price] of Object.entries(ACCENT_PRICES)) {
     assert.equal(i.slot, 'accent');
     assert.equal(i.price, price);
     assert.match(i.color, /^#[0-9a-f]{6}$/i);
+  });
+}
+
+for (const [color, price] of Object.entries(NAMEPLATE_PRICES)) {
+  check(`nameplate ${color} = ${price}`, () => {
+    const i = item(`nameplate:${color}`);
+    assert.ok(i, `nameplate:${color} exists`);
+    assert.equal(i.slot, 'nameplate');
+    assert.equal(i.price, price);
+    const hasSolid = /^#[0-9a-f]{6}$/i.test(i.color || '');
+    if (['rainbow', 'fiery-red'].includes(color)) {
+      assert.ok(Array.isArray(i.colors) && i.colors.length >= 3, `${color} has animated colors`);
+      for (const c of i.colors) assert.match(c, /^#[0-9a-f]{6}$/i);
+      if (i.color) assert.fail(`${color} should be animation-only`);
+    } else {
+      assert.match(i.color, /^#[0-9a-f]{6}$/i);
+    }
   });
 }
 

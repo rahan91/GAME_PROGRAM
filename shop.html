@@ -198,7 +198,7 @@
         return '<div class="swatch accent" style="background:' + (item.color || '#8cb496') + '"></div>';
       }
       if (item.slot === 'nameplate') {
-        return '<div class="swatch nameplate"><span class="np-ex" style="color:' + (item.color || '#828282') + '">PlayerName</span><span class="np-pts">975</span></div>';
+        return '<div class="swatch nameplate"><span class="np-ex" style="' + window.Shop.npStyle(item) + '">PlayerName</span><span class="np-pts">975</span></div>';
       }
       if (item.slot === 'cursor') {
         return '<div class="swatch cursor"><img data-cursor data-color="' + (item.color || '') + '" alt="cursor"></div>';

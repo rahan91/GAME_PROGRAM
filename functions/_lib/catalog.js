@@ -45,6 +45,23 @@ export const ITEMS = [
   { key: 'accent:yellow',  slot: 'accent', name: 'Yellow',   color: '#eab308', price: 50000 },
 
   { key: 'nameplate:default', default: true, slot: 'nameplate', name: 'Default', color: '#828282', price: 0 },
+  { key: 'nameplate:white',        slot: 'nameplate', name: 'White',        color: '#FFFFFF', price: 30000 },
+  { key: 'nameplate:blue',         slot: 'nameplate', name: 'Blue',         color: '#9696FF', price: 60000 },
+  { key: 'nameplate:green',        slot: 'nameplate', name: 'Green',        color: '#96FF96', price: 100000 },
+  { key: 'nameplate:orange',       slot: 'nameplate', name: 'Orange',       color: '#FFC896', price: 140000 },
+  { key: 'nameplate:light-red',    slot: 'nameplate', name: 'Light Red',    color: '#FF9696', price: 180000 },
+  { key: 'nameplate:pink',         slot: 'nameplate', name: 'Pink',         color: '#FF96FF', price: 200000 },
+  { key: 'nameplate:light-purple', slot: 'nameplate', name: 'Light Purple', color: '#D2A0FF', price: 250000 },
+  { key: 'nameplate:lime',         slot: 'nameplate', name: 'Lime',         color: '#96FF0A', price: 300000 },
+  { key: 'nameplate:yellow',       slot: 'nameplate', name: 'Yellow',       color: '#FFFF0A', price: 360000 },
+  { key: 'nameplate:cyan',         slot: 'nameplate', name: 'Cyan',         color: '#05C8FF', price: 400000 },
+  { key: 'nameplate:red',          slot: 'nameplate', name: 'Red',          color: '#FF2864', price: 470000 },
+  { key: 'nameplate:purple',       slot: 'nameplate', name: 'Purple',       color: '#B428FF', price: 500000 },
+  { key: 'nameplate:amber',        slot: 'nameplate', name: 'Amber',        color: '#FFAF00', price: 650000 },
+  { key: 'nameplate:rainbow',      slot: 'nameplate', name: 'Rainbow',      color: null, price: 800000,
+    colors: ['#FF2864', '#FFAF00', '#FFFF0A', '#96FF96', '#05C8FF', '#9696FF', '#B428FF', '#FF96FF'] },
+  { key: 'nameplate:fiery-red',    slot: 'nameplate', name: 'Fiery Red',    color: null, price: 1000000,
+    colors: ['#FF2864', '#FFAF00', '#FFFF0A'] },
 ];
 
 export const ITEM_BY_KEY = Object.fromEntries(ITEMS.map((i) => [i.key, i]));
