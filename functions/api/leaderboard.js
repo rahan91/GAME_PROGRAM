@@ -14,7 +14,7 @@ async function attachNameplates(env, rows) {
   for (const e of eq.results) {
     const it = getItem(e.item_key);
     if (!it) continue;
-    if (it.colors) byUser[e.user_id] = { colors: it.colors };
+    if (it.colors) byUser[e.user_id] = { colors: it.colors, speed: it.speed || null };
     else if (it.color) byUser[e.user_id] = { color: it.color };
   }
   const def = getItem('nameplate:default');
@@ -23,6 +23,7 @@ async function attachNameplates(env, rows) {
     if (v) {
       r.nameplate = v.color || null;
       r.nameplateColors = v.colors || null;
+      r.nameplateSpeed = v.speed || null;
     } else {
       r.nameplate = (def && def.color) || '#828282';
     }

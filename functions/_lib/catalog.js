@@ -59,9 +59,9 @@ export const ITEMS = [
   { key: 'nameplate:purple',       slot: 'nameplate', name: 'Purple',       color: '#B428FF', price: 50000 },
   { key: 'nameplate:amber',        slot: 'nameplate', name: 'Amber',        color: '#FFAF00', price: 65000 },
   { key: 'nameplate:rainbow',      slot: 'nameplate', name: 'Rainbow',      color: null, price: 80000,
-    colors: ['#FF2864', '#FFAF00', '#FFFF0A', '#96FF96', '#05C8FF', '#9696FF', '#B428FF', '#FF96FF'] },
+    colors: ['#FF2864', '#FFAF00', '#FFFF0A', '#96FF96', '#05C8FF', '#9696FF', '#B428FF'] },
   { key: 'nameplate:fiery-red',    slot: 'nameplate', name: 'Fiery Red',    color: null, price: 100000,
-    colors: ['#FF2864', '#FFAF00', '#FFFF0A'] },
+    colors: ['#FF2864', '#FFAF00', '#FFFF0A'], speed: 0.24 },
 ];
 
 export const ITEM_BY_KEY = Object.fromEntries(ITEMS.map((i) => [i.key, i]));

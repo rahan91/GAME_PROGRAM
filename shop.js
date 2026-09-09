@@ -76,9 +76,9 @@
     { key: 'nameplate:purple',       slot: 'nameplate', name: 'Purple',       color: '#B428FF', price: 50000 },
     { key: 'nameplate:amber',        slot: 'nameplate', name: 'Amber',        color: '#FFAF00', price: 65000 },
     { key: 'nameplate:rainbow',      slot: 'nameplate', name: 'Rainbow',      color: null, price: 80000,
-      colors: ['#FF2864', '#FFAF00', '#FFFF0A', '#96FF96', '#05C8FF', '#9696FF', '#B428FF', '#FF96FF'] },
+      colors: ['#FF2864', '#FFAF00', '#FFFF0A', '#96FF96', '#05C8FF', '#9696FF', '#B428FF'] },
     { key: 'nameplate:fiery-red',    slot: 'nameplate', name: 'Fiery Red',    color: null, price: 100000,
-      colors: ['#FF2864', '#FFAF00', '#FFFF0A'] }
+    colors: ['#FF2864', '#FFAF00', '#FFFF0A'], speed: 0.24 }
   ];
 
   var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent', nameplate: 'Nameplate' };
@@ -314,8 +314,8 @@
     kfs += ' 100% { color:' + colors[0] + '; }';
     _npSheet.textContent += '@keyframes ' + id + ' { ' + kfs + ' } ';
   }
-  function npDuration(colors) {
-    return (colors.length * 0.5) + 's';
+  function npDuration(colors, speed) {
+    return (speed || colors.length * 0.5) + 's';
   }
 
   window.Shop = {
@@ -336,7 +336,7 @@
       if (item && item.colors && item.colors.length) {
         var aid = npAnimId(item.colors);
         npKeyframes(aid, item.colors);
-        return 'color:' + (first || '#828282') + ';animation:' + aid + ' ' + npDuration(item.colors) + ' linear infinite';
+        return 'color:' + (first || '#828282') + ';animation:' + aid + ' ' + npDuration(item.colors, item.speed) + ' linear infinite';
       }
       return 'color:' + (first || '#828282');
     },
@@ -345,7 +345,7 @@
       if (row && row.nameplateColors && row.nameplateColors.length) {
         var aid = npAnimId(row.nameplateColors);
         npKeyframes(aid, row.nameplateColors);
-        return '<span class="nm" style="animation:' + aid + ' ' + npDuration(row.nameplateColors) + ' linear infinite">' + uname + '</span>';
+        return '<span class="nm" style="animation:' + aid + ' ' + npDuration(row.nameplateColors, row.nameplateSpeed) + ' linear infinite">' + uname + '</span>';
       }
       return '<span class="nm" style="color:' + ((row && row.nameplate) || '#828282') + '">' + uname + '</span>';
     },
