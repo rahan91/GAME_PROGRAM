@@ -232,7 +232,7 @@
 
 <div id="cross"></div>
 
-<div class="hint">Draw a circle &middot; bring the stroke back to its start to finish &middot; every attempt is scored on circularity</div>
+<div class="hint">Center your circle on the dot &middot; bring the stroke back to its start to finish &middot; scored on circularity around the dot</div>
 
 <div id="leaderboard">
   <h3>Circle &middot; Accuracy</h3>
@@ -253,6 +253,7 @@
   const triesDisplay = document.getElementById('triesDisplay');
 
   const SIZE = 640;           // logical canvas space
+  const CENTER = SIZE / 2;    // fixed anchor: the dot you must center on
   const ctx = board.getContext('2d');
 
   let dpr = 1;
@@ -299,6 +300,24 @@
   function clearBoard() {
     ctx.clearRect(0, 0, SIZE, SIZE);
   }
+  // exact 10px screen dot at board center, with a soft halo so it always reads
+  function drawDot() {
+    const rect = board.getBoundingClientRect();
+    const x = rect.width / 2, y = rect.height / 2;
+    ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.beginPath();
+    ctx.arc(x, y, 16, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(235,242,238,0.95)';
+    ctx.shadowColor = 'rgba(235,242,238,0.8)';
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.restore();
+  }
   function drawStroke() {
     if (stroke.length < 2) return;
     ctx.save();
@@ -320,13 +339,8 @@
     ctx.shadowBlur = 14;
     ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.arc(fit.cx, fit.cy, fit.R, 0, Math.PI * 2);
+    ctx.arc(CENTER, CENTER, fit.R, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = ringColor;
-    ctx.beginPath();
-    ctx.arc(fit.cx, fit.cy, 3, 0, Math.PI * 2);
-    ctx.fill();
     ctx.restore();
   }
   function render() {
@@ -418,7 +432,7 @@
     drawing = false;
     finished = true;
     const elapsed = (Date.now() - strokeStart) / 1000;
-    lastFit = Scoring.circleFit(stroke);
+    lastFit = Scoring.circleFit(stroke, { cx: CENTER, cy: CENTER });
     if (!lastFit) { abandonDraw('too short'); return; }
     lastCov = lastFit.coverage;
     const accuracy = lastFit.accuracy;
@@ -481,7 +495,7 @@
     render();
     // auto-finish when the stroke closes back onto its start with a real loop behind it
     if (stroke.length > 12 && pathLength(stroke) > 60) {
-      const est = Scoring.circleFit(stroke);
+      const est = Scoring.circleFit(stroke, { cx: CENTER, cy: CENTER });
       const cov = est ? est.coverage : 0;
       const closeR = Math.max(16, (est && est.R) ? est.R * 0.10 : 20);
       if (cov >= 0.55 && Math.hypot(p[0] - stroke[0][0], p[1] - stroke[0][1]) < closeR) {
@@ -493,7 +507,7 @@
     if (!drawing) return;
     drawing = false;
     if (stroke.length < 4 || pathLength(stroke) < 40) { abandonDraw('too short'); return; }
-    const est = Scoring.circleFit(stroke);
+    const est = Scoring.circleFit(stroke, { cx: CENTER, cy: CENTER });
     const cov = est ? est.coverage : 0;
     if (cov >= 0.5) {
       finishDraw();

@@ -236,6 +236,26 @@ const cf = S.circleFit;
   const fit = cf(half);
   assert(fit.coverage >= 0.48 && fit.coverage <= 0.53, 'a half-loop reports ~50% coverage');
 }
+{
+  // fixed anchor center: a perfect circle centered on the dot is perfect
+  const anchor = { cx: 320, cy: 320 };
+  const ok = sampleCircle(320, 320, 150, 360, 0);
+  const f0 = cf(ok, anchor);
+  assert(f0.accuracy > 0.995 && f0.coverage > 0.99, 'anchored perfect circle scores ~100%');
+  // same circle drawn off the dot is punished
+  const off = sampleCircle(320 + 25, 320 + 25, 150, 360, 0);
+  const f1 = cf(off, anchor);
+  assert(f1.accuracy < 0.95, 'anchored circle offset 25px from the dot drops accuracy');
+  assert(f1.accuracy > 0.7, 'a 25px offset is not catastrophic');
+  // a loop that does not enclose the dot cannot cover the full sweep
+  const tangent = sampleCircle(320 + 150, 320, 150, 360, 0);
+  const f2 = cf(tangent, anchor);
+  assert(f2.coverage <= 0.55, 'a loop that misses the dot reports low coverage around it');
+  // the Kasa path still works when no anchor is given
+  const free = sampleCircle(200, 150, 100, 400, 0);
+  const f3 = cf(free);
+  assert(f3.accuracy > 0.995, 'unanchored fit still recovers a perfect circle');
+}
 
 console.log('\n' + (failures === 0 ? 'ALL ' + checks + ' CHECKS PASSED' : failures + ' OF ' + checks + ' CHECKS FAILED'));
 process.exit(failures === 0 ? 0 : 1);

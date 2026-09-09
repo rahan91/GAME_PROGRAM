@@ -189,15 +189,20 @@
   }
 
   // Fit a circle to the stroke and grade it:
-  //  - center via Kasa least squares (robust to uneven point density)
-  //  - accuracy = 1 - RMS relative radial deviation measured per point around
-  //    the fitted center (R = mean radius), harsh on wobble and ellipses
-  //  - coverage = 1 - longest run of empty angular bins / 360: measures the
-  //    true sweep of the loop, independent of how densely the stroke samples it
-  // points: array of [x, y]. Returns null for degenerate inputs.
-  function circleFit(points) {
+//  - center: a fixed anchor ({cx,cy}) if provided, otherwise the Kasa
+//    least-squares fit (robust to uneven point density)
+//  - accuracy = 1 - RMS relative radial deviation measured per point around
+//    that center (R = mean radius), harsh on wobble, ellipses and off-center
+//    circles when an anchor is given
+//  - coverage = 1 - longest run of empty angular bins / 360: measures the true
+//    sweep of the loop around the center, independent of sample density
+// points: array of [x, y], fixed: {cx, cy} | undefined. Returns null for
+// degenerate inputs.
+  function circleFit(points, fixed) {
     if (!Array.isArray(points) || points.length < 4) return null;
-    var c = circleCenter(points);
+    var c = (fixed && Number.isFinite(fixed.cx) && Number.isFinite(fixed.cy))
+      ? { cx: fixed.cx, cy: fixed.cy }
+      : circleCenter(points);
     var BINS = 360;
     var bins = new Array(BINS).fill(0);
     var sumR = 0, sq = 0;
