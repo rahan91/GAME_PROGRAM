@@ -78,7 +78,7 @@
     { key: 'nameplate:rainbow',      slot: 'nameplate', name: 'Rainbow',      color: null, price: 80000,
       colors: ['#FF2864', '#FFAF00', '#FFFF0A', '#96FF96', '#05C8FF', '#9696FF', '#B428FF'] },
     { key: 'nameplate:fiery-red',    slot: 'nameplate', name: 'Fiery Red',    color: null, price: 100000,
-    colors: ['#FF2864', '#FFAF00', '#FFFF0A'], speed: 0.8 }
+    colors: ['#FF2864', '#FFAF00', '#FFFF0A'], speed: 1.2 }
   ];
 
   var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent', nameplate: 'Nameplate' };
