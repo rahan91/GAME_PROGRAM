@@ -282,15 +282,26 @@
     targetWrap.style.top = pos.y + 'px';
   }
 
+  // Smaller screens and touch devices earn less — the game is harder on them.
+  function deviceScoreMult() {
+    var w = window.innerWidth || 1280;
+    var s = w >= 1280 ? 1.0 : w >= 960 ? 0.92 : w >= 768 ? 0.84 : w >= 600 ? 0.76 : 0.68;
+    var t = ('ontouchstart' in window) ? 0.8 : 1.0;
+    return Math.round(s * t * 100) / 100;
+  }
+
   // End of a run: submit its total exactly once, then prepare the next run.
   function endRun(now) {
-    const points = Scoring.targetRunScore(runScore);
+    const raw = Scoring.targetRunScore(runScore);
+    const mult = deviceScoreMult();
+    const points = Math.max(0, Math.round(raw * mult));
     addScore(points);
     loadLeaderboard();
     const total = hits + misses;
     const acc = total > 0 ? Math.round(hits / total * 100) : 0;
     runStatus.textContent = 'Run complete: +' + Shop.fmt(points) +
-      ' pts (' + hits + ' hits, ' + misses + ' misses, ' + acc + '% accuracy)';
+      ' pts (' + hits + ' hits, ' + misses + ' misses, ' + acc + '% accuracy' +
+      (mult < 1 ? ', ×' + mult : '') + ')';
     running = false;
     hits = 0; misses = 0; runScore = 0; runStart = 0;
     updateRunDisplay();

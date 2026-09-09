@@ -58,7 +58,7 @@
   // by hitting more targets. Nothing in the formula depends on elapsed session
   // time, so simply keeping the page open cannot raise future scores.
   var RUN_TARGETS = 20;
-  var TARGET_BASE_HIT = 13;       // nominal per-hit score at reference speed + perfect acc
+  var TARGET_BASE_HIT = 30;       // nominal per-hit score at reference speed + perfect acc
   var TARGET_REF_REACTION = 400;  // reference reaction time in ms
   var TARGET_SPEED_MIN = 0.5;     // floor: too slow buys nothing extra
   var TARGET_SPEED_MAX = 1.5;     // ceiling: sub-~267ms reactions gain nothing more
