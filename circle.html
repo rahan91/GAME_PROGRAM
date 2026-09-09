@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circle — Draw a Perfect Ring &amp; Score | GAME PROGRAM</title>
+  <meta name="description" content="Trace a perfect circle over the ring in one stroke. Every part of your line is colored by its accuracy, and the score is driven almost entirely by how round you drew it. Out of the band, too slow, or incomplete ends the run.">
+  <meta name="keywords" content="circle game, draw game, ring game, accuracy game, arcade, browser game, leaderboard, percentile">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#1c1c1c">
+  <link rel="canonical" href="https://game-program.pages.dev/circle">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GAME PROGRAM">
+  <meta property="og:title" content="Circle — Draw a Perfect Ring &amp; Score | GAME PROGRAM">
+  <meta property="og:description" content="Trace a perfect circle in one stroke. The line is colored by accuracy part by part; the score is all about roundness.">
+  <meta property="og:url" content="https://game-program.pages.dev/circle">
+  <meta property="og:image" content="https://game-program.pages.dev/assets/circle-icon.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Circle — Draw a Perfect Ring &amp; Score | GAME PROGRAM">
+  <meta name="twitter:description" content="Trace a perfect circle in one stroke. The line is colored by accuracy part by part; the score is all about roundness.">
+  <meta name="twitter:image" content="https://game-program.pages.dev/assets/circle-icon.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Circle",
+    "url": "https://game-program.pages.dev/circle",
+    "description": "Trace a perfect circle over the ring in one stroke and score on accuracy.",
+    "genre": "Arcade",
+    "gamePlatform": "Web Browser",
+    "operatingSystem": "Any",
+    "applicationCategory": "Game",
+    "inLanguage": "en"
+  }
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #1c1c1c;
+    color: #e0e0e0;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    animation: float 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .orb--1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(var(--acc-dim),0.18) 0%, transparent 70%);
+    top: 0%; left: 5%;
+  }
+  .orb--2 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(var(--acc-orb),0.14) 0%, transparent 70%);
+    bottom: 0%; right: 0%;
+    animation-delay: -4s;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.03); }
+  }
+
+  .back {
+    position: fixed; top: 20px; left: 20px; z-index: 10;
+    color: rgba(var(--acc-main),0.6); text-decoration: none;
+    font-size: 14px; transition: color 0.2s;
+  }
+  .back:hover { color: rgba(var(--acc-main),1); }
+
+  h1 {
+    position: fixed; top: 20px; left: 0; right: 0;
+    text-align: center; pointer-events: none;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 6px;
+    text-transform: uppercase; color: rgba(var(--acc-main),0.85);
+  }
+
+  #hud {
+    position: fixed; top: 64px; left: 0; right: 0;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 6px 18px; padding: 0 12px;
+    pointer-events: none; z-index: 8;
+    font-size: 13px; color: rgba(var(--acc-main),0.75);
+  }
+  #hud .stat { letter-spacing: 0.1em; }
+  #hud b { color: rgba(var(--acc-texthi),0.95); }
+
+  #boardWrap {
+    position: fixed; left: 50%; top: calc(50% + 14px);
+    width: min(58vmin, 480px); height: min(58vmin, 480px);
+    transform: translate(-50%, -50%);
+    z-index: 5;
+  }
+  #board {
+    display: block; width: 100%; height: 100%;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(var(--acc-main),0.16);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35) inset, 0 0 0 1px rgba(0,0,0,0.3);
+    cursor: none; touch-action: none;
+  }
+  #board::after {
+    content: ''; position: absolute; inset: 0; border-radius: 14px;
+    pointer-events: none;
+  }
+
+  #goBtn {
+    position: absolute; left: 50%; top: 100%;
+    transform: translateX(-50%);
+    margin-top: 12px;
+    font-family: inherit; font-size: 14px; letter-spacing: 4px;
+    text-transform: uppercase; cursor: pointer;
+    padding: 10px 26px; border-radius: 8px;
+    background: rgba(var(--acc-btn),0.18);
+    color: rgba(var(--acc-texthi),0.95);
+    border: 1px solid rgba(var(--acc-btn),0.4);
+    z-index: 12; transition: background 0.15s;
+    display: none;
+  }
+  #goBtn:hover { background: rgba(var(--acc-btn),0.4); }
+
+  #resultCard {
+    position: absolute; left: 50%; top: 30%; transform: translateX(-50%);
+    text-align: center; z-index: 12; pointer-events: none;
+    display: none;
+  }
+  #resultCard .res-acc {
+    font-size: 34px; font-weight: 700; letter-spacing: 1px;
+    color: rgba(var(--acc-texthi),0.95); text-shadow: 0 0 18px rgba(var(--acc-bright),0.4);
+  }
+  #resultCard .res-acc.err { color: rgba(230,110,120,0.95); text-shadow: 0 0 18px rgba(230,110,120,0.35); }
+  #resultCard .res-sub { margin-top: 6px; font-size: 12px; color: rgba(var(--acc-main),0.8); }
+  #resultCard .res-sub b { color: rgba(var(--acc-bright),1); }
+  #resultCard .res-sub.err b { color: rgba(230,110,120,1); }
+
+  #cross {
+    position: fixed; left: 0; top: 0;
+    width: 14px; height: 14px;
+    pointer-events: none; z-index: 160;
+    opacity: 0; will-change: transform;
+  }
+  #cross.on { opacity: 1; }
+  #cross::before, #cross::after {
+    content: ''; position: absolute;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 0 2px rgba(0,0,0,0.8);
+  }
+  #cross::before { left: 0; right: 0; top: 6px; height: 2px; }
+  #cross::after { top: 0; bottom: 0; left: 6px; width: 2px; }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 0; right: 0;
+    text-align: center; color: rgba(var(--acc-main),0.35);
+    font-size: 12px; pointer-events: none; z-index: 6;
+  }
+
+  #runStatus {
+    position: fixed; bottom: 42px; left: 0; right: 0;
+    text-align: center; color: rgba(var(--acc-main),0.7);
+    font-size: 12px; pointer-events: none; z-index: 6;
+  }
+
+  #leaderboard {
+    position: fixed; bottom: 20px; left: 20px; z-index: 6;
+    width: 230px; max-height: 46vh;
+    border: 1px solid rgba(var(--acc-main),0.2);
+    border-radius: 12px; background: rgba(var(--acc-panel),0.82);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    backdrop-filter: blur(3px);
+    overflow: hidden; pointer-events: none;
+  }
+  #leaderboard h3 {
+    font-size: 10px; font-weight: 400; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(var(--acc-main),0.85);
+    padding: 10px 14px 7px; border-bottom: 1px solid rgba(var(--acc-main),0.18);
+  }
+  #leaderboard .lb-body { padding: 5px 0; overflow: hidden; }
+  .lb-row { display: flex; align-items: center; gap: 8px; padding: 4px 14px; font-size: 12px; }
+  .lb-row.me { background: rgba(var(--acc-main),0.14); }
+  .lb-row .rk { width: 18px; color: rgba(var(--acc-main),0.45); font-variant-numeric: tabular-nums; text-align: right; }
+  .lb-row .rk.top { color: rgba(230,200,120,0.9); font-weight: 600; }
+  .lb-row .nm { flex: 1; color: rgba(var(--acc-text),0.85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-row .pt { color: rgba(var(--acc-main),0.85); font-variant-numeric: tabular-nums; }
+  .lb-row.me .pt { color: rgba(var(--acc-bright),1); }
+  .lb-row .acc { color: rgba(var(--acc-texthi),0.95); font-variant-numeric: tabular-nums; }
+  .lb-user {
+    border-top: 1px solid rgba(var(--acc-main),0.18);
+    padding: 8px 14px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: rgba(var(--acc-texthi),0.9);
+    letter-spacing: 0.04em;
+  }
+  .lb-user b { color: rgba(var(--acc-bright),1); }
+  .lb-user .muted { color: rgba(var(--acc-main),0.55); }
+  .lb-status { padding: 10px 14px; font-size: 11px; color: rgba(var(--acc-main),0.45); }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 1.25rem; letter-spacing: 4px; }
+    #hud { top: 56px; font-size: 12px; gap: 3px 14px; }
+    #runStatus, .hint { font-size: 11px; }
+    #leaderboard { display: none; }
+    #boardWrap { top: calc(50% + 14px); width: min(62vmin, 460px); height: min(62vmin, 460px); }
+  }
+  @media (pointer: coarse) {
+    #cross { display: none; }
+  }
+</style>
+  <link rel="stylesheet" href="crt.css">
+  <link rel="stylesheet" href="ui.css">
+  <script defer src="crt.js"></script>
+  <script src="score.js"></script>
+  <script src="scoring.js"></script>
+  <script src="shop.js"></script>
+</head>
+<body>
+
+<div class="orb orb--1"></div>
+<div class="orb orb--2"></div>
+
+<a class="back" href="/gallery">&larr; Gallery</a>
+
+<h1>Circle</h1>
+
+<div id="hud">
+  <span class="stat">Player <b id="playerName">anonymous</b></span>
+  <span class="stat">Total <b id="scoreDisplay">0</b></span>
+  <span class="stat">Time <b id="timeDisplay">0.0s</b></span>
+  <span class="stat">Accuracy <b id="accDisplay">-</b></span>
+  <span class="stat">Coverage <b id="covDisplay">0%</b></span>
+</div>
+
+<div id="boardWrap">
+  <canvas id="board"></canvas>
+  <button id="goBtn">DRAW</button>
+  <div id="resultCard">
+    <div class="res-acc" id="resAcc">0%</div>
+    <div class="res-sub" id="resSub"></div>
+  </div>
+</div>
+
+<div id="cross"></div>
+
+<div id="runStatus"></div>
+<div class="hint">Trace the ring in one stroke &middot; line colors show accuracy part by part &middot; stay in the band &middot; finish before time runs out</div>
+
+<div id="leaderboard">
+  <h3>Circle &middot; Accuracy</h3>
+  <div class="lb-body" id="lbRows"><div class="lb-status">Loading&hellip;</div></div>
+  <div class="lb-user" id="lbUser"></div>
+</div>
+
+<script>
+(() => {
+  const board = document.getElementById('board');
+  const boardWrap = document.getElementById('boardWrap');
+  const goBtn = document.getElementById('goBtn');
+  const resAcc = document.getElementById('resAcc');
+  const resSub = document.getElementById('resSub');
+  const resultCard = document.getElementById('resultCard');
+  const timeDisplay = document.getElementById('timeDisplay');
+  const accDisplay = document.getElementById('accDisplay');
+  const covDisplay = document.getElementById('covDisplay');
+  const runStatus = document.getElementById('runStatus');
+
+  const SIZE = 640;           // logical canvas space
+  const cx = SIZE / 2, cy = SIZE / 2;
+  const ctx = board.getContext('2d');
+
+  const P = Scoring.CIRCLE_PARAMS;   // radius, tolerance, budget, minCoverage
+  const R = P.radius;
+  const TOL = P.tolerance;
+  const BUDGET = P.budget;
+
+  let dpr = 1;
+  let phase = 'idle';         // idle | draw | result | error
+  let drawing = false;
+  let stroke = [];            // points traced (logical coords)
+  let colors = [];            // per-segment color (matches stroke[i-1]..stroke[i])
+  let strokeStart = 0;
+  let isLoggedIn = false;
+  let serverTotal = null;
+  let lastAcc = 0;
+  let lastCov = 0;
+  let ringColor = 'rgba(140,180,150,0.8)';
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  // ---------- canvas sizing (crisp at device pixel ratio) ----------
+  function fit() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    board.width = Math.max(2, Math.round(boardWrap.getBoundingClientRect().width * dpr));
+    board.height = Math.max(2, Math.round(boardWrap.getBoundingClientRect().height * dpr));
+    resetTransform();
+  }
+  function resetTransform() {
+    ctx.setTransform(board.width / SIZE, 0, 0, board.height / SIZE, 0, 0);
+  }
+  function toLogical(e) {
+    const rect = board.getBoundingClientRect();
+    return [
+      (e.clientX - rect.left) / rect.width * SIZE,
+      (e.clientY - rect.top) / rect.height * SIZE
+    ];
+  }
+
+  // ---------- geometry / accuracy ----------
+  function radiusAt(p) {
+    return Math.hypot(p[0] - cx, p[1] - cy);
+  }
+  // [0,1]: fidelity of a radius to the target ring; 0 = on the line, 1 = at the band edge
+  function deviationOnLine(dev) {
+    return clamp(1 - Math.pow(dev / TOL, 2), 0, 1);
+  }
+  function segmentColors(acc) {
+    const hue = Math.round(130 - 130 * clamp(acc, 0, 1));   // 130 green -> 0 red
+    return 'hsl(' + hue + ', 82%, 52%)';
+  }
+  // unwrapped angular sweep in [0,1] of full 360deg
+  function computeCoverage(pts) {
+    if (pts.length < 2) return 0;
+    let sweep = 0;
+    let prev = Math.atan2(cy - pts[0][1], pts[0][0] - cx);
+    for (let i = 1; i < pts.length; i++) {
+      let a = Math.atan2(cy - pts[i][1], pts[i][0] - cx);
+      let d = a - prev;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      while (d > Math.PI) d -= 2 * Math.PI;
+      sweep += d;
+      prev = a;
+    }
+    return clamp(Math.abs(sweep) / (2 * Math.PI), 0, 1);
+  }
+  // length-weighted mean segment accuracy
+  function computeAccuracy(pts) {
+    let total = 0, sum = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const seg = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      const dev = Math.abs(radiusAt(pts[i]) - R);
+      sum += deviationOnLine(dev) * seg;
+      total += seg;
+    }
+    return total > 0 ? sum / total : 0;
+  }
+
+  // ---------- drawing ----------
+  function clearBoard() {
+    ctx.clearRect(0, 0, SIZE, SIZE);
+  }
+  function drawTarget() {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.setLineDash([6, 6]);
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R + TOL, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx, cy, Math.max(6, R - TOL), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = ringColor;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = ringColor;
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawStroke() {
+    if (stroke.length < 2) return;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 4;
+    for (let i = 1; i < stroke.length; i++) {
+      ctx.strokeStyle = colors[i - 1];
+      ctx.beginPath();
+      ctx.moveTo(stroke[i - 1][0], stroke[i - 1][1]);
+      ctx.lineTo(stroke[i][0], stroke[i][1]);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function render() {
+    clearBoard();
+    drawTarget();
+    drawStroke();
+  }
+
+  // ---------- HUD / score ----------
+  function currentPlayer() {
+    return document.getElementById('playerName').textContent.trim() || 'anonymous';
+  }
+  function refreshScoreDisplay() {
+    const local = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
+    const total = (isLoggedIn && serverTotal != null) ? serverTotal : local;
+    document.getElementById('scoreDisplay').textContent = Shop.fmt(total);
+  }
+  function addScore(points) {
+    if (!isLoggedIn || points <= 0) return;
+    ScoreBoard.add(currentPlayer(), points);
+    fetch('/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points, game: 'circle' })
+    }).then(r => r.json()).then((d) => {
+      if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
+      else if (d && Number.isFinite(d.balance)) { serverTotal = d.balance; refreshScoreDisplay(); }
+    }).catch(() => {});
+  }
+  function accText(a) {
+    return (a * 100).toFixed(2) + '%';
+  }
+  function recordCircle(points, elapsed) {
+    if (!isLoggedIn || points <= 0) return;
+    fetch('/api/circle/record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accuracy: lastAcc, coverage: lastCov, points: Math.round(points), elapsed })
+    }).catch(() => {});
+  }
+  async function loadLeaderboard() {
+    const container = document.getElementById('lbRows');
+    const userEl = document.getElementById('lbUser');
+    const name = currentPlayer();
+    let data = null;
+    try {
+      const url = '/api/circle/leaderboard?limit=10' + (isLoggedIn ? '&user=' + encodeURIComponent(name) : '');
+      const res = await fetch(url);
+      data = await res.json();
+    } catch { data = null; }
+    if (!data || !data.top) {
+      container.innerHTML = '<div class="lb-status">Could not load.</div>';
+      userEl.innerHTML = '';
+      return;
+    }
+    if (!data.top.length) {
+      container.innerHTML = '<div class="lb-status">No runs yet. Be the first!</div>';
+      userEl.innerHTML = '<span class="muted">Players: 0</span>';
+      return;
+    }
+    container.innerHTML = data.top.map((row, i) =>
+      '<div class="lb-row' + (isLoggedIn && row.username === name ? ' me' : '') + '">' +
+      '<span class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>' +
+      window.Shop.npHTML(row) +
+      '<span class="acc">' + accText(row.accuracy) + '</span>' +
+      '</div>'
+    ).join('');
+    if (data.user && data.user.pct != null) {
+      userEl.innerHTML = 'You: rank <b>#' + data.user.rank + '</b> of ' + data.players +
+        ' &middot; <b>' + data.user.pct.toFixed(2) + 'th</b> pct' +
+        ' &middot; best <b>' + accText(data.user.best) + '</b>' +
+        ' &middot; ' + data.user.runs + ' run' + (data.user.runs === 1 ? '' : 's');
+    } else {
+      userEl.innerHTML = '<span class="muted">Players: ' + data.players + ' &middot; Runs: ' + data.runs + '</span>';
+    }
+  }
+
+  // ---------- flow ----------
+  function resetGame() {
+    stroke = [];
+    colors = [];
+    drawing = false;
+    goBtn.style.display = 'block';
+    goBtn.textContent = 'DRAW';
+    resultCard.style.display = 'none';
+    accDisplay.textContent = '-';
+    covDisplay.textContent = '0%';
+    timeDisplay.textContent = '0.0s';
+    render();
+    runStatus.textContent = 'Trace the ring in one stroke \u2014 press DRAW to begin.';
+  }
+  function startDraw() {
+    if (phase === 'result' || phase === 'error') { resetGame(); return; }
+    if (phase !== 'idle') return;
+    phase = 'draw';
+    stroke = [];
+    colors = [];
+    drawing = false;
+    strokeStart = Date.now();
+    goBtn.style.display = 'none';
+    resultCard.style.display = 'none';
+    accDisplay.textContent = '-';
+    covDisplay.textContent = '0%';
+    runStatus.textContent = 'Trace the ring \u2014 stay inside the band!';
+    render();
+  }
+  function failRun(reason) {
+    phase = 'error';
+    drawing = false;
+    lastAcc = computeAccuracy(stroke);
+    lastCov = computeCoverage(stroke);
+    if (stroke.length >= 2) render();
+    resAcc.className = 'res-acc err';
+    resAcc.textContent = 'ERROR';
+    resSub.className = 'res-sub err';
+    resSub.innerHTML = '<b>' + reason + '</b>';
+    resultCard.style.display = 'block';
+    goBtn.style.display = 'block';
+    goBtn.textContent = 'TRY AGAIN';
+    runStatus.textContent = reason + ' \u2014 no points this time.';
+  }
+  function endRun(now) {
+    const elapsed = (now - strokeStart) / 1000;
+    lastAcc = computeAccuracy(stroke);
+    lastCov = computeCoverage(stroke);
+    const points = Scoring.circleScore(lastAcc, lastCov, elapsed);
+    addScore(points);
+    recordCircle(points, elapsed);
+    loadLeaderboard();
+
+    phase = 'result';
+    drawing = false;
+    const accPct = Math.round(lastAcc * 1000) / 10;
+    accDisplay.textContent = accPct + '%';
+    covDisplay.textContent = Math.round(lastCov * 100) + '%';
+    resAcc.className = 'res-acc';
+    resAcc.textContent = accPct + '%';
+    resSub.className = 'res-sub';
+    resSub.innerHTML = '+' + Shop.fmt(points) + ' pts &middot; ' + Math.round(lastCov * 100) +
+      '% coverage &middot; ' + elapsed.toFixed(1) + 's';
+    resultCard.style.display = 'block';
+    goBtn.style.display = 'block';
+    goBtn.textContent = 'AGAIN';
+    runStatus.textContent = 'Circle locked in!';
+    render();
+  }
+
+  // ---------- inputs ----------
+  board.addEventListener('pointerdown', (e) => {
+    if (e.target.closest && e.target.closest('a')) return;
+    if (phase !== 'draw') return;
+    e.preventDefault();
+    const p = toLogical(e);
+    if (Math.abs(radiusAt(p) - R) > TOL) { failRun('started out of the band'); return; }
+    drawing = true;
+    stroke = [p];
+    colors = [];
+    render();
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!drawing || phase !== 'draw') return;
+    const p = toLogical(e);
+    const last = stroke[stroke.length - 1];
+    if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 1.5) return;
+    const dev = Math.abs(radiusAt(p) - R);
+    if (dev > TOL) {
+      drawing = false;
+      failRun(radiusAt(p) < R ? 'too close to the ring' : 'too far from the ring');
+      return;
+    }
+    colors.push(segmentColors(deviationOnLine(dev)));
+    stroke.push(p);
+    render();
+    accDisplay.textContent = Math.round(computeAccuracy(stroke) * 1000) / 10 + '%';
+    covDisplay.textContent = Math.round(computeCoverage(stroke) * 100) + '%';
+  });
+  window.addEventListener('pointerup', (e) => {
+    if (!drawing || phase !== 'draw') return;
+    drawing = false;
+    if (stroke.length < 2) { phase = 'draw'; render(); return; }
+    const cov = computeCoverage(stroke);
+    if (cov < P.minCoverage) { failRun('incomplete circle'); return; }
+    endRun(Date.now());
+  });
+  window.addEventListener('pointercancel', () => { drawing = false; });
+
+  goBtn.addEventListener('click', startDraw);
+
+  // ---- time budget (too slow = error) ----
+  setInterval(() => {
+    if (phase !== 'draw') return;
+    const elapsed = (Date.now() - strokeStart) / 1000;
+    timeDisplay.textContent = elapsed.toFixed(1) + 's';
+    if (elapsed > BUDGET) { drawing = false; runStatus.textContent = 'Out of time!'; failRun('too slow'); }
+  }, 100);
+
+  // ---------- crosshair ----------
+  const cross = document.getElementById('cross');
+  document.addEventListener('pointermove', (e) => {
+    cross.style.transform = 'translate3d(' + e.clientX + 'px,' + e.clientY + 'px,0) translate(-50%,-50%)';
+  });
+  board.addEventListener('pointerenter', () => cross.classList.add('on'));
+  board.addEventListener('pointerleave', () => cross.classList.remove('on'));
+
+  // ---------- cosmetics ----------
+  async function applyCosmetics() {
+    try {
+      const s = await Shop.state();
+      Shop.applyAccentFromState(s);
+      const a = Shop.installed(s.equipped, Shop.ACCENT);
+      ringColor = (a && a.color) ? Shop.hexToRgba(a.color, 0.8) : 'rgba(140,180,150,0.8)';
+    } catch (e) {}
+    render();
+  }
+  async function loadPlayerAndScore() {
+    try {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      const user = data.user || null;
+      isLoggedIn = !!(user && user.username);
+      if (user && user.username) document.getElementById('playerName').textContent = user.username;
+      serverTotal = (user && Number.isFinite(user.total))
+        ? user.total
+        : (user && Number.isFinite(user.balance)) ? user.balance : null;
+    } catch {
+      isLoggedIn = false;
+    }
+    await applyCosmetics();
+    refreshScoreDisplay();
+  }
+
+  // ---------- boot ----------
+  fit();
+  window.addEventListener('resize', () => { fit(); render(); });
+  loadPlayerAndScore();
+  window.addEventListener('pageshow', loadPlayerAndScore);
+  loadLeaderboard();
+  window.addEventListener('pageshow', loadLeaderboard);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) loadLeaderboard(); });
+  resetGame();
+})();
+</script>
+</body>
+</html>

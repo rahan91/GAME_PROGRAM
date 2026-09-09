@@ -1,7 +1,7 @@
 import { json, getUserFromRequest } from '../_lib/auth.js';
 
 const MAX_POINTS = 100000;
-const GAMES = { maze: 1, target: 1, button: 1, cut: 1 };
+const GAMES = { maze: 1, target: 1, button: 1, cut: 1, circle: 1 };
 
 export async function onRequestPost(context) {
   const user = await getUserFromRequest(context.env, context.request);

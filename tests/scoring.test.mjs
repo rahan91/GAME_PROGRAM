@@ -160,5 +160,24 @@ assert(S.CUT_DIFFS.insane.harmonics > S.CUT_DIFFS.easy.harmonics, 'insane fits t
 assert(S.CUT_DIFFS.easy.color === '#3b82f6' && S.CUT_DIFFS.normal.color === '#22c55e' && S.CUT_DIFFS.hard.color === '#eab308', 'easy/normal/hard colors (blue/green/yellow)');
 assert(S.CUT_DIFFS.harder.color === '#f97316' && S.CUT_DIFFS.insane.color === '#ec4899', 'harder/insane colors (orange/pink)');
 
+console.log('\n=== Circle scoring ===');
+const circ = S.circleScore;
+assert(circ(1, 1, 7) === 400, 'perfect full cover at ref time = accuracy weight (400)');
+assert(circ(1, 1, 0.1) === 460, 'perfect full cover fastest = 400 * 1.15');
+assert(circ(1, 1, 999) === 340, 'perfect full cover slowest = 400 * 0.85');
+assert(circ(1, 0.5, 7) === 200, 'half coverage halves the score');
+assert(circ(1, 0, 7) === 0, 'no coverage = 0');
+assert(circ(1, -1, 7) === 0, 'negative coverage clamps to 0');
+assert(circ(1, 2, 7) === 400, 'coverage above 1 clamps to perfect');
+assert(circ(0.9, 1, 7) === Math.round(S.CIRCLE_ACC_PERFECT * Math.pow(0.9, S.CIRCLE_ACC_POWER)), 'slow 90% = accuracy component');
+assert(circ(0.9, 1, 7) > circ(0.5, 1, 7), 'higher accuracy scores more');
+assert(circ(0.95, 1, 7) > circ(1, 0.5, 7), 'accuracy dominates over coverage at the same score scale');
+assert(circ(0, 1, 7) === 0, 'zero accuracy = 0');
+assert(circ(-1, 1, 7) === 0, 'negative accuracy clamps to 0');
+assert(circ(NaN, 1, 7) === 0, 'NaN accuracy -> 0');
+assert(circ(1, 1, Infinity) === 0, 'infinite elapsed is non-finite -> 0 (sanitized)');
+assert(S.CIRCLE_PARAMS.tolerance > 0 && S.CIRCLE_PARAMS.budget > 0 && S.CIRCLE_PARAMS.minCoverage > 0, 'error thresholds are positive');
+between(circ(1, 1, 0.1), 0, 5000, 'perfect circle bounded 0..5000');
+
 console.log('\n' + (failures === 0 ? 'ALL ' + checks + ' CHECKS PASSED' : failures + ' OF ' + checks + ' CHECKS FAILED'));
 process.exit(failures === 0 ? 0 : 1);
