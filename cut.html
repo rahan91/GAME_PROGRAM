@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUT</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #1c1c1c;
+    color: #e0e0e0;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    animation: float 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .orb--1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(var(--acc-dim),0.18) 0%, transparent 70%);
+    top: 0%; left: 5%;
+  }
+  .orb--2 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(var(--acc-orb),0.14) 0%, transparent 70%);
+    bottom: 0%; right: 0%;
+    animation-delay: -4s;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.03); }
+  }
+
+  .back {
+    position: fixed; top: 20px; left: 20px; z-index: 10;
+    color: rgba(var(--acc-main),0.6); text-decoration: none;
+    font-size: 14px; transition: color 0.2s;
+  }
+  .back:hover { color: rgba(var(--acc-main),1); }
+
+  h1 {
+    position: fixed; top: 20px; left: 0; right: 0;
+    text-align: center; pointer-events: none;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 6px;
+    text-transform: uppercase; color: rgba(var(--acc-main),0.85);
+  }
+
+  #hud {
+    position: fixed; top: 64px; left: 0; right: 0;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 6px 18px; padding: 0 12px;
+    pointer-events: none; z-index: 8;
+    font-size: 13px; color: rgba(var(--acc-main),0.75);
+  }
+  #hud .stat { letter-spacing: 0.1em; }
+  #hud b { color: rgba(var(--acc-texthi),0.95); }
+
+  #diffRow {
+    position: fixed; top: 104px; left: 0; right: 0;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 8px; padding: 0 12px; z-index: 9;
+  }
+  .diff-btn {
+    font-family: inherit; font-size: 12px; letter-spacing: 1.5px;
+    text-transform: uppercase; cursor: pointer;
+    padding: 6px 14px; border-radius: 20px;
+    background: rgba(0,0,0,0.3); color: #e0e0e0;
+    border: 2px solid; transition: background 0.15s, transform 0.15s, opacity 0.15s;
+    opacity: 0.55;
+  }
+  .diff-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .diff-btn.active { opacity: 1; background: rgba(255,255,255,0.08); }
+  .diff-btn:disabled { opacity: 0.25; cursor: default; transform: none; }
+
+  #boardWrap {
+    position: fixed; left: 50%; top: calc(50% + 16px);
+    width: min(58vmin, 480px); height: min(58vmin, 480px);
+    transform: translate(-50%, -50%);
+    z-index: 5;
+  }
+  #board {
+    display: block; width: 100%; height: 100%;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(var(--acc-main),0.16);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35) inset, 0 0 0 1px rgba(0,0,0,0.3);
+    cursor: none; touch-action: none;
+  }
+  #board.select { cursor: crosshair; }
+
+  #goBtn {
+    position: absolute; left: 50%; bottom: 10%;
+    transform: translateX(-50%);
+    font-family: inherit; font-size: 14px; letter-spacing: 4px;
+    text-transform: uppercase; cursor: pointer;
+    padding: 10px 26px; border-radius: 8px;
+    background: rgba(var(--acc-btn),0.18);
+    color: rgba(var(--acc-texthi),0.95);
+    border: 1px solid rgba(var(--acc-btn),0.4);
+    z-index: 12; transition: background 0.15s;
+    display: none;
+  }
+  #goBtn:hover { background: rgba(var(--acc-btn),0.4); }
+
+  #resultCard {
+    position: absolute; left: 50%; top: 26%; transform: translateX(-50%);
+    text-align: center; z-index: 12; pointer-events: none;
+    display: none;
+  }
+  #resultCard .res-acc {
+    font-size: 34px; font-weight: 700; letter-spacing: 1px;
+    color: rgba(var(--acc-texthi),0.95); text-shadow: 0 0 18px rgba(var(--acc-bright),0.4);
+  }
+  #resultCard .res-sub { margin-top: 6px; font-size: 12px; color: rgba(var(--acc-main),0.8); }
+  #resultCard .res-sub b { color: rgba(var(--acc-bright),1); }
+
+  #cross {
+    position: fixed; left: 0; top: 0;
+    width: 14px; height: 14px;
+    pointer-events: none; z-index: 160;
+    opacity: 0; will-change: transform;
+  }
+  #cross.on { opacity: 1; }
+  #cross::before, #cross::after {
+    content: ''; position: absolute;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 0 2px rgba(0,0,0,0.8);
+  }
+  #cross::before { left: 0; right: 0; top: 6px; height: 2px; }
+  #cross::after { top: 0; bottom: 0; left: 6px; width: 2px; }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 0; right: 0;
+    text-align: center; color: rgba(var(--acc-main),0.35);
+    font-size: 12px; pointer-events: none; z-index: 6;
+  }
+
+  #runStatus {
+    position: fixed; bottom: 42px; left: 0; right: 0;
+    text-align: center; color: rgba(var(--acc-main),0.7);
+    font-size: 12px; pointer-events: none; z-index: 6;
+  }
+
+  #leaderboard {
+    position: fixed; bottom: 20px; left: 20px; z-index: 6;
+    width: 220px; max-height: 44vh;
+    border: 1px solid rgba(var(--acc-main),0.2);
+    border-radius: 12px; background: rgba(var(--acc-panel),0.82);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    backdrop-filter: blur(3px);
+    overflow: hidden; pointer-events: none;
+  }
+  #leaderboard h3 {
+    font-size: 10px; font-weight: 400; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(var(--acc-main),0.85);
+    padding: 10px 14px 7px; border-bottom: 1px solid rgba(var(--acc-main),0.18);
+  }
+  #leaderboard .lb-body { padding: 5px 0; overflow: hidden; }
+  .lb-row { display: flex; align-items: center; gap: 8px; padding: 4px 14px; font-size: 12px; }
+  .lb-row.me { background: rgba(var(--acc-main),0.14); }
+  .lb-row .rk { width: 18px; color: rgba(var(--acc-main),0.45); font-variant-numeric: tabular-nums; text-align: right; }
+  .lb-row .rk.top { color: rgba(230,200,120,0.9); font-weight: 600; }
+  .lb-row .nm { flex: 1; color: rgba(var(--acc-text),0.85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-row .pt { color: rgba(var(--acc-main),0.85); font-variant-numeric: tabular-nums; }
+  .lb-row.me .pt { color: rgba(var(--acc-bright),1); }
+  .lb-status { padding: 10px 14px; font-size: 11px; color: rgba(var(--acc-main),0.45); }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 1.25rem; letter-spacing: 4px; }
+    #hud { top: 56px; font-size: 12px; gap: 3px 14px; }
+    #diffRow { top: 94px; gap: 5px; }
+    .diff-btn { font-size: 10px; padding: 5px 10px; }
+    #runStatus, .hint { font-size: 11px; }
+    #leaderboard { display: none; }
+    #boardWrap { top: calc(50% + 14px); width: min(62vmin, 460px); height: min(62vmin, 460px); }
+  }
+  @media (pointer: coarse) {
+    #cross { display: none; }
+  }
+</style>
+  <link rel="stylesheet" href="crt.css">
+  <script defer src="crt.js"></script>
+  <script src="score.js"></script>
+  <script src="scoring.js"></script>
+  <script src="shop.js"></script>
+</head>
+<body>
+
+<div class="orb orb--1"></div>
+<div class="orb orb--2"></div>
+
+<a class="back" href="/gallery">&larr; Gallery</a>
+
+<h1>Cut</h1>
+
+<div id="hud">
+  <span class="stat">Player <b id="playerName">anonymous</b></span>
+  <span class="stat">Total <b id="scoreDisplay">0</b></span>
+  <span class="stat">Time <b id="timeDisplay">0.0s</b></span>
+  <span class="stat">Accuracy <b id="accDisplay">-</b></span>
+</div>
+
+<div id="diffRow"></div>
+
+<div id="boardWrap">
+  <canvas id="board"></canvas>
+  <button id="goBtn">CUT</button>
+  <div id="resultCard">
+    <div class="res-acc" id="resAcc">0%</div>
+    <div class="res-sub" id="resSub"></div>
+  </div>
+</div>
+
+<div id="cross"></div>
+
+<div id="runStatus"></div>
+<div class="hint">Pick a difficulty &middot; Memorize the outline &middot; Press CUT &middot; Trace it back from memory &middot; One stroke, scored on release</div>
+
+<div id="leaderboard">
+  <h3>Cut Leaderboard</h3>
+  <div class="lb-body" id="lbRows"><div class="lb-status">Loading&hellip;</div></div>
+</div>
+
+<script>
+(() => {
+  const board = document.getElementById('board');
+  const boardWrap = document.getElementById('boardWrap');
+  const goBtn = document.getElementById('goBtn');
+  const resAcc = document.getElementById('resAcc');
+  const resSub = document.getElementById('resSub');
+  const resultCard = document.getElementById('resultCard');
+  const diffRow = document.getElementById('diffRow');
+  const timeDisplay = document.getElementById('timeDisplay');
+  const accDisplay = document.getElementById('accDisplay');
+  const runStatus = document.getElementById('runStatus');
+
+  const SIZE = 640;           // logical canvas space
+  const cx = SIZE / 2, cy = SIZE / 2;
+  const ctx = board.getContext('2d');
+  let dpr = 1;
+
+  const DIFFS = Scoring.CUT_DIFFS;
+  const DIFF_ORDER = ['easy', 'normal', 'hard', 'harder', 'insane'];
+
+  let difficulty = null;
+  let phase = 'idle';         // idle | memorize | cut | result
+  let shape = null;           // memorized outline points (logical coords)
+  let stroke = [];            // points currently being cut
+  let drawing = false;
+  let cutStart = 0;
+  let strokeColor = 'rgba(210,222,232,0.95)';
+  let isLoggedIn = false;
+  let serverTotal = null;
+  let lastIou = 0;
+
+  // ---------- canvas sizing (crisp at device pixel ratio) ----------
+  function fit() {
+    const rect = boardWrap.getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    board.width = Math.max(2, Math.round(rect.width * dpr));
+    board.height = Math.max(2, Math.round(rect.height * dpr));
+    resetTransform();
+  }
+  function resetTransform() {
+    const rect = boardWrap.getBoundingClientRect();
+    ctx.setTransform(board.width / SIZE, 0, 0, board.height / SIZE, 0, 0);
+    void rect;
+  }
+  function toLogical(e) {
+    const rect = board.getBoundingClientRect();
+    return [
+      (e.clientX - rect.left) / rect.width * SIZE,
+      (e.clientY - rect.top) / rect.height * SIZE
+    ];
+  }
+
+  // ---------- random closed outline (star-shaped, always simple+closed) ----------
+  function chaikin(pts, iters) {
+    let cur = pts;
+    for (let i = 0; i < iters; i++) {
+      const next = [];
+      const n = cur.length;
+      for (let j = 0; j < n; j++) {
+        const a = cur[j], b = cur[(j + 1) % n];
+        next.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25]);
+        next.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+      }
+      cur = next;
+    }
+    return cur;
+  }
+  function genShape(diffKey) {
+    const cfg = DIFFS[diffKey];
+    const N = cfg.verts;
+    const H = cfg.harmonics;
+    const R = cfg.radius;
+    const harms = [];
+    for (let k = 2; k <= H; k++) {
+      harms.push({ k, amp: 0.07 + Math.random() * 0.15, ph: Math.random() * Math.PI * 2 });
+    }
+    const pts = [];
+    for (let i = 0; i < N; i++) {
+      const th = (i / N) * Math.PI * 2;
+      let mod = 1;
+      for (let h = 0; h < harms.length; h++) {
+        const hm = harms[h];
+        mod += hm.amp * Math.sin(hm.k * th + hm.ph);
+      }
+      const r = Math.max(R * 0.3, R * mod);
+      pts.push([cx + r * Math.cos(th), cy + r * Math.sin(th)]);
+    }
+    return chaikin(pts, 2);
+  }
+  function pathCtx(c, pts) {
+    c.beginPath();
+    c.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) c.lineTo(pts[i][0], pts[i][1]);
+    c.closePath();
+  }
+
+  // ---------- drawing ----------
+  function clearBoard() {
+    ctx.clearRect(0, 0, SIZE, SIZE);
+  }
+  function drawShape(color, fillAlpha) {
+    if (!shape) return;
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 16;
+    pathCtx(ctx, shape);
+    ctx.fillStyle = 'rgba(255,255,255,' + (fillAlpha || 0.05) + ')';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawStroke() {
+    if (stroke.length < 2) return;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = strokeColor;
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(stroke[0][0], stroke[0][1]);
+    for (let i = 1; i < stroke.length; i++) ctx.lineTo(stroke[i][0], stroke[i][1]);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function render() {
+    clearBoard();
+    if (phase === 'memorize') drawShape(DIFFS[difficulty].color, 0.05);
+    drawStroke();
+  }
+
+  // ---------- accuracy: pixel IoU of the cut silhouette vs the hidden shape ----------
+  function computeIoU(targetPts, cutPts) {
+    if (!cutPts || cutPts.length < 3) return 0;
+    const S = 380;
+    const mask = document.createElement('canvas');
+    mask.width = S; mask.height = S;
+    const m = mask.getContext('2d');
+    const map = (p) => [p[0] / SIZE * S, p[1] / SIZE * S];
+    m.fillStyle = '#000';
+    pathCtx(m, targetPts.map(map));
+    m.fill();
+    const A = m.getImageData(0, 0, S, S).data;
+    m.clearRect(0, 0, S, S);
+    pathCtx(m, cutPts.map(map));
+    m.fill();
+    const B = m.getImageData(0, 0, S, S).data;
+    let inter = 0, uni = 0;
+    for (let i = 3; i < A.length; i += 4) {
+      const ta = A[i] > 40, tb = B[i] > 40;
+      if (ta || tb) { uni++; if (ta && tb) inter++; }
+    }
+    return uni ? inter / uni : 0;
+  }
+  function strokeLength(pts) {
+    let d = 0;
+    for (let i = 1; i < pts.length; i++) {
+      d += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    }
+    return d;
+  }
+
+  // ---------- HUD / score ----------
+  function currentPlayer() {
+    return document.getElementById('playerName').textContent.trim() || 'anonymous';
+  }
+  function refreshScoreDisplay() {
+    const local = isLoggedIn ? (ScoreBoard.get(currentPlayer()).total || 0) : 0;
+    const total = (isLoggedIn && serverTotal != null) ? serverTotal : local;
+    document.getElementById('scoreDisplay').textContent = Shop.fmt(total);
+  }
+  function addScore(points) {
+    if (!isLoggedIn) return;
+    ScoreBoard.add(currentPlayer(), points);
+    fetch('/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ points, game: 'cut' })
+    }).then(r => r.json()).then((d) => {
+      if (d && Number.isFinite(d.total)) { serverTotal = d.total; refreshScoreDisplay(); }
+      else if (d && Number.isFinite(d.balance)) { serverTotal = d.balance; refreshScoreDisplay(); }
+    }).catch(() => {});
+  }
+  async function loadLeaderboard() {
+    const container = document.getElementById('lbRows');
+    let me = null;
+    try {
+      const mr = await (await fetch('/api/me')).json();
+      me = (mr.user && mr.user.username) ? mr.user.username : null;
+    } catch {}
+    let rows;
+    try {
+      const res = await fetch('/api/leaderboard?game=cut&limit=10');
+      const data = await res.json();
+      rows = data.leaderboard || null;
+    } catch { rows = null; }
+    if (!rows) { container.innerHTML = '<div class="lb-status">Could not load.</div>'; return; }
+    if (!rows.length) { container.innerHTML = '<div class="lb-status">No scores yet. Finish a cut!</div>'; return; }
+    container.innerHTML = rows.map((row, i) =>
+      '<div class="lb-row' + (row.username === me ? ' me' : '') + '">' +
+      '<span class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>' +
+      window.Shop.npHTML(row) +
+      '<span class="pt">' + Shop.fmt(row.value) + '</span>' +
+      '</div>'
+    ).join('');
+  }
+
+  // ---------- flow ----------
+  function selectDifficulty(diffKey) {
+    if (phase === 'cut') return; // no switching mid-cut
+    difficulty = diffKey;
+    phase = 'memorize';
+    shape = genShape(diffKey);
+    stroke = [];
+    drawing = false;
+    goBtn.style.display = '';
+    goBtn.textContent = 'CUT';
+    resultCard.style.display = 'none';
+    timeDisplay.textContent = '0.0s';
+    render();
+    paintDiffButtons();
+    runStatus.textContent = 'Outline ready \u2014 memorize it, then press CUT.';
+  }
+  function startCut() {
+    if (phase === 'result') {
+      // regenerate a fresh outline on the same difficulty
+      selectDifficulty(difficulty);
+      return;
+    }
+    if (phase !== 'memorize' || !difficulty) return;
+    phase = 'cut';
+    stroke = [];
+    drawing = false;
+    cutStart = Date.now();
+    goBtn.style.display = 'none';
+    resultCard.style.display = 'none';
+    board.classList.add('select');
+    runStatus.textContent = 'Cut it from memory \u2014 one stroke.';
+    render();
+    paintDiffButtons();
+  }
+  function endCut(now) {
+    const elapsed = (now - cutStart) / 1000;
+    const iou = (stroke.length >= 3 && strokeLength(stroke) > 40)
+      ? computeIoU(shape, stroke)
+      : 0;
+    lastIou = iou;
+    const points = Scoring.cutScore(iou, difficulty, elapsed);
+    addScore(points);
+    loadLeaderboard();
+
+    phase = 'result';
+    drawing = false;
+    board.classList.remove('select');
+    accDisplay.textContent = Math.round(iou * 1000) / 10 + '%';
+    resAcc.textContent = (Math.round(iou * 1000) / 10) + '%';
+    resSub.innerHTML = '+' + Shop.fmt(points) + ' pts &middot; ' + elapsed.toFixed(1) + 's' +
+      ' &middot; ' + DIFFS[difficulty].mult.toFixed(2) + 'x';
+    resultCard.style.display = '';
+    goBtn.style.display = '';
+    goBtn.textContent = 'CUT AGAIN';
+    runStatus.textContent = 'Cut complete!';
+    paintDiffButtons();
+
+    // reveal: your silhouette vs the true outline
+    clearBoard();
+    ctx.save();
+    pathCtx(ctx, stroke);
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+    ctx.save();
+    pathCtx(ctx, shape);
+    ctx.strokeStyle = DIFFS[difficulty].color;
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = DIFFS[difficulty].color;
+    ctx.shadowBlur = 12;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ---------- inputs ----------
+  board.addEventListener('pointerdown', (e) => {
+    if (e.target.closest && e.target.closest('a')) return;
+    if (phase !== 'cut') return;
+    e.preventDefault();
+    drawing = true;
+    stroke = [toLogical(e)];
+    render();
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (drawing && phase === 'cut') {
+      const p = toLogical(e);
+      const last = stroke[stroke.length - 1];
+      if (Math.hypot(p[0] - last[0], p[1] - last[1]) > 1.2) {
+        stroke.push(p);
+        render();
+      }
+    }
+  });
+  window.addEventListener('pointerup', (e) => {
+    if (!drawing) return;
+    if (stroke.length < 2) { drawing = false; return; }
+    endCut(Date.now());
+  });
+  window.addEventListener('pointercancel', () => { drawing = false; });
+
+  goBtn.addEventListener('click', startCut);
+
+  // ---------- difficulty buttons ----------
+  function paintDiffButtons() {
+    const btns = diffRow.children;
+    for (let i = 0; i < btns.length; i++) {
+      const key = DIFF_ORDER[i];
+      const active = phase !== 'cut' && difficulty === key;
+      btns[i].classList.toggle('active', active);
+      btns[i].disabled = phase === 'cut';
+    }
+  }
+  function buildDifficulties() {
+    DIFF_ORDER.forEach((key) => {
+      const cfg = DIFFS[key];
+      const b = document.createElement('button');
+      b.className = 'diff-btn';
+      b.style.borderColor = cfg.color;
+      b.style.color = cfg.color;
+      b.textContent = key;
+      b.addEventListener('click', () => selectDifficulty(key));
+      diffRow.appendChild(b);
+    });
+  }
+
+  // ---------- crosshair ----------
+  const cross = document.getElementById('cross');
+  document.addEventListener('pointermove', (e) => {
+    cross.style.transform = 'translate3d(' + e.clientX + 'px,' + e.clientY + 'px,0) translate(-50%,-50%)';
+  });
+  board.addEventListener('pointerenter', () => cross.classList.add('on'));
+  board.addEventListener('pointerleave', () => cross.classList.remove('on'));
+
+  // ---------- boot ----------
+  setInterval(() => {
+    if (phase !== 'cut') return;
+    timeDisplay.textContent = ((Date.now() - cutStart) / 1000).toFixed(1) + 's';
+  }, 100);
+
+  async function applyCosmetics() {
+    try {
+      const s = await Shop.state();
+      Shop.applyAccentFromState(s);
+      const cur = Shop.installed(s.equipped, Shop.CURSOR);
+      if (cur && cur.color) {
+        strokeColor = cur.color;
+      } else {
+        strokeColor = 'rgba(210,222,232,0.95)';
+      }
+    } catch (e) {}
+  }
+  async function loadPlayerAndScore() {
+    try {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      const user = data.user || null;
+      isLoggedIn = !!(user && user.username);
+      if (user && user.username) document.getElementById('playerName').textContent = user.username;
+      serverTotal = (user && Number.isFinite(user.total))
+        ? user.total
+        : (user && Number.isFinite(user.balance)) ? user.balance : null;
+    } catch {
+      isLoggedIn = false;
+    }
+    await applyCosmetics();
+    refreshScoreDisplay();
+  }
+
+  buildDifficulties();
+  fit();
+  window.addEventListener('resize', () => { fit(); render(); });
+
+  loadPlayerAndScore();
+  window.addEventListener('pageshow', loadPlayerAndScore);
+  loadLeaderboard();
+  window.addEventListener('pageshow', loadLeaderboard);
+})();
+</script>
+</body>
+</html>

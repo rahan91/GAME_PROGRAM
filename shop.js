@@ -5,11 +5,7 @@
     var sign = v < 0 ? '-' : '';
     var a = Math.abs(v);
     function render(x, suffix) {
-      var intDigits = x >= 100 ? 3 : x >= 10 ? 2 : x >= 1 ? 1 : 0;
-      var decimals = Math.max(0, 4 - intDigits);
-      var s = x.toFixed(decimals);
-      if (s.indexOf('.') > -1) s = s.replace(/\.?0+$/, '');
-      return sign + s + suffix;
+      return sign + x.toFixed(2) + suffix;
     }
     if (a >= 1e9) return render(a / 1e9, 'b');
     if (a >= 1e6) return render(a / 1e6, 'm');

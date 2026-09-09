@@ -97,6 +97,32 @@
     return Math.max(0, Math.round(raw));
   }
 
+  // ---------------- Cut ----------------
+  // You memorize a random closed outline, then reproduce it from memory with a
+  // single mouse cut. Accuracy (pixel IoU vs the hidden outline) dominates the
+  // score; difficulty adds a multiplier on top; finishing fast adds a small bonus.
+  var CUT_ACC_PERFECT = 3000;   // accuracy component at 100% IoU (before mult)
+  var CUT_ACC_POWER = 1.6;      // sub-perfect cuts decay sharply (accuracy matters)
+  var CUT_TIME_MAX = 1.10;      // fast finish: +10% max, never more
+  var CUT_DIFFS = {
+    easy:   { color: '#3b82f6', radius: 90,  verts: 8,  harmonics: 2, mult: 1.00 },
+    normal: { color: '#22c55e', radius: 110, verts: 11, harmonics: 3, mult: 1.15 },
+    hard:   { color: '#eab308', radius: 130, verts: 14, harmonics: 4, mult: 1.35 },
+    harder: { color: '#f97316', radius: 150, verts: 18, harmonics: 5, mult: 1.60 },
+    insane: { color: '#ec4899', radius: 170, verts: 24, harmonics: 6, mult: 2.00 }
+  };
+  var CUT_REF_TIME = { easy: 15, normal: 18, hard: 22, harder: 26, insane: 32 };
+
+  // iou in [0,1]: intersection/union of the cut silhouette vs the target outline.
+  function cutScore(accuracy, difficulty, elapsedSec) {
+    if (!Number.isFinite(accuracy) || !Number.isFinite(elapsedSec)) return 0;
+    var diff = CUT_DIFFS[difficulty] || CUT_DIFFS.easy;
+    var iou = clamp(accuracy, 0, 1);
+    var timeMult = clamp(CUT_REF_TIME[difficulty] / Math.max(elapsedSec, 0.001), 1, CUT_TIME_MAX);
+    var accComp = CUT_ACC_PERFECT * Math.pow(iou, CUT_ACC_POWER);
+    return safeScore(Math.round(accComp * diff.mult * timeMult));
+  }
+
   global.Scoring = {
     MAX_RUN_SCORE: MAX_RUN_SCORE,
     clamp: clamp,
@@ -108,6 +134,10 @@
     RUN_TARGETS: RUN_TARGETS,
     TARGET_REF_REACTION: TARGET_REF_REACTION,
     TARGET_SPEED_MAX: TARGET_SPEED_MAX,
-    buttonScore: buttonScore
+    buttonScore: buttonScore,
+    cutScore: cutScore,
+    CUT_DIFFS: CUT_DIFFS,
+    CUT_REF_TIME: CUT_REF_TIME,
+    CUT_ACC_PERFECT: CUT_ACC_PERFECT
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,7 +1,7 @@
 import { json } from '../_lib/auth.js';
 import { getItem } from '../_lib/catalog.js';
 
-const GAMES = { maze: 'total', target: 'total', button: 'best' };
+const GAMES = { maze: 'total', target: 'total', button: 'best', cut: 'total' };
 
 async function attachNameplates(env, rows) {
   if (!rows.length) return rows;
