@@ -450,7 +450,7 @@
     shape = genShape(diffKey);
     stroke = [];
     drawing = false;
-    goBtn.style.display = '';
+    goBtn.style.display = 'block';
     goBtn.textContent = 'CUT';
     resultCard.style.display = 'none';
     timeDisplay.textContent = '0.0s';
@@ -493,8 +493,8 @@
     resAcc.textContent = (Math.round(iou * 1000) / 10) + '%';
     resSub.innerHTML = '+' + Shop.fmt(points) + ' pts &middot; ' + elapsed.toFixed(1) + 's' +
       ' &middot; ' + DIFFS[difficulty].mult.toFixed(2) + 'x';
-    resultCard.style.display = '';
-    goBtn.style.display = '';
+    resultCard.style.display = 'block';
+    goBtn.style.display = 'block';
     goBtn.textContent = 'CUT AGAIN';
     runStatus.textContent = 'Cut complete!';
     paintDiffButtons();
