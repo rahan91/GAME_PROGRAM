@@ -363,10 +363,17 @@
 
   let cols, rows, cellSize, grid, player, won, moves, trail, startTime, wallsLayer, trailLayer, trailCtx;
   const PADDING = 2;
+  const MAX_MAZE_PX = 640;   // cap for very large screens; width-driven below that
   let selectedDifficulty = 'medium';
   let scored = false;
   let playerColor = 'rgba(180,200,140,0.9)';
   let playerShadow = 'rgba(180,200,140,0.5)';
+
+  function computeCellSize(c, r) {
+    const pad = window.innerWidth <= 600 ? 24 : 40;
+    const fit = Math.max(120, Math.min(window.innerWidth - pad, MAX_MAZE_PX));
+    return Math.max(6, Math.floor((fit - PADDING * 2) / Math.max(c, r)));
+  }
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -587,9 +594,7 @@
   function generateMaze(c, r) {
     stopAI();
     cols = c; rows = r;
-    const maxSize = 700;
-    cellSize = Math.floor((maxSize - PADDING * 2) / Math.max(cols, rows));
-    cellSize = Math.max(cellSize, 6);
+    cellSize = computeCellSize(cols, rows);
     canvas.width = cols * cellSize + PADDING * 2;
     canvas.height = rows * cellSize + PADDING * 2;
 
@@ -973,6 +978,32 @@
   }
 
   updateDifficultyGlow();
+
+  function refitToWindow() {
+    if (!grid) return;
+    const size = computeCellSize(cols, rows);
+    if (size === cellSize && canvas.width === cols * cellSize + PADDING * 2 &&
+        canvas.height === rows * cellSize + PADDING * 2) return;
+    cellSize = size;
+    canvas.width = cols * cellSize + PADDING * 2;
+    canvas.height = rows * cellSize + PADDING * 2;
+    renderWallsLayer();
+    initTrailLayer();
+    for (let i = 1; i < trail.length; i++) {
+      appendTrailSegment(trail[i - 1].x, trail[i - 1].y, trail[i].x, trail[i].y);
+    }
+    draw();
+  }
+  let refitTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(refitTimer);
+    refitTimer = setTimeout(refitToWindow, 150);
+  });
+  window.addEventListener('orientationchange', () => {
+    clearTimeout(refitTimer);
+    refitTimer = setTimeout(refitToWindow, 250);
+  });
+
   generateMaze(20, 20);
   window.addEventListener('pa-theme', () => {
     renderWallsLayer();
