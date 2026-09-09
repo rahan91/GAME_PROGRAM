@@ -126,13 +126,20 @@
   }
 
   // ---------------- Circle ----------------
-  // Freehand "perfect circle" (inspired by neal.fun/perfect-circle): you draw a
-  // circle from scratch and it finishes when the stroke returns to its start.
-  // Accuracy (circularity) is the dominant term (cubed), coverage is the
-  // fraction of a full loop actually drawn, and time is only a modest swing
-  // between -15% and +15%. No hard errors in this game.
+  // Freehand "perfect circle" (inspired by neal.fun/perfect-circle) against the
+  // on-screen guide ring: you trace the ring, center it on the dot, and the run
+  // finishes when the stroke returns to its start.
+  //  - accuracy is the dominant term (cubed) and is the PRODUCT of two parts:
+  //      * circularity — how constant the radius is (mean absolute radial
+  //        deviation around the center), amplified so quality spreads out
+  //      * size      — how well the mean radius matches the guide ring radius
+  //  - coverage is the fraction of the loop actually drawn
+  //  - time is only a modest swing between -15% and +15%. No hard errors.
   var CIRCLE_ACC_PERFECT = 240;  // accuracy term at 100% (full coverage too)
   var CIRCLE_ACC_POWER = 3.0;    // accuracy is cubed: wobble hurts fast
+  var CIRCLE_ACC_K = 2.5;        // circularity calibration: score drops 2.5x
+                                 // faster than the raw radial error, matching
+                                 // how an eye judges a hand-drawn circle
   var CIRCLE_REF_TIME = 7.0;     // seconds that earn the neutral time mult
   var CIRCLE_TIME_MIN = 0.85;    // slowest acceptable finish: -15%
   var CIRCLE_TIME_MAX = 1.15;    // fastest finish: +15%
@@ -148,78 +155,57 @@
     return safeScore(Math.round(accComp * cov * timeMult));
   }
 
-  function det3(m) {
-    return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
-         - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
-         + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
-  }
-
-  // Least-squares circle center via the Kasa algebraic fit (minimizes the
-  // implicit equation sum((x-cx)^2+(y-cy)^2-R^2)^2) on mean-centred points.
-  // The point-centroid (what naive fits use) is biased toward the densest part
-  // of the stroke; the Kasa fit recovers the true center. Falls back to the
-  // centroid if the system is degenerate (short arcs).
-  function circleCenter(pts) {
-    var n = pts.length;
-    var rx = 0, ry = 0;
-    for (var i = 0; i < n; i++) { rx += pts[i][0]; ry += pts[i][1]; }
-    var mx = rx / n, my = ry / n;
-    var sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, sx3 = 0, sy3 = 0, sxy2 = 0, sx2y = 0;
-    for (i = 0; i < n; i++) {
-      var x = pts[i][0] - mx, y = pts[i][1] - my;
-      sx += x; sy += y;
-      sxx += x * x; syy += y * y; sxy += x * y;
-      sx3 += x * x * x; sy3 += y * y * y; sxy2 += x * y * y; sx2y += x * x * y;
-    }
-    var M = [[sxx, sxy, sx], [sxy, syy, sy], [sx, sy, n]];
-    var v = [sx3 + sxy2, sx2y + sy3, sxx + syy];
-    var det = det3(M); // exact n is intended; centred point sums: sx=0, sy=0
-    if (Math.abs(det) < 1e-9) return { cx: mx, cy: my };
-    var a = det3([
-      [v[0], M[0][1], M[0][2]],
-      [v[1], M[1][1], M[1][2]],
-      [v[2], M[2][1], M[2][2]]
-    ]) / det;
-    var b = det3([
-      [M[0][0], v[0], M[0][2]],
-      [M[1][0], v[1], M[1][2]],
-      [M[2][0], v[2], M[2][2]]
-    ]) / det;
-    return { cx: mx + a / 2, cy: my + b / 2 };
-  }
-
   // Fit a circle to the stroke and grade it:
-//  - center: a fixed anchor ({cx,cy}) if provided, otherwise the Kasa
-//    least-squares fit (robust to uneven point density)
-//  - accuracy = 1 - RMS relative radial deviation measured per point around
-//    that center (R = mean radius), harsh on wobble, ellipses and off-center
-//    circles when an anchor is given
+//  - center: a fixed anchor ({cx,cy,targetR}) if provided (the on-screen dot /
+//    guide ring), otherwise the vendored circle-fit module's least-squares fit
+//  - accuracy = circularity x size, both in [0,1]:
+//      * circularity = 1 - CIRCLE_ACC_K * mean(|d_i - R| / R): average radial
+//        error about the center, amplified by CIRCLE_ACC_K so a slightly
+//        wobbly or off-center stroke reads visibly worse than a clean one
+//      * size = 1 - |R - targetR| / targetR: how well the drawn mean radius
+//        matches the fixed guide ring radius (only when targetR is provided)
 //  - coverage = 1 - longest run of empty angular bins / 360: measures the true
 //    sweep of the loop around the center, independent of sample density
-// points: array of [x, y], fixed: {cx, cy} | undefined. Returns null for
-// degenerate inputs.
-  function circleFit(points, fixed) {
+// points: array of [x, y], anchor: {cx, cy, targetR} | undefined. Returns null
+// for degenerate inputs.
+  function circleFit(points, anchor) {
     if (!Array.isArray(points) || points.length < 4) return null;
-    var c = (fixed && Number.isFinite(fixed.cx) && Number.isFinite(fixed.cy))
-      ? { cx: fixed.cx, cy: fixed.cy }
-      : circleCenter(points);
+    var n = points.length;
+    var cx, cy, R, errs;
+    var anchored = !!(anchor && Number.isFinite(anchor.cx) && Number.isFinite(anchor.cy));
+    if (anchored) {
+      cx = anchor.cx; cy = anchor.cy;
+      R = 0;
+      errs = new Array(n);
+      for (var i = 0; i < n; i++) {
+        var d0 = Math.hypot(points[i][0] - cx, points[i][1] - cy);
+        R += d0;
+        errs[i] = d0;
+      }
+      R /= n;
+      for (i = 0; i < n; i++) errs[i] = errs[i] - R;   // deviations d_i - R
+    } else {
+      var fit = (typeof Circlefit !== 'undefined' && Circlefit.compute) ? Circlefit.compute(points) : null;
+      if (!fit || !fit.success) return null;
+      cx = fit.center.x; cy = fit.center.y; R = fit.radius;
+      errs = fit.distances;
+    }
+    if (!(R > 1e-5)) return null;
+    var arre = 0;
+    for (i = 0; i < n; i++) arre += Math.abs(errs[i] / R);
+    arre /= n;
+    var circularity = clamp(1 - CIRCLE_ACC_K * arre, 0, 1);
+    var accuracy = circularity;
+    var targetR = anchored && Number.isFinite(anchor.targetR) ? anchor.targetR : 0;
+    if (targetR > 0 && circularity > 0) {
+      accuracy = circularity * clamp(1 - Math.abs(R - targetR) / targetR, 0, 1);
+    }
     var BINS = 360;
     var bins = new Array(BINS).fill(0);
-    var sumR = 0, sq = 0;
-    for (var i = 0; i < points.length; i++) {
-      var x = points[i][0], y = points[i][1];
-      var th = Math.atan2(y - c.cy, x - c.cx);
+    for (i = 0; i < n; i++) {
+      var th = Math.atan2(points[i][1] - cy, points[i][0] - cx);
       if (th < 0) th += 2 * Math.PI;
       bins[Math.min(BINS - 1, Math.floor(th * BINS / (2 * Math.PI)))] = 1;
-      var d = Math.hypot(x - c.cx, y - c.cy);
-      sumR += d;
-    }
-    var R = sumR / points.length;
-    if (!(R > 1e-5)) return null;
-    for (i = 0; i < points.length; i++) {
-      var d = Math.hypot(points[i][0] - c.cx, points[i][1] - c.cy);
-      var rel = (d - R) / R;
-      sq += rel * rel;
     }
     var maxGap = 0, run = 0;
     for (var b = 0; b < BINS; b++) {
@@ -239,10 +225,10 @@
     }
     if (wrap + tail > maxGap) maxGap = wrap + tail;
     return {
-      cx: c.cx,
-      cy: c.cy,
+      cx: cx,
+      cy: cy,
       R: R,
-      accuracy: Math.max(0, Math.min(1, 1 - Math.sqrt(sq / points.length))),
+      accuracy: accuracy,
       coverage: Math.max(0, Math.min(1, 1 - maxGap / BINS))
     };
   }
@@ -268,6 +254,7 @@
     circleFit: circleFit,
     CIRCLE_ACC_PERFECT: CIRCLE_ACC_PERFECT,
     CIRCLE_ACC_POWER: CIRCLE_ACC_POWER,
+    CIRCLE_ACC_K: CIRCLE_ACC_K,
     CIRCLE_REF_TIME: CIRCLE_REF_TIME,
     CIRCLE_TIME_MIN: CIRCLE_TIME_MIN,
     CIRCLE_TIME_MAX: CIRCLE_TIME_MAX

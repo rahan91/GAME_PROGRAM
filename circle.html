@@ -202,6 +202,7 @@
   <link rel="stylesheet" href="ui.css">
   <script defer src="crt.js"></script>
   <script src="score.js"></script>
+  <script src="vendor/circle-fit.js"></script>
   <script src="scoring.js"></script>
   <script src="shop.js"></script>
 </head>
@@ -446,7 +447,7 @@ function render() {
     drawing = false;
     finished = true;
     const elapsed = (Date.now() - strokeStart) / 1000;
-    lastFit = Scoring.circleFit(stroke, { cx: CENTER, cy: CENTER });
+    lastFit = Scoring.circleFit(stroke, { cx: CENTER, cy: CENTER, targetR: GUIDE_R });
     if (!lastFit) { abandonDraw('too short'); return; }
     lastCov = lastFit.coverage;
     const accuracy = lastFit.accuracy;
@@ -509,7 +510,7 @@ function render() {
     render();
     // auto-finish when the stroke closes back onto its start with a real loop behind it
     if (stroke.length > 12 && pathLength(stroke) > 60) {
-      const est = Scoring.circleFit(stroke, { cx: CENTER, cy: CENTER });
+      const est = Scoring.circleFit(stroke, { cx: CENTER, cy: CENTER, targetR: GUIDE_R });
       const cov = est ? est.coverage : 0;
       const closeR = Math.max(16, (est && est.R) ? est.R * 0.10 : 20);
       if (cov >= 0.55 && Math.hypot(p[0] - stroke[0][0], p[1] - stroke[0][1]) < closeR) {
@@ -521,7 +522,7 @@ function render() {
     if (!drawing) return;
     drawing = false;
     if (stroke.length < 4 || pathLength(stroke) < 40) { abandonDraw('too short'); return; }
-    const est = Scoring.circleFit(stroke, { cx: CENTER, cy: CENTER });
+    const est = Scoring.circleFit(stroke, { cx: CENTER, cy: CENTER, targetR: GUIDE_R });
     const cov = est ? est.coverage : 0;
     if (cov >= 0.5) {
       finishDraw();

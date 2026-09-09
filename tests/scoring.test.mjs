@@ -1,10 +1,10 @@
 import { readFileSync } from 'fs';
 import vm from 'vm';
 
-const src = readFileSync(new URL('../scoring.js', import.meta.url), 'utf8');
 const ctx = { console };
 vm.createContext(ctx);
-vm.runInContext(src, ctx);
+vm.runInContext(readFileSync(new URL('../vendor/circle-fit.js', import.meta.url), 'utf8'), ctx);
+vm.runInContext(readFileSync(new URL('../scoring.js', import.meta.url), 'utf8'), ctx);
 const S = ctx.Scoring;
 
 let failures = 0;
@@ -190,6 +190,17 @@ function sampleCircle(cx, cy, r, n, jitter) {
   }
   return pts;
 }
+// a human-style trace of the ring at (320,320): radial wobble + slight offset
+function traceRing(r, n, jitter, offX, offY) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = i / n * 2 * Math.PI;
+    const jx = (Math.random() * 2 - 1) * jitter;
+    const jy = (Math.random() * 2 - 1) * jitter;
+    pts.push([320 + offX + (r + jx) * Math.cos(a), 320 + offY + (r + jy) * Math.sin(a)]);
+  }
+  return pts;
+}
 const cf = S.circleFit;
 {
   const pts = sampleCircle(200, 150, 100, 400, 0);
@@ -217,7 +228,7 @@ const cf = S.circleFit;
     ellipse.push([0 + 200 * Math.cos(a), 0 + 90 * Math.sin(a)]);
   }
   const fit = cf(ellipse);
-  assert(fit.accuracy < 0.8 && fit.accuracy > 0.6, 'a 2.2:1 ellipse is graded harshly (well below a circle)');
+  assert(fit.accuracy < 0.6 && fit.accuracy > 0.3, 'a 2.2:1 ellipse is graded harshly (well below a circle)');
 }
 {
   const wobble18 = sampleCircle(100, 100, 120, 300, 18);
@@ -245,8 +256,10 @@ const cf = S.circleFit;
   // same circle drawn off the dot is punished
   const off = sampleCircle(320 + 25, 320 + 25, 150, 360, 0);
   const f1 = cf(off, anchor);
-  assert(f1.accuracy < 0.95, 'anchored circle offset 25px from the dot drops accuracy');
-  assert(f1.accuracy > 0.7, 'a 25px offset is not catastrophic');
+  assert(f1.accuracy < 0.75, 'anchored circle offset 25px from the dot drops accuracy hard');
+  assert(f1.accuracy > 0.5, 'a 25px offset is bad but not perfectly-doomed');
+  const okOff = sampleCircle(320 + 8, 320 + 8, 150, 360, 0);
+  assert(cf(okOff, anchor).accuracy > 0.8, 'a small 8px offset stays in the 80s');
   // a loop that does not enclose the dot cannot cover the full sweep
   const tangent = sampleCircle(320 + 150, 320, 150, 360, 0);
   const f2 = cf(tangent, anchor);
@@ -255,6 +268,25 @@ const cf = S.circleFit;
   const free = sampleCircle(200, 150, 100, 400, 0);
   const f3 = cf(free);
   assert(f3.accuracy > 0.995, 'unanchored fit still recovers a perfect circle');
+}
+{
+  // guide-ring accuracy: circularity AND size must both match the dot+ring
+  const guide = { cx: 320, cy: 320, targetR: 220 };
+  const big = sampleCircle(320, 320, 220, 400, 0);
+  const fB = cf(big, guide);
+  assert(fB.accuracy > 0.995, 'perfect circle on the guide ring is ~100%');
+  const tiny = sampleCircle(320, 320, 120, 400, 0);
+  const fT = cf(tiny, guide);
+  assert(fT.accuracy < 0.6 && fT.accuracy > 0.4, 'a perfectly round but wrong-size circle is penalized by size');
+  const huge = sampleCircle(320, 320, 330, 400, 0);
+  const fH = cf(huge, guide);
+  assert(fH.accuracy > 0.4 && fH.accuracy < 0.6, 'a 50% oversized circle scores around half');
+  const good = traceRing(220, 400, 7, 8, 12);
+  const fG = cf(good, guide);
+  assert(fG.accuracy > 0.8 && fG.accuracy < 0.96, 'clean trace on the ring sits in the high 80s-90s');
+  const sloppy = traceRing(220, 400, 22, 25, 18);
+  const fS = cf(sloppy, guide);
+  assert(fS.accuracy < 0.8, 'sloppy wobble + off-center reads clearly worse than good');
 }
 
 console.log('\n' + (failures === 0 ? 'ALL ' + checks + ' CHECKS PASSED' : failures + ' OF ' + checks + ' CHECKS FAILED'));
