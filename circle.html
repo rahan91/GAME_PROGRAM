@@ -232,7 +232,7 @@
 
 <div id="cross"></div>
 
-<div class="hint">Center your circle on the dot &middot; bring the stroke back to its start to finish &middot; scored on circularity around the dot</div>
+<div class="hint">Trace the ring around the dot &middot; bring the stroke back to its start to finish &middot; scored on circularity around the dot</div>
 
 <div id="leaderboard">
   <h3>Circle &middot; Accuracy</h3>
@@ -254,6 +254,7 @@
 
   const SIZE = 640;           // logical canvas space
   const CENTER = SIZE / 2;    // fixed anchor: the dot you must center on
+  const GUIDE_R = 220;        // fixed guide ring radius drawn on the board
   const ctx = board.getContext('2d');
 
   let dpr = 1;
@@ -300,6 +301,17 @@
   function clearBoard() {
     ctx.clearRect(0, 0, SIZE, SIZE);
   }
+  // the pre-fixed guide circle around the dot: a faint ring to trace
+  function drawGuide() {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([8, 10]);
+    ctx.beginPath();
+    ctx.arc(CENTER, CENTER, GUIDE_R, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
   // exact 10px screen dot at board center, with a soft halo so it always reads
   function drawDot() {
     const rect = board.getBoundingClientRect();
@@ -343,9 +355,11 @@
     ctx.stroke();
     ctx.restore();
   }
-  function render() {
+function render() {
     clearBoard();
+    drawGuide();
     drawStroke();
+    drawDot();
   }
 
   // ---------- HUD / score ----------
