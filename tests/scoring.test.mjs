@@ -176,7 +176,6 @@ assert(circ(0, 1, 7) === 0, 'zero accuracy = 0');
 assert(circ(-1, 1, 7) === 0, 'negative accuracy clamps to 0');
 assert(circ(NaN, 1, 7) === 0, 'NaN accuracy -> 0');
 assert(circ(1, 1, Infinity) === 0, 'infinite elapsed is non-finite -> 0 (sanitized)');
-assert(S.CIRCLE_PARAMS.tolerance > 0 && S.CIRCLE_PARAMS.budget > 0 && S.CIRCLE_PARAMS.minCoverage > 0, 'error thresholds are positive');
 between(circ(1, 1, 0.1), 0, 5000, 'perfect circle bounded 0..5000');
 
 console.log('\n' + (failures === 0 ? 'ALL ' + checks + ' CHECKS PASSED' : failures + ' OF ' + checks + ' CHECKS FAILED'));

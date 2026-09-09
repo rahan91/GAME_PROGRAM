@@ -126,25 +126,19 @@
   }
 
   // ---------------- Circle ----------------
-  // Trace a perfect circle over the target ring in a single stroke. Accuracy is
-  // the dominant term (squared), coverage of the full 360 degrees scales it,
-  // and time is only a modest swing between -15% and +15%. Deviating out of the
-  // tolerance band, running out of time, or releasing before enough of the ring
-  // is covered are hard errors handled by the game page (no score).
+  // Freehand "perfect circle" (inspired by neal.fun/perfect-circle): you draw a
+  // circle from scratch and it finishes when the stroke returns to its start.
+  // Accuracy is the dominant term (squared) and means circularity, coverage is
+  // the fraction of a full loop actually drawn, and time is only a modest swing
+  // between -15% and +15%. There are no hard errors in this game.
   var CIRCLE_ACC_PERFECT = 400;  // accuracy term at 100% (full coverage too)
   var CIRCLE_ACC_POWER = 2.0;    // accuracy is squared: wobble hurts fast
   var CIRCLE_REF_TIME = 7.0;     // seconds that earn the neutral time mult
   var CIRCLE_TIME_MIN = 0.85;    // slowest acceptable finish: -15%
   var CIRCLE_TIME_MAX = 1.15;    // fastest finish: +15%
-  var CIRCLE_PARAMS = {
-    radius: 220,     // target ring radius (640px logical board)
-    tolerance: 14,   // max radial deviation in px (band is radius +/- tolerance)
-    budget: 12,      // seconds allowed to complete the stroke (hard error)
-    minCoverage: 0.6 // fraction of the ring that must be swept (hard error)
-  };
 
-  // accuracy in [0,1] (length-weighted fidelity to the ring), coverage in [0,1]
-  // (fraction of 360deg actually drawn), elapsedSec > 0.
+  // accuracy in [0,1] (circularity), coverage in [0,1] (fraction of a full loop
+  // drawn), elapsedSec > 0.
   function circleScore(accuracy, coverage, elapsedSec) {
     if (!Number.isFinite(accuracy) || !Number.isFinite(coverage) || !Number.isFinite(elapsedSec)) return 0;
     var acc = clamp(accuracy, 0, 1);
@@ -176,7 +170,6 @@
     CIRCLE_ACC_POWER: CIRCLE_ACC_POWER,
     CIRCLE_REF_TIME: CIRCLE_REF_TIME,
     CIRCLE_TIME_MIN: CIRCLE_TIME_MIN,
-    CIRCLE_TIME_MAX: CIRCLE_TIME_MAX,
-    CIRCLE_PARAMS: CIRCLE_PARAMS
+    CIRCLE_TIME_MAX: CIRCLE_TIME_MAX
   };
 })(typeof window !== 'undefined' ? window : globalThis);

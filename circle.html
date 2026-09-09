@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Circle — Draw a Perfect Ring &amp; Score | GAME PROGRAM</title>
-  <meta name="description" content="Trace a perfect circle over the ring in one stroke. Every part of your line is colored by its accuracy, and the score is driven almost entirely by how round you drew it. Out of the band, too slow, or incomplete ends the run.">
-  <meta name="keywords" content="circle game, draw game, ring game, accuracy game, arcade, browser game, leaderboard, percentile">
+<title>Circle — Can You Draw a Perfect Circle? | GAME PROGRAM</title>
+  <meta name="description" content="Can you draw a perfect circle? Draw a freehand circle, close the loop and see your circularity score, how the attempt compares to other players and the points you earn.">
+  <meta name="keywords" content="perfect circle, draw a circle, circularity test, drawing game, arcade, browser game, leaderboard, percentile">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#1c1c1c">
   <link rel="canonical" href="https://game-program.pages.dev/circle">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="GAME PROGRAM">
-  <meta property="og:title" content="Circle — Draw a Perfect Ring &amp; Score | GAME PROGRAM">
-  <meta property="og:description" content="Trace a perfect circle in one stroke. The line is colored by accuracy part by part; the score is all about roundness.">
+  <meta property="og:title" content="Circle — Can You Draw a Perfect Circle? | GAME PROGRAM">
+  <meta property="og:description" content="Draw a freehand circle, close the loop and see your circularity score and percentile.">
   <meta property="og:url" content="https://game-program.pages.dev/circle">
   <meta property="og:image" content="https://game-program.pages.dev/assets/circle-icon.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Circle — Draw a Perfect Ring &amp; Score | GAME PROGRAM">
-  <meta name="twitter:description" content="Trace a perfect circle in one stroke. The line is colored by accuracy part by part; the score is all about roundness.">
+  <meta name="twitter:title" content="Circle — Can You Draw a Perfect Circle? | GAME PROGRAM">
+  <meta name="twitter:description" content="Draw a freehand circle, close the loop and see your circularity score and percentile.">
   <meta name="twitter:image" content="https://game-program.pages.dev/assets/circle-icon.png">
   <script type="application/ld+json">
   {
@@ -25,7 +25,7 @@
     "@type": "VideoGame",
     "name": "Circle",
     "url": "https://game-program.pages.dev/circle",
-    "description": "Trace a perfect circle over the ring in one stroke and score on accuracy.",
+    "description": "Can you draw a perfect circle? Freehand drawing scored on circularity.",
     "genre": "Arcade",
     "gamePlatform": "Web Browser",
     "operatingSystem": "Any",
@@ -72,33 +72,33 @@
   }
 
   .back {
-    position: fixed; top: 20px; left: 20px; z-index: 10;
+    position: fixed; top: 16px; left: 16px; z-index: 10;
     color: rgba(var(--acc-main),0.6); text-decoration: none;
     font-size: 14px; transition: color 0.2s;
   }
   .back:hover { color: rgba(var(--acc-main),1); }
 
   h1 {
-    position: fixed; top: 20px; left: 0; right: 0;
-    text-align: center; pointer-events: none;
+    position: fixed; top: 16px; left: 0; right: 0;
+    text-align: center; pointer-events: none; z-index: 6;
     font-family: 'IBM Plex Mono', 'Courier New', monospace;
-    font-weight: 700; letter-spacing: 6px;
+    font-weight: 700; letter-spacing: 4px;
     text-transform: uppercase; color: rgba(var(--acc-main),0.85);
+    font-size: 1.3rem;
+    padding: 0 120px;
   }
 
-  #hud {
-    position: fixed; top: 64px; left: 0; right: 0;
-    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-    gap: 6px 18px; padding: 0 12px;
-    pointer-events: none; z-index: 8;
-    font-size: 13px; color: rgba(var(--acc-main),0.75);
+  #statChip {
+    position: fixed; top: 16px; right: 16px; z-index: 10;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 12px; color: rgba(var(--acc-main),0.7);
+    letter-spacing: 0.08em;
   }
-  #hud .stat { letter-spacing: 0.1em; }
-  #hud b { color: rgba(var(--acc-texthi),0.95); }
+  #statChip b { color: rgba(var(--acc-texthi),0.95); font-weight: 400; }
 
   #boardWrap {
-    position: fixed; left: 50%; top: calc(50% + 14px);
-    width: min(58vmin, 480px); height: min(58vmin, 480px);
+    position: fixed; left: 50%; top: calc(50% + 8px);
+    width: min(88vmin, 760px); height: min(88vmin, 760px);
     transform: translate(-50%, -50%);
     z-index: 5;
   }
@@ -106,43 +106,31 @@
     display: block; width: 100%; height: 100%;
     border-radius: 14px;
     background: rgba(0,0,0,0.28);
-    border: 1px solid rgba(var(--acc-main),0.16);
+    border: 1px solid rgba(var(--acc-main),0.12);
     box-shadow: 0 12px 40px rgba(0,0,0,0.35) inset, 0 0 0 1px rgba(0,0,0,0.3);
     cursor: none; touch-action: none;
   }
-  #board::after {
-    content: ''; position: absolute; inset: 0; border-radius: 14px;
-    pointer-events: none;
-  }
 
-  #goBtn {
-    position: absolute; left: 50%; top: 100%;
-    transform: translateX(-50%);
-    margin-top: 12px;
-    font-family: inherit; font-size: 14px; letter-spacing: 4px;
-    text-transform: uppercase; cursor: pointer;
-    padding: 10px 26px; border-radius: 8px;
-    background: rgba(var(--acc-btn),0.18);
-    color: rgba(var(--acc-texthi),0.95);
-    border: 1px solid rgba(var(--acc-btn),0.4);
-    z-index: 12; transition: background 0.15s;
-    display: none;
-  }
-  #goBtn:hover { background: rgba(var(--acc-btn),0.4); }
-
-  #resultCard {
-    position: absolute; left: 50%; top: 30%; transform: translateX(-50%);
+  #overlay {
+    position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%);
     text-align: center; z-index: 12; pointer-events: none;
-    display: none;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px;
+    opacity: 0; transition: opacity 0.25s ease;
   }
-  #resultCard .res-acc {
-    font-size: 34px; font-weight: 700; letter-spacing: 1px;
-    color: rgba(var(--acc-texthi),0.95); text-shadow: 0 0 18px rgba(var(--acc-bright),0.4);
+  #overlay.show { opacity: 1; }
+  #overlay .big {
+    font-size: clamp(40px, 12vmin, 88px);
+    font-weight: 700; letter-spacing: 1px;
+    color: rgba(var(--acc-texthi),0.98);
+    text-shadow: 0 0 26px rgba(var(--acc-bright),0.5);
+    font-variant-numeric: tabular-nums;
   }
-  #resultCard .res-acc.err { color: rgba(230,110,120,0.95); text-shadow: 0 0 18px rgba(230,110,120,0.35); }
-  #resultCard .res-sub { margin-top: 6px; font-size: 12px; color: rgba(var(--acc-main),0.8); }
-  #resultCard .res-sub b { color: rgba(var(--acc-bright),1); }
-  #resultCard .res-sub.err b { color: rgba(230,110,120,1); }
+  #overlay .msg { font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--acc-main),0.9); }
+  #overlay .sub { font-size: 12px; color: rgba(var(--acc-main),0.65); line-height: 1.7; }
+  #overlay .sub b { color: rgba(var(--acc-bright),1); font-weight: 400; }
+  #overlay .pts { font-size: 13px; color: rgba(var(--acc-main),0.8); margin-top: 4px; }
+  #overlay .pts b { color: rgba(var(--acc-bright),1); font-weight: 400; }
 
   #cross {
     position: fixed; left: 0; top: 0;
@@ -165,12 +153,6 @@
     font-size: 12px; pointer-events: none; z-index: 6;
   }
 
-  #runStatus {
-    position: fixed; bottom: 42px; left: 0; right: 0;
-    text-align: center; color: rgba(var(--acc-main),0.7);
-    font-size: 12px; pointer-events: none; z-index: 6;
-  }
-
   #leaderboard {
     position: fixed; bottom: 20px; left: 20px; z-index: 6;
     width: 230px; max-height: 46vh;
@@ -185,15 +167,14 @@
     text-transform: uppercase; color: rgba(var(--acc-main),0.85);
     padding: 10px 14px 7px; border-bottom: 1px solid rgba(var(--acc-main),0.18);
   }
-  #leaderboard .lb-body { padding: 5px 0; overflow: hidden; }
+  #leaderboard .lb-body { padding: 5px 0; overflow-y: auto; max-height: calc(46vh - 64px); }
   .lb-row { display: flex; align-items: center; gap: 8px; padding: 4px 14px; font-size: 12px; }
   .lb-row.me { background: rgba(var(--acc-main),0.14); }
   .lb-row .rk { width: 18px; color: rgba(var(--acc-main),0.45); font-variant-numeric: tabular-nums; text-align: right; }
   .lb-row .rk.top { color: rgba(230,200,120,0.9); font-weight: 600; }
   .lb-row .nm { flex: 1; color: rgba(var(--acc-text),0.85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lb-row .pt { color: rgba(var(--acc-main),0.85); font-variant-numeric: tabular-nums; }
-  .lb-row.me .pt { color: rgba(var(--acc-bright),1); }
-  .lb-row .acc { color: rgba(var(--acc-texthi),0.95); font-variant-numeric: tabular-nums; }
+  .lb-row .acc { color: rgba(var(--acc-text),0.9); font-variant-numeric: tabular-nums; }
+  .lb-row.me .acc { color: rgba(var(--acc-bright),1); }
   .lb-user {
     border-top: 1px solid rgba(var(--acc-main),0.18);
     padding: 8px 14px;
@@ -207,11 +188,11 @@
   .lb-status { padding: 10px 14px; font-size: 11px; color: rgba(var(--acc-main),0.45); }
 
   @media (max-width: 640px) {
-    h1 { font-size: 1.25rem; letter-spacing: 4px; }
-    #hud { top: 56px; font-size: 12px; gap: 3px 14px; }
-    #runStatus, .hint { font-size: 11px; }
+    h1 { font-size: 1.05rem; letter-spacing: 3px; padding: 0 90px; }
+    #statChip { font-size: 11px; gap: 10px; }
+    .hint { font-size: 11px; }
     #leaderboard { display: none; }
-    #boardWrap { top: calc(50% + 14px); width: min(62vmin, 460px); height: min(62vmin, 460px); }
+    #boardWrap { top: calc(50% + 12px); width: min(92vmin, 640px); height: min(92vmin, 640px); }
   }
   @media (pointer: coarse) {
     #cross { display: none; }
@@ -231,29 +212,27 @@
 
 <a class="back" href="/gallery">&larr; Gallery</a>
 
-<h1>Circle</h1>
+<h1>Can you draw a perfect circle?</h1>
 
-<div id="hud">
-  <span class="stat">Player <b id="playerName">anonymous</b></span>
-  <span class="stat">Total <b id="scoreDisplay">0</b></span>
-  <span class="stat">Time <b id="timeDisplay">0.0s</b></span>
-  <span class="stat">Accuracy <b id="accDisplay">-</b></span>
-  <span class="stat">Coverage <b id="covDisplay">0%</b></span>
+<div id="statChip">
+  <span>Player <b id="playerName">anonymous</b></span>
+  <span>Total <b id="scoreDisplay">0</b></span>
+  <span>Tries <b id="triesDisplay">0</b></span>
 </div>
 
 <div id="boardWrap">
   <canvas id="board"></canvas>
-  <button id="goBtn">DRAW</button>
-  <div id="resultCard">
-    <div class="res-acc" id="resAcc">0%</div>
-    <div class="res-sub" id="resSub"></div>
+  <div id="overlay">
+    <div class="big" id="ovScore">0%</div>
+    <div class="msg" id="ovMsg"></div>
+    <div class="sub"><span id="ovBeat"></span><br><span id="ovCov"></span></div>
+    <div class="pts" id="ovPts"></div>
   </div>
 </div>
 
 <div id="cross"></div>
 
-<div id="runStatus"></div>
-<div class="hint">Trace the ring in one stroke &middot; line colors show accuracy part by part &middot; stay in the band &middot; finish before time runs out</div>
+<div class="hint">Draw a circle &middot; bring the stroke back to its start to finish &middot; every attempt is scored on circularity</div>
 
 <div id="leaderboard">
   <h3>Circle &middot; Accuracy</h3>
@@ -265,35 +244,28 @@
 (() => {
   const board = document.getElementById('board');
   const boardWrap = document.getElementById('boardWrap');
-  const goBtn = document.getElementById('goBtn');
-  const resAcc = document.getElementById('resAcc');
-  const resSub = document.getElementById('resSub');
-  const resultCard = document.getElementById('resultCard');
-  const timeDisplay = document.getElementById('timeDisplay');
-  const accDisplay = document.getElementById('accDisplay');
-  const covDisplay = document.getElementById('covDisplay');
-  const runStatus = document.getElementById('runStatus');
+  const overlay = document.getElementById('overlay');
+  const ovScore = document.getElementById('ovScore');
+  const ovMsg = document.getElementById('ovMsg');
+  const ovBeat = document.getElementById('ovBeat');
+  const ovCov = document.getElementById('ovCov');
+  const ovPts = document.getElementById('ovPts');
+  const triesDisplay = document.getElementById('triesDisplay');
 
   const SIZE = 640;           // logical canvas space
-  const cx = SIZE / 2, cy = SIZE / 2;
   const ctx = board.getContext('2d');
 
-  const P = Scoring.CIRCLE_PARAMS;   // radius, tolerance, budget, minCoverage
-  const R = P.radius;
-  const TOL = P.tolerance;
-  const BUDGET = P.budget;
-
   let dpr = 1;
-  let phase = 'idle';         // idle | draw | result | error
   let drawing = false;
+  let finished = false;
   let stroke = [];            // points traced (logical coords)
-  let colors = [];            // per-segment color (matches stroke[i-1]..stroke[i])
   let strokeStart = 0;
+  let tries = 0;
   let isLoggedIn = false;
   let serverTotal = null;
-  let lastAcc = 0;
+  let lastFit = null;         // last computed circle fit + accuracy
   let lastCov = 0;
-  let ringColor = 'rgba(140,180,150,0.8)';
+  let lastPoints = 0;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -316,24 +288,36 @@
   }
 
   // ---------- geometry / accuracy ----------
-  function radiusAt(p) {
-    return Math.hypot(p[0] - cx, p[1] - cy);
+  // Fit a circle (centroid center, mean radius) and score circularity:
+  // accuracy = 1 - (mean |dist - R|) / R, i.e. how constant the radius is.
+  function fitCircle(pts) {
+    const n = pts.length;
+    if (n < 4) return null;
+    let sx = 0, sy = 0;
+    for (const p of pts) { sx += p[0]; sy += p[1]; }
+    const ccx = sx / n, ccy = sy / n;
+    const ds = [];
+    let sumR = 0;
+    for (const p of pts) {
+      const d = Math.hypot(p[0] - ccx, p[1] - ccy);
+      ds.push(d);
+      sumR += d;
+    }
+    const R = sumR / n;
+    if (!(R > 1e-5)) return null;
+    let dev = 0;
+    for (const d of ds) dev += Math.abs(d - R);
+    const accuracy = clamp(1 - (dev / n) / R, 0, 1);
+    const spread = Math.max(...ds) - Math.min(...ds);
+    return { cx: ccx, cy: ccy, R, accuracy, spread };
   }
-  // [0,1]: fidelity of a radius to the target ring; 0 = on the line, 1 = at the band edge
-  function deviationOnLine(dev) {
-    return clamp(1 - Math.pow(dev / TOL, 2), 0, 1);
-  }
-  function segmentColors(acc) {
-    const hue = Math.round(130 - 130 * clamp(acc, 0, 1));   // 130 green -> 0 red
-    return 'hsl(' + hue + ', 82%, 52%)';
-  }
-  // unwrapped angular sweep in [0,1] of full 360deg
-  function computeCoverage(pts) {
+  // unwrapped angular sweep around a center, as a fraction of 360deg
+  function sweepAround(pts, ccx, ccy) {
     if (pts.length < 2) return 0;
     let sweep = 0;
-    let prev = Math.atan2(cy - pts[0][1], pts[0][0] - cx);
+    let prev = Math.atan2(ccy - pts[0][1], pts[0][0] - ccx);
     for (let i = 1; i < pts.length; i++) {
-      let a = Math.atan2(cy - pts[i][1], pts[i][0] - cx);
+      let a = Math.atan2(ccy - pts[i][1], pts[i][0] - ccx);
       let d = a - prev;
       while (d < -Math.PI) d += 2 * Math.PI;
       while (d > Math.PI) d -= 2 * Math.PI;
@@ -342,61 +326,48 @@
     }
     return clamp(Math.abs(sweep) / (2 * Math.PI), 0, 1);
   }
-  // length-weighted mean segment accuracy
-  function computeAccuracy(pts) {
-    let total = 0, sum = 0;
-    for (let i = 1; i < pts.length; i++) {
-      const seg = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-      const dev = Math.abs(radiusAt(pts[i]) - R);
-      sum += deviationOnLine(dev) * seg;
-      total += seg;
-    }
-    return total > 0 ? sum / total : 0;
+  function pathLength(pts) {
+    let d = 0;
+    for (let i = 1; i < pts.length; i++) d += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    return d;
   }
 
   // ---------- drawing ----------
   function clearBoard() {
     ctx.clearRect(0, 0, SIZE, SIZE);
   }
-  function drawTarget() {
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.setLineDash([6, 6]);
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.arc(cx, cy, R + TOL, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(cx, cy, Math.max(6, R - TOL), 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.strokeStyle = ringColor;
-    ctx.lineWidth = 3;
-    ctx.shadowColor = ringColor;
-    ctx.shadowBlur = 12;
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
   function drawStroke() {
     if (stroke.length < 2) return;
     ctx.save();
+    ctx.strokeStyle = 'rgba(220,232,226,0.95)';
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = 4;
-    for (let i = 1; i < stroke.length; i++) {
-      ctx.strokeStyle = colors[i - 1];
-      ctx.beginPath();
-      ctx.moveTo(stroke[i - 1][0], stroke[i - 1][1]);
-      ctx.lineTo(stroke[i][0], stroke[i][1]);
-      ctx.stroke();
-    }
+    ctx.lineWidth = 3.2;
+    ctx.beginPath();
+    ctx.moveTo(stroke[0][0], stroke[0][1]);
+    for (let i = 1; i < stroke.length; i++) ctx.lineTo(stroke[i][0], stroke[i][1]);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawFit(fit) {
+    if (!fit) return;
+    ctx.save();
+    ctx.strokeStyle = ringColor;
+    ctx.shadowColor = ringColor;
+    ctx.shadowBlur = 14;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(fit.cx, fit.cy, fit.R, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = ringColor;
+    ctx.beginPath();
+    ctx.arc(fit.cx, fit.cy, 3, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
   function render() {
     clearBoard();
-    drawTarget();
     drawStroke();
   }
 
@@ -429,7 +400,7 @@
     fetch('/api/circle/record', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accuracy: lastAcc, coverage: lastCov, points: Math.round(points), elapsed })
+      body: JSON.stringify({ accuracy: lastFit.accuracy, coverage: lastCov, points: Math.round(points), elapsed })
     }).catch(() => {});
   }
   async function loadLeaderboard() {
@@ -460,8 +431,9 @@
       '</div>'
     ).join('');
     if (data.user && data.user.pct != null) {
+      const beat = Math.max(1, Math.min(100, Math.round(100 - data.user.pct)));
+      if (finished) ovBeat.textContent = 'You beat ' + beat + '% of players';
       userEl.innerHTML = 'You: rank <b>#' + data.user.rank + '</b> of ' + data.players +
-        ' &middot; <b>' + data.user.pct.toFixed(2) + 'th</b> pct' +
         ' &middot; best <b>' + accText(data.user.best) + '</b>' +
         ' &middot; ' + data.user.runs + ' run' + (data.user.runs === 1 ? '' : 's');
     } else {
@@ -470,123 +442,104 @@
   }
 
   // ---------- flow ----------
-  function resetGame() {
-    stroke = [];
-    colors = [];
-    drawing = false;
-    goBtn.style.display = 'block';
-    goBtn.textContent = 'DRAW';
-    resultCard.style.display = 'none';
-    accDisplay.textContent = '-';
-    covDisplay.textContent = '0%';
-    timeDisplay.textContent = '0.0s';
-    render();
-    runStatus.textContent = 'Trace the ring in one stroke \u2014 press DRAW to begin.';
-  }
   function startDraw() {
-    if (phase === 'result' || phase === 'error') { resetGame(); return; }
-    if (phase !== 'idle') return;
-    phase = 'draw';
     stroke = [];
-    colors = [];
-    drawing = false;
+    drawing = true;
+    finished = false;
+    lastFit = null;
     strokeStart = Date.now();
-    goBtn.style.display = 'none';
-    resultCard.style.display = 'none';
-    accDisplay.textContent = '-';
-    covDisplay.textContent = '0%';
-    runStatus.textContent = 'Trace the ring \u2014 stay inside the band!';
+    overlay.classList.remove('show');
     render();
   }
-  function failRun(reason) {
-    phase = 'error';
+  function finishDraw() {
     drawing = false;
-    lastAcc = computeAccuracy(stroke);
-    lastCov = computeCoverage(stroke);
-    if (stroke.length >= 2) render();
-    resAcc.className = 'res-acc err';
-    resAcc.textContent = 'ERROR';
-    resSub.className = 'res-sub err';
-    resSub.innerHTML = '<b>' + reason + '</b>';
-    resultCard.style.display = 'block';
-    goBtn.style.display = 'block';
-    goBtn.textContent = 'TRY AGAIN';
-    runStatus.textContent = reason + ' \u2014 no points this time.';
-  }
-  function endRun(now) {
-    const elapsed = (now - strokeStart) / 1000;
-    lastAcc = computeAccuracy(stroke);
-    lastCov = computeCoverage(stroke);
-    const points = Scoring.circleScore(lastAcc, lastCov, elapsed);
-    addScore(points);
-    recordCircle(points, elapsed);
+    finished = true;
+    const elapsed = (Date.now() - strokeStart) / 1000;
+    lastElapsed = elapsed;
+    lastFit = fitCircle(stroke);
+    if (!lastFit) { abandonDraw('too short'); return; }
+    lastCov = sweepAround(stroke, lastFit.cx, lastFit.cy);
+    const accuracy = lastFit.accuracy;
+    lastPoints = Scoring.circleScore(accuracy, lastCov, elapsed);
+    addScore(lastPoints);
+    recordCircle(lastPoints, elapsed);
     loadLeaderboard();
 
-    phase = 'result';
-    drawing = false;
-    const accPct = Math.round(lastAcc * 1000) / 10;
-    accDisplay.textContent = accPct + '%';
-    covDisplay.textContent = Math.round(lastCov * 100) + '%';
-    resAcc.className = 'res-acc';
-    resAcc.textContent = accPct + '%';
-    resSub.className = 'res-sub';
-    resSub.innerHTML = '+' + Shop.fmt(points) + ' pts &middot; ' + Math.round(lastCov * 100) +
-      '% coverage &middot; ' + elapsed.toFixed(1) + 's';
-    resultCard.style.display = 'block';
-    goBtn.style.display = 'block';
-    goBtn.textContent = 'AGAIN';
-    runStatus.textContent = 'Circle locked in!';
+    tries++;
+    triesDisplay.textContent = tries;
+
+    const pct = Math.round(accuracy * 1000) / 10;
+    ovScore.textContent = pct + '%';
+    ovMsg.textContent = messageFor(accuracy);
+    ovBeat.textContent = isLoggedIn ? '' : 'You beat ' + heuristicBeat(accuracy) + '% of players';
+    ovCov.textContent = Math.round(lastCov * 100) + '% of the circle drawn';
+    ovPts.textContent = lastPoints > 0 ? ('+' + Shop.fmt(lastPoints) + ' pts &middot; ' + elapsed.toFixed(1) + 's') : 'draw again to keep improving';
+    overlay.classList.add('show');
     render();
+    // show the fitted circle over the stroke
+    drawFit(lastFit);
+  }
+  function abandonDraw(reason) {
+    drawing = false;
+    tries++;
+    triesDisplay.textContent = tries;
+    stroke = [];
+    render();
+  }
+  function messageFor(accuracy) {
+    const p = accuracy * 100;
+    if (p >= 97) return 'Perfect circle!';
+    if (p >= 92) return 'Unbelievably circular';
+    if (p >= 85) return 'Stunning roundness';
+    if (p >= 75) return 'That\u2019s a nice circle';
+    if (p >= 62) return 'Genuinely round-ish';
+    if (p >= 48) return 'Shaped like a reminder of a circle';
+    if (p >= 30) return 'Are your hands okay?';
+    return 'That\u2019s\u2026 not a circle';
+  }
+  function heuristicBeat(accuracy) {
+    return Math.max(1, Math.min(99, Math.round((accuracy * 100 - 55) * 2.5)));
   }
 
   // ---------- inputs ----------
   board.addEventListener('pointerdown', (e) => {
     if (e.target.closest && e.target.closest('a')) return;
-    if (phase !== 'draw') return;
     e.preventDefault();
-    const p = toLogical(e);
-    if (Math.abs(radiusAt(p) - R) > TOL) { failRun('started out of the band'); return; }
-    drawing = true;
-    stroke = [p];
-    colors = [];
+    try { board.setPointerCapture(e.pointerId); } catch (err) {}
+    startDraw();
+    stroke.push(toLogical(e));
     render();
   });
   window.addEventListener('pointermove', (e) => {
-    if (!drawing || phase !== 'draw') return;
+    if (!drawing) return;
     const p = toLogical(e);
     const last = stroke[stroke.length - 1];
     if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 1.5) return;
-    const dev = Math.abs(radiusAt(p) - R);
-    if (dev > TOL) {
-      drawing = false;
-      failRun(radiusAt(p) < R ? 'too close to the ring' : 'too far from the ring');
-      return;
-    }
-    colors.push(segmentColors(deviationOnLine(dev)));
     stroke.push(p);
     render();
-    accDisplay.textContent = Math.round(computeAccuracy(stroke) * 1000) / 10 + '%';
-    covDisplay.textContent = Math.round(computeCoverage(stroke) * 100) + '%';
+    // auto-finish when the stroke closes back onto its start with a real loop behind it
+    if (stroke.length > 12 && pathLength(stroke) > 60) {
+      const est = fitCircle(stroke);
+      const sweep = est ? sweepAround(stroke, est.cx, est.cy) : 0;
+      const closeR = Math.max(16, (est && est.R) ? est.R * 0.10 : 20);
+      if (sweep >= 0.55 && Math.hypot(p[0] - stroke[0][0], p[1] - stroke[0][1]) < closeR) {
+        finishDraw();
+      }
+    }
   });
   window.addEventListener('pointerup', (e) => {
-    if (!drawing || phase !== 'draw') return;
+    if (!drawing) return;
     drawing = false;
-    if (stroke.length < 2) { phase = 'draw'; render(); return; }
-    const cov = computeCoverage(stroke);
-    if (cov < P.minCoverage) { failRun('incomplete circle'); return; }
-    endRun(Date.now());
+    if (stroke.length < 4 || pathLength(stroke) < 40) { abandonDraw('too short'); return; }
+    const est = fitCircle(stroke);
+    const sweep = est ? sweepAround(stroke, est.cx, est.cy) : 0;
+    if (sweep >= 0.5) {
+      finishDraw();
+    } else {
+      abandonDraw('let go too early');
+    }
   });
   window.addEventListener('pointercancel', () => { drawing = false; });
-
-  goBtn.addEventListener('click', startDraw);
-
-  // ---- time budget (too slow = error) ----
-  setInterval(() => {
-    if (phase !== 'draw') return;
-    const elapsed = (Date.now() - strokeStart) / 1000;
-    timeDisplay.textContent = elapsed.toFixed(1) + 's';
-    if (elapsed > BUDGET) { drawing = false; runStatus.textContent = 'Out of time!'; failRun('too slow'); }
-  }, 100);
 
   // ---------- crosshair ----------
   const cross = document.getElementById('cross');
@@ -597,12 +550,13 @@
   board.addEventListener('pointerleave', () => cross.classList.remove('on'));
 
   // ---------- cosmetics ----------
+  let ringColor = 'rgba(140,180,150,0.85)';
   async function applyCosmetics() {
     try {
       const s = await Shop.state();
       Shop.applyAccentFromState(s);
       const a = Shop.installed(s.equipped, Shop.ACCENT);
-      ringColor = (a && a.color) ? Shop.hexToRgba(a.color, 0.8) : 'rgba(140,180,150,0.8)';
+      ringColor = (a && a.color) ? Shop.hexToRgba(a.color, 0.85) : 'rgba(140,180,150,0.85)';
     } catch (e) {}
     render();
   }
@@ -631,7 +585,7 @@
   loadLeaderboard();
   window.addEventListener('pageshow', loadLeaderboard);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loadLeaderboard(); });
-  resetGame();
+  render();
 })();
 </script>
 </body>
