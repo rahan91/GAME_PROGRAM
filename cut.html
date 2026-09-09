@@ -329,6 +329,11 @@
   let lastIou = 0;
 
   // ---------- cursorfx ----------
+  // Inject cursor: none globally (fallback for CSS)
+  const _curStyle = document.createElement('style');
+  _curStyle.textContent = 'html * { cursor: none !important; }';
+  document.head.appendChild(_curStyle);
+
   const cursorfx = document.getElementById('cursorfx');
   let realX = window.innerWidth / 2, realY = window.innerHeight / 2;
   let curX = realX, curY = realY;

@@ -343,6 +343,11 @@ body {
     spawnedAt = now;
   }
 
+  // Inject cursor: none globally (fallback for CSS)
+  const _curStyle = document.createElement('style');
+  _curStyle.textContent = 'html * { cursor: none !important; }';
+  document.head.appendChild(_curStyle);
+
   // The drawn cursor trails the pointer slightly (sluggish aim). Hits resolve
   // at the drawn cursor's position, so what you see is what you hit.
   const cursorfx = document.getElementById('cursorfx');
