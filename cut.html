@@ -218,6 +218,19 @@
   .lb-user .muted { color: rgba(var(--acc-main),0.55); }
   .lb-status { padding: 10px 14px; font-size: 11px; color: rgba(var(--acc-main),0.45); }
 
+  #cursorfx {
+    position: fixed; top: 0; left: 0;
+    width: 31px; height: 40px;
+    background-size: auto 30px;
+    pointer-events: none;
+    z-index: 100;
+    will-change: transform;
+    image-rendering: pixelated;
+    transform: translate3d(0, 0, 0);
+  }
+  #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0 / auto 30px; }
+  #cursorfx.finger { background: url('assets/cursor-finger.png') no-repeat 0 0 / auto 30px; }
+
   @media (max-width: 640px) {
     h1 { font-size: 1.25rem; letter-spacing: 4px; }
     #hud { top: 56px; font-size: 12px; gap: 3px 14px; }
@@ -267,6 +280,8 @@
 
 <div id="cross"></div>
 
+<div id="cursorfx" class="arrow"></div>
+
 <div id="runStatus"></div>
 <div class="hint">Pick a difficulty &middot; Memorize the outline &middot; Press CUT &middot; Trace it back from memory &middot; One stroke, scored on release</div>
 
@@ -307,6 +322,66 @@
   let isLoggedIn = false;
   let serverTotal = null;
   let lastIou = 0;
+
+  // ---------- cursorfx ----------
+  const cursorfx = document.getElementById('cursorfx');
+  let realX = window.innerWidth / 2, realY = window.innerHeight / 2;
+  let curX = realX, curY = realY;
+  let cursorSpritesState = null;
+  const TRAIL = 3;
+  const trail = [], trailX = [], trailY = [];
+  for (let i = 0; i < TRAIL; i++) {
+    const t = document.createElement('div');
+    t.style.cssText =
+      'position:fixed;top:0;left:0;width:31px;height:40px;pointer-events:none;' +
+      'z-index:99;will-change:transform;image-rendering:pixelated;' +
+      'transform:translate3d(-100px,-100px,0);opacity:' + (0.3 - i * 0.08).toFixed(2) + ';' +
+      'background-size:auto 30px;background-repeat:no-repeat;';
+    document.body.appendChild(t);
+    trail.push(t);
+    trailX.push(realX);
+    trailY.push(realY);
+  }
+  document.addEventListener('pointermove', (e) => {
+    realX = e.clientX;
+    realY = e.clientY;
+  });
+  function paintCursor() {
+    if (cursorSpritesState && cursorSpritesState.arrow) {
+      cursorfx.style.backgroundImage = 'url("' + cursorSpritesState.arrow + '")';
+      cursorfx.style.backgroundRepeat = 'no-repeat';
+      cursorfx.style.filter = cursorSpritesState.border || '';
+    } else {
+      cursorfx.style.backgroundImage = '';
+      cursorfx.style.filter = '';
+    }
+    for (let i = 0; i < TRAIL; i++) {
+      trail[i].style.backgroundImage = cursorfx.style.backgroundImage;
+      trail[i].style.filter = cursorfx.style.filter;
+    }
+  }
+  function cursorTick() {
+    curX += (realX - curX) * 0.24;
+    curY += (realY - curY) * 0.24;
+    const hotX = 1;
+    cursorfx.style.transform = 'translate3d(' + (curX - hotX) + 'px,' + curY + 'px,0)';
+    const url = cursorSpritesState && cursorSpritesState.arrow
+      ? cursorSpritesState.arrow
+      : 'assets/cursor-arrow.png';
+    const filt = cursorSpritesState ? (cursorSpritesState.border || '') : '';
+    for (let i = TRAIL - 1; i > 0; i--) {
+      trailX[i] += (trailX[i - 1] - trailX[i]) * 0.35;
+      trailY[i] += (trailY[i - 1] - trailY[i]) * 0.35;
+    }
+    trailX[0] += (curX - trailX[0]) * 0.4;
+    trailY[0] += (curY - trailY[0]) * 0.4;
+    for (let j = 0; j < TRAIL; j++) {
+      trail[j].style.backgroundImage = 'url("' + url + '")';
+      trail[j].style.filter = filt;
+      trail[j].style.transform = 'translate3d(' + (trailX[j] - hotX) + 'px,' + trailY[j] + 'px,0)';
+    }
+    requestAnimationFrame(cursorTick);
+  }
 
   // ---------- canvas sizing (crisp at device pixel ratio) ----------
   function fit() {
@@ -663,35 +738,6 @@
     timeDisplay.textContent = ((Date.now() - cutStart) / 1000).toFixed(1) + 's';
   }, 100);
 
-  async function applyCosmetics() {
-    try {
-      const s = await Shop.state();
-      Shop.applyAccentFromState(s);
-      const cur = Shop.installed(s.equipped, Shop.CURSOR);
-      if (cur && cur.color) {
-        strokeColor = cur.color;
-      } else {
-        strokeColor = 'rgba(210,222,232,0.95)';
-      }
-    } catch (e) {}
-  }
-  async function loadPlayerAndScore() {
-    try {
-      const res = await fetch('/api/me');
-      const data = await res.json();
-      const user = data.user || null;
-      isLoggedIn = !!(user && user.username);
-      if (user && user.username) document.getElementById('playerName').textContent = user.username;
-      serverTotal = (user && Number.isFinite(user.total))
-        ? user.total
-        : (user && Number.isFinite(user.balance)) ? user.balance : null;
-    } catch {
-      isLoggedIn = false;
-    }
-    await applyCosmetics();
-    refreshScoreDisplay();
-  }
-
   buildDifficulties();
   fit();
   window.addEventListener('resize', () => { fit(); render(); });
@@ -700,6 +746,7 @@
   window.addEventListener('pageshow', loadPlayerAndScore);
   loadLeaderboard(difficulty);
   window.addEventListener('pageshow', () => { loadLeaderboard(difficulty); });
+  requestAnimationFrame(cursorTick);
 })();
 </script>
 </body>
