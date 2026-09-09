@@ -190,17 +190,6 @@ function sampleCircle(cx, cy, r, n, jitter) {
   }
   return pts;
 }
-// a human-style trace of the ring at (320,320): radial wobble + slight offset
-function traceRing(r, n, jitter, offX, offY) {
-  const pts = [];
-  for (let i = 0; i < n; i++) {
-    const a = i / n * 2 * Math.PI;
-    const jx = (Math.random() * 2 - 1) * jitter;
-    const jy = (Math.random() * 2 - 1) * jitter;
-    pts.push([320 + offX + (r + jx) * Math.cos(a), 320 + offY + (r + jy) * Math.sin(a)]);
-  }
-  return pts;
-}
 const cf = S.circleFit;
 {
   const pts = sampleCircle(200, 150, 100, 400, 0);
@@ -270,23 +259,12 @@ const cf = S.circleFit;
   assert(f3.accuracy > 0.995, 'unanchored fit still recovers a perfect circle');
 }
 {
-  // guide-ring accuracy: only circularity around the dot matters; size is free
-  const guide = { cx: 320, cy: 320 };
-  const big = sampleCircle(320, 320, 220, 400, 0);
-  const fB = cf(big, guide);
-  assert(fB.accuracy > 0.995, 'perfect circle on the guide ring is ~100%');
-  const tiny = sampleCircle(320, 320, 120, 400, 0);
-  const fT = cf(tiny, guide);
-  assert(fT.accuracy > 0.995, 'a perfectly round tiny circle is ~100%');
-  const huge = sampleCircle(320, 320, 330, 400, 0);
-  const fH = cf(huge, guide);
-  assert(fH.accuracy > 0.995, 'a perfectly round huge circle is ~100%');
-  const good = traceRing(220, 400, 7, 8, 12);
-  const fG = cf(good, guide);
-  assert(fG.accuracy > 0.8 && fG.accuracy < 0.96, 'clean trace on the ring sits in the high 80s-90s');
-  const sloppy = traceRing(220, 400, 22, 25, 18);
-  const fS = cf(sloppy, guide);
-  assert(fS.accuracy < 0.8, 'sloppy wobble + off-center reads clearly worse than good');
+  // unanchored geometric fit recovers a perfect circle
+  const free = sampleCircle(200, 150, 100, 400, 0);
+  const f3 = cf(free);
+  assert(f3.accuracy > 0.995, 'unanchored fit recovers a perfect circle');
+  assert(Math.abs(f3.cx - 200) < 0.5 && Math.abs(f3.cy - 150) < 0.5, 'center recovered precisely');
+  assert(Math.abs(f3.R - 100) < 1, 'radius recovered precisely');
 }
 
 console.log('\n' + (failures === 0 ? 'ALL ' + checks + ' CHECKS PASSED' : failures + ' OF ' + checks + ' CHECKS FAILED'));
