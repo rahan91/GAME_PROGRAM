@@ -171,7 +171,10 @@
     var bannerEl = document.getElementById('loginBanner');
     var statusEl = document.getElementById('statusRow');
     var slots = ['maze', 'cursor', 'target', 'accent', 'nameplate'];
-    var activeSlot = 'maze';
+    var activeSlot = (function () {
+      try { var s = localStorage.getItem('shopTab'); return slots.indexOf(s) !== -1 ? s : 'maze'; }
+      catch (e) { return 'maze'; }
+    })();
     var state = null;
 
     function setStatus(msg, isErr) {
@@ -188,7 +191,7 @@
         var b = document.createElement('button');
         b.className = 'tab' + (slot === activeSlot ? ' active' : '');
         b.textContent = window.ShopCatalog.slotName(slot);
-        b.addEventListener('click', function () { activeSlot = slot; renderTabs(); renderItems(); });
+        b.addEventListener('click', function () { activeSlot = slot; try { localStorage.setItem('shopTab', slot); } catch (e) {} renderTabs(); renderItems(); });
         tabsEl.appendChild(b);
       });
     }
