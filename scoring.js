@@ -100,16 +100,18 @@
   // ---------------- Cut ----------------
   // You memorize a random closed outline, then reproduce it from memory with a
   // single mouse cut. Accuracy (pixel IoU vs the hidden outline) dominates the
-  // score; difficulty adds a multiplier on top; finishing fast adds a small bonus.
+  // score; difficulty adds only a small multiplier on top (how well you traced
+  // the shape matters far more than which difficulty you picked); finishing
+  // fast adds a small bonus.
   var CUT_ACC_PERFECT = 200;   // accuracy component at 100% IoU (before mult)
-  var CUT_ACC_POWER = 1.6;      // sub-perfect cuts decay sharply (accuracy matters)
+  var CUT_ACC_POWER = 2.0;      // accuracy is squared: sub-perfect cuts decay fast
   var CUT_TIME_MAX = 1.10;      // fast finish: +10% max, never more
   var CUT_DIFFS = {
     easy:   { color: '#3b82f6', radius: 90,  verts: 10, harmonics: 3, mult: 1.00 },
-    normal: { color: '#22c55e', radius: 110, verts: 13, harmonics: 4, mult: 1.15 },
-    hard:   { color: '#eab308', radius: 130, verts: 16, harmonics: 5, mult: 1.35 },
-    harder: { color: '#f97316', radius: 150, verts: 20, harmonics: 6, mult: 1.60 },
-    insane: { color: '#ec4899', radius: 170, verts: 27, harmonics: 7, mult: 2.00 }
+    normal: { color: '#22c55e', radius: 110, verts: 13, harmonics: 4, mult: 1.06 },
+    hard:   { color: '#eab308', radius: 130, verts: 16, harmonics: 5, mult: 1.12 },
+    harder: { color: '#f97316', radius: 150, verts: 20, harmonics: 6, mult: 1.20 },
+    insane: { color: '#ec4899', radius: 170, verts: 27, harmonics: 7, mult: 1.30 }
   };
   var CUT_REF_TIME = { easy: 15, normal: 18, hard: 22, harder: 26, insane: 32 };
 
@@ -138,6 +140,7 @@
     cutScore: cutScore,
     CUT_DIFFS: CUT_DIFFS,
     CUT_REF_TIME: CUT_REF_TIME,
-    CUT_ACC_PERFECT: CUT_ACC_PERFECT
+    CUT_ACC_PERFECT: CUT_ACC_PERFECT,
+    CUT_ACC_POWER: CUT_ACC_POWER
   };
 })(typeof window !== 'undefined' ? window : globalThis);

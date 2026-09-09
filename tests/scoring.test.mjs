@@ -138,13 +138,13 @@ assert(cut(1, 'easy', 10) === 220, 'perfect easy fast = accuracy weight + 10% ti
 assert(cut(1, 'easy', 999) === 200, 'perfect easy slow = exactly the accuracy weight (no time bonus)');
 assert(cut(1, 'easy', 1000) === 200, 'perfect easy capped at the accuracy weight floor');
 between(cut(1, 'easy', 10), 0, 5000, 'perfect easy bounded 0..5000');
-assert(cut(1, 'insane', 10) === 440, 'perfect insane fast = 200 * 2.0 * 1.10 (no 5000 cap needed)');
-assert(cut(1, 'insane', 999) === 400, 'perfect insane slow = 200 * 2.0');
+assert(cut(1, 'insane', 10) === 286, 'perfect insane fast = 200 * 1.30 * 1.10 (no 5000 cap needed)');
+assert(cut(1, 'insane', 999) === 260, 'perfect insane slow = 200 * 1.30');
 assert(cut(0.9, 'easy', 10) > cut(0.5, 'easy', 10), 'higher accuracy scores more (easy)');
 assert(cut(0.9, 'hard', 10) > cut(0.9, 'easy', 10), 'hard > easy at equal accuracy');
 assert(cut(0.9, 'insane', 10) > cut(0.9, 'hard', 10), 'insane > hard at equal accuracy');
 assert(cut(0.9, 'easy', 5) >= cut(0.9, 'easy', 30), 'fast cut >= slow cut (same difficulty)');
-assert(cut(0.9, 'easy', 999) === Math.round(S.CUT_ACC_PERFECT * Math.pow(0.9, 1.6)), 'slow cut never scored below the accuracy component');
+assert(cut(0.9, 'easy', 999) === Math.round(S.CUT_ACC_PERFECT * Math.pow(0.9, S.CUT_ACC_POWER)), 'slow cut never scored below the accuracy component');
 assert(cut(2, 'easy', 999) === cut(1, 'easy', 999), 'accuracy above 1 clamps to perfect');
 assert(cut(0, 'easy', 10) === 0, 'zero accuracy = 0');
 assert(cut(-1, 'easy', 10) === 0, 'negative accuracy clamps to 0');
@@ -153,7 +153,8 @@ assert(cut(0.5, 'bogus', 999) === cut(0.5, 'easy', 999), 'unknown difficulty fal
 assert(cut(0.5, 'easy', Infinity) === 0, 'infinite elapsed is non-finite -> 0 (sanitized)');
 assert(cut(0.5, 'easy', -5) === cut(0.5, 'easy', 10), 'negative elapsed behaves like a fast time');
 assert(S.CUT_DIFFS.hard.mult > S.CUT_DIFFS.normal.mult, 'mult increases with difficulty');
-assert(S.CUT_DIFFS.insane.mult === 2.0, 'insane multiplier is 2.0');
+assert(S.CUT_DIFFS.insane.mult === 1.30, 'insane multiplier flattened to 1.30');
+assert((cut(1, 'insane', 999) - cut(1, 'easy', 999)) < (cut(1, 'easy', 999) - cut(0.5, 'easy', 999)), 'accuracy affects score more than difficulty');
 assert(S.CUT_DIFFS.insane.radius > S.CUT_DIFFS.easy.radius, 'insane fits the "more grand" rule');
 assert(S.CUT_DIFFS.insane.harmonics > S.CUT_DIFFS.easy.harmonics, 'insane fits the "more complex" rule');
 assert(S.CUT_DIFFS.easy.color === '#3b82f6' && S.CUT_DIFFS.normal.color === '#22c55e' && S.CUT_DIFFS.hard.color === '#eab308', 'easy/normal/hard colors (blue/green/yellow)');
