@@ -295,43 +295,16 @@
   var giftTarget = null;
   var toastTimer;
 
-  var GIFT_ITEMS = [
-    { key: 'maze:dark-green', slot: 'maze', name: 'Dark Green', price: 10000 },
-    { key: 'maze:teal', slot: 'maze', name: 'Teal', price: 12000 },
-    { key: 'maze:aqua', slot: 'maze', name: 'Aqua', price: 15000 },
-    { key: 'maze:blue', slot: 'maze', name: 'Blue', price: 16700 },
-    { key: 'maze:indigo', slot: 'maze', name: 'Indigo', price: 17000 },
-    { key: 'maze:violet', slot: 'maze', name: 'Violet', price: 18000 },
-    { key: 'maze:red', slot: 'maze', name: 'Red', price: 20000 },
-    { key: 'maze:orange', slot: 'maze', name: 'Orange', price: 22000 },
-    { key: 'maze:yellow', slot: 'maze', name: 'Yellow', price: 25000 },
-    { key: 'cursor:black', slot: 'cursor', name: 'Black', price: 3500 },
-    { key: 'cursor:red', slot: 'cursor', name: 'Red', price: 7000 },
-    { key: 'cursor:orange', slot: 'cursor', name: 'Orange', price: 7700 },
-    { key: 'cursor:yellow', slot: 'cursor', name: 'Yellow', price: 8400 },
-    { key: 'cursor:lime', slot: 'cursor', name: 'Lime', price: 9100 },
-    { key: 'cursor:green', slot: 'cursor', name: 'Green', price: 9800 },
-    { key: 'cursor:teal', slot: 'cursor', name: 'Teal', price: 10500 },
-    { key: 'cursor:aqua', slot: 'cursor', name: 'Aqua', price: 11200 },
-    { key: 'cursor:blue', slot: 'cursor', name: 'Blue', price: 11900 },
-    { key: 'cursor:indigo', slot: 'cursor', name: 'Indigo', price: 12600 },
-    { key: 'cursor:violet', slot: 'cursor', name: 'Violet', price: 13300 },
-    { key: 'cursor:pink', slot: 'cursor', name: 'Pink', price: 14000 },
-    { key: 'target:orange', slot: 'target', name: 'Orange', price: 26000 },
-    { key: 'target:yellow', slot: 'target', name: 'Yellow', price: 27300 },
-    { key: 'target:green', slot: 'target', name: 'Green', price: 29900 },
-    { key: 'target:aqua', slot: 'target', name: 'Aqua', price: 32500 },
-    { key: 'target:blue', slot: 'target', name: 'Blue', price: 35100 },
-    { key: 'target:purple', slot: 'target', name: 'Purple', price: 39000 }
-  ];
-
   (function seedGiftSelect() {
+    var items = (window.ShopCatalog && ShopCatalog.items) ? ShopCatalog.items.slice() : [];
+    items.sort(function (a, b) { return a.slot < b.slot ? -1 : a.slot > b.slot ? 1 : a.price - b.price; });
     var i, it;
-    for (i = 0; i < GIFT_ITEMS.length; i++) {
-      it = GIFT_ITEMS[i];
+    for (i = 0; i < items.length; i++) {
+      it = items[i];
+      if (it.default) continue;
       var o = document.createElement('option');
       o.value = it.key;
-      o.textContent = it.slot.toUpperCase() + ' \u00b7 ' + it.name + ' \u00b7 ' + (window.Shop ? Shop.fmt(it.price) : it.price);
+      o.textContent = (ShopCatalog.slotName(it.slot)).toUpperCase() + ' \u00b7 ' + it.name + ' \u00b7 ' + (window.Shop ? Shop.fmt(it.price) : it.price);
       giftSelect.appendChild(o);
     }
   })();
