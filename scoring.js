@@ -156,18 +156,16 @@
   }
 
   // Fit a circle to the stroke and grade it:
-//  - center: a fixed anchor ({cx,cy,targetR}) if provided (the on-screen dot /
-//    guide ring), otherwise the vendored circle-fit module's least-squares fit
-//  - accuracy = circularity x size, both in [0,1]:
-//      * circularity = 1 - CIRCLE_ACC_K * mean(|d_i - R| / R): average radial
-//        error about the center, amplified by CIRCLE_ACC_K so a slightly
-//        wobbly or off-center stroke reads visibly worse than a clean one
-//      * size = 1 - |R - targetR| / targetR: how well the drawn mean radius
-//        matches the fixed guide ring radius (only when targetR is provided)
+//  - center: a fixed anchor ({cx,cy}) if provided (the on-screen dot), otherwise
+//    the vendored circle-fit module's least-squares fit
+//  - accuracy = circularity in [0,1]:
+//      circularity = 1 - CIRCLE_ACC_K * mean(|d_i - R| / R): average radial
+//      error about the center, amplified by CIRCLE_ACC_K so a slightly wobbly
+//      or off-center stroke reads visibly worse than a clean one
 //  - coverage = 1 - longest run of empty angular bins / 360: measures the true
 //    sweep of the loop around the center, independent of sample density
-// points: array of [x, y], anchor: {cx, cy, targetR} | undefined. Returns null
-// for degenerate inputs.
+// points: array of [x, y], anchor: {cx, cy} | undefined. Returns null for
+// degenerate inputs.
   function circleFit(points, anchor) {
     if (!Array.isArray(points) || points.length < 4) return null;
     var n = points.length;
@@ -194,12 +192,7 @@
     var arre = 0;
     for (i = 0; i < n; i++) arre += Math.abs(errs[i] / R);
     arre /= n;
-    var circularity = clamp(1 - CIRCLE_ACC_K * arre, 0, 1);
-    var accuracy = circularity;
-    var targetR = anchored && Number.isFinite(anchor.targetR) ? anchor.targetR : 0;
-    if (targetR > 0 && circularity > 0) {
-      accuracy = circularity * clamp(1 - Math.abs(R - targetR) / targetR, 0, 1);
-    }
+    var accuracy = clamp(1 - CIRCLE_ACC_K * arre, 0, 1);
     var BINS = 360;
     var bins = new Array(BINS).fill(0);
     for (i = 0; i < n; i++) {

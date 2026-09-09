@@ -270,17 +270,17 @@ const cf = S.circleFit;
   assert(f3.accuracy > 0.995, 'unanchored fit still recovers a perfect circle');
 }
 {
-  // guide-ring accuracy: circularity AND size must both match the dot+ring
-  const guide = { cx: 320, cy: 320, targetR: 220 };
+  // guide-ring accuracy: only circularity around the dot matters; size is free
+  const guide = { cx: 320, cy: 320 };
   const big = sampleCircle(320, 320, 220, 400, 0);
   const fB = cf(big, guide);
   assert(fB.accuracy > 0.995, 'perfect circle on the guide ring is ~100%');
   const tiny = sampleCircle(320, 320, 120, 400, 0);
   const fT = cf(tiny, guide);
-  assert(fT.accuracy < 0.6 && fT.accuracy > 0.4, 'a perfectly round but wrong-size circle is penalized by size');
+  assert(fT.accuracy > 0.995, 'a perfectly round tiny circle is ~100%');
   const huge = sampleCircle(320, 320, 330, 400, 0);
   const fH = cf(huge, guide);
-  assert(fH.accuracy > 0.4 && fH.accuracy < 0.6, 'a 50% oversized circle scores around half');
+  assert(fH.accuracy > 0.995, 'a perfectly round huge circle is ~100%');
   const good = traceRing(220, 400, 7, 8, 12);
   const fG = cf(good, guide);
   assert(fG.accuracy > 0.8 && fG.accuracy < 0.96, 'clean trace on the ring sits in the high 80s-90s');
