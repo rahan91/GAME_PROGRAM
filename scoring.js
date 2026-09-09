@@ -105,11 +105,11 @@
   var CUT_ACC_POWER = 1.6;      // sub-perfect cuts decay sharply (accuracy matters)
   var CUT_TIME_MAX = 1.10;      // fast finish: +10% max, never more
   var CUT_DIFFS = {
-    easy:   { color: '#3b82f6', radius: 90,  verts: 8,  harmonics: 2, mult: 1.00 },
-    normal: { color: '#22c55e', radius: 110, verts: 11, harmonics: 3, mult: 1.15 },
-    hard:   { color: '#eab308', radius: 130, verts: 14, harmonics: 4, mult: 1.35 },
-    harder: { color: '#f97316', radius: 150, verts: 18, harmonics: 5, mult: 1.60 },
-    insane: { color: '#ec4899', radius: 170, verts: 24, harmonics: 6, mult: 2.00 }
+    easy:   { color: '#3b82f6', radius: 90,  verts: 10, harmonics: 3, mult: 1.00 },
+    normal: { color: '#22c55e', radius: 110, verts: 13, harmonics: 4, mult: 1.15 },
+    hard:   { color: '#eab308', radius: 130, verts: 16, harmonics: 5, mult: 1.35 },
+    harder: { color: '#f97316', radius: 150, verts: 20, harmonics: 6, mult: 1.60 },
+    insane: { color: '#ec4899', radius: 170, verts: 27, harmonics: 7, mult: 2.00 }
   };
   var CUT_REF_TIME = { easy: 15, normal: 18, hard: 22, harder: 26, insane: 32 };
 
