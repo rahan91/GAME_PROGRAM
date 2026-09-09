@@ -105,7 +105,7 @@
   // fast adds a small bonus.
   var CUT_ACC_PERFECT = 200;   // accuracy component at 100% IoU (before mult)
   var CUT_ACC_POWER = 2.0;      // accuracy is squared: sub-perfect cuts decay fast
-  var CUT_TIME_MAX = 1.10;      // fast finish: +10% max, never more
+  var CUT_TIME_MAX = 1.05;      // fast finish: +5% max, never more
   var CUT_DIFFS = {
     easy:   { color: '#3b82f6', radius: 90,  verts: 10, harmonics: 3, mult: 1.00 },
     normal: { color: '#22c55e', radius: 110, verts: 13, harmonics: 4, mult: 1.06 },
