@@ -6,24 +6,24 @@ let checks = 0;
 const check = (name, fn) => { fn(); checks++; };
 
 const MAZE_PRICES = {
-  'dark-green': 1000, teal: 1200, aqua: 1500, blue: 1670,
-  indigo: 1700, violet: 1800, red: 2000, orange: 2200, yellow: 2500,
+  'dark-green': 2000, teal: 2400, aqua: 3000, blue: 3340,
+  indigo: 3400, violet: 3600, red: 4000, orange: 4400, yellow: 5000,
 };
 const CURSOR_PRICES = {
-  black: 350, red: 700, orange: 770, yellow: 840, lime: 910,
-  green: 980, teal: 1050, aqua: 1120, blue: 1190, indigo: 1260,
-  violet: 1330, pink: 1400,
+  black: 700, red: 1400, orange: 1540, yellow: 1680, lime: 1820,
+  green: 1960, teal: 2100, aqua: 2240, blue: 2380, indigo: 2520,
+  violet: 2660, pink: 2800,
 };
 const TARGET_PRICES = {
-  orange: 2600, yellow: 2730, green: 2990, aqua: 3250, blue: 3510, purple: 3900,
+  orange: 5200, yellow: 5460, green: 5980, aqua: 6500, blue: 7020, purple: 7800,
 };
 const ACCENT_PRICES = {
-  aqua: 3000, teal: 3300, blue: 3600, indigo: 3900, violet: 4000, red: 4400, orange: 4700, yellow: 5000,
+  aqua: 6000, teal: 6600, blue: 7200, indigo: 7800, violet: 8000, red: 8800, orange: 9400, yellow: 10000,
 };
 const NAMEPLATE_PRICES = {
-  white: 3000, blue: 6000, green: 10000, orange: 14000, 'light-red': 18000, pink: 20000,
-  'light-purple': 25000, lime: 30000, yellow: 36000, cyan: 40000, red: 47000, purple: 50000,
-  amber: 65000, rainbow: 80000, 'fiery-red': 100000,
+  white: 6000, blue: 12000, green: 20000, orange: 28000, 'light-red': 36000, pink: 40000,
+  'light-purple': 50000, lime: 60000, yellow: 72000, cyan: 80000, red: 94000, purple: 100000,
+  amber: 130000, rainbow: 160000, 'fiery-red': 200000,
 };
 
 for (const [color, price] of Object.entries(MAZE_PRICES)) {
