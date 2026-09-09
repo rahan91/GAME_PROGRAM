@@ -40,15 +40,15 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
+body {
     min-height: 100vh;
     background: #1c1c1c;
     color: #e0e0e0;
     font-family: 'IBM Plex Mono', 'Courier New', monospace;
     overflow: hidden;
-    user-select: none;
-    cursor: none;
+    cursor: none !important;
   }
+  *, *::before, *::after { cursor: none !important; }
 
   .orb {
     position: fixed;
