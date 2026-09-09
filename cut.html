@@ -176,6 +176,17 @@
   .lb-row .nm { flex: 1; color: rgba(var(--acc-text),0.85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lb-row .pt { color: rgba(var(--acc-main),0.85); font-variant-numeric: tabular-nums; }
   .lb-row.me .pt { color: rgba(var(--acc-bright),1); }
+  .lb-row .acc { color: rgba(var(--acc-texthi),0.95); font-variant-numeric: tabular-nums; }
+  .lb-user {
+    border-top: 1px solid rgba(var(--acc-main),0.18);
+    padding: 8px 14px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: rgba(var(--acc-texthi),0.9);
+    letter-spacing: 0.04em;
+  }
+  .lb-user b { color: rgba(var(--acc-bright),1); }
+  .lb-user .muted { color: rgba(var(--acc-main),0.55); }
   .lb-status { padding: 10px 14px; font-size: 11px; color: rgba(var(--acc-main),0.45); }
 
   @media (max-width: 640px) {
@@ -230,8 +241,9 @@
 <div class="hint">Pick a difficulty &middot; Memorize the outline &middot; Press CUT &middot; Trace it back from memory &middot; One stroke, scored on release</div>
 
 <div id="leaderboard">
-  <h3>Cut Leaderboard</h3>
-  <div class="lb-body" id="lbRows"><div class="lb-status">Loading&hellip;</div></div>
+  <h3>Cut &middot; <span id="lbDiff">-</span></h3>
+  <div class="lb-body" id="lbRows"><div class="lb-status">Select a difficulty to see its accuracy leaderboard.</div></div>
+  <div class="lb-user" id="lbUser"></div>
 </div>
 
 <script>
@@ -419,28 +431,62 @@
       else if (d && Number.isFinite(d.balance)) { serverTotal = d.balance; refreshScoreDisplay(); }
     }).catch(() => {});
   }
-  async function loadLeaderboard() {
+  function accText(a) {
+    return (a * 100).toFixed(2) + '%';
+  }
+  async function loadLeaderboard(diffParam) {
     const container = document.getElementById('lbRows');
-    let me = null;
+    const userEl = document.getElementById('lbUser');
+    const titleEl = document.getElementById('lbDiff');
+    const diffKey = diffParam || difficulty || null;
+    if (!diffKey) {
+      titleEl.textContent = '-';
+      container.innerHTML = '<div class="lb-status">Select a difficulty to see its accuracy leaderboard.</div>';
+      userEl.innerHTML = '';
+      return;
+    }
+    titleEl.textContent = diffKey;
+    const name = currentPlayer();
+    let data = null;
     try {
-      const mr = await (await fetch('/api/me')).json();
-      me = (mr.user && mr.user.username) ? mr.user.username : null;
-    } catch {}
-    let rows;
-    try {
-      const res = await fetch('/api/leaderboard?game=cut&limit=10');
-      const data = await res.json();
-      rows = data.leaderboard || null;
-    } catch { rows = null; }
-    if (!rows) { container.innerHTML = '<div class="lb-status">Could not load.</div>'; return; }
-    if (!rows.length) { container.innerHTML = '<div class="lb-status">No scores yet. Finish a cut!</div>'; return; }
-    container.innerHTML = rows.map((row, i) =>
-      '<div class="lb-row' + (row.username === me ? ' me' : '') + '">' +
+      const url = '/api/cut/leaderboard?difficulty=' + encodeURIComponent(diffKey) + '&limit=10' +
+        (isLoggedIn ? '&user=' + encodeURIComponent(name) : '');
+      const res = await fetch(url);
+      data = await res.json();
+    } catch { data = null; }
+    if (!data || !data.top) {
+      container.innerHTML = '<div class="lb-status">Could not load.</div>';
+      userEl.innerHTML = '';
+      return;
+    }
+    if (!data.top.length) {
+      container.innerHTML = '<div class="lb-status">No runs on ' + diffKey + ' yet. Be the first!</div>';
+      userEl.innerHTML = '<span class="muted">Players: 0</span>';
+      return;
+    }
+    container.innerHTML = data.top.map((row, i) =>
+      '<div class="lb-row' + (isLoggedIn && row.username === name ? ' me' : '') + '">' +
       '<span class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>' +
       window.Shop.npHTML(row) +
-      '<span class="pt">' + Shop.fmt(row.value) + '</span>' +
+      '<span class="acc">' + accText(row.accuracy) + '</span>' +
       '</div>'
     ).join('');
+    if (data.user && data.user.pct != null) {
+      userEl.innerHTML = 'You: rank <b>#' + data.user.rank + '</b> of ' + data.players +
+        ' &middot; <b>' + data.user.pct.toFixed(2) + 'th</b> pct' +
+        ' &middot; best <b>' + accText(data.user.best) + '</b>' +
+        ' &middot; ' + data.user.runs + ' run' + (data.user.runs === 1 ? '' : 's');
+    } else {
+      userEl.innerHTML = '<span class="muted">Players: ' + data.players + ' &middot; Runs: ' + data.runs + '</span>';
+    }
+  }
+  function recordCut(points, elapsed) {
+    if (!isLoggedIn || !difficulty) return;
+    fetch('/api/cut/record', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ difficulty, accuracy: lastIou, points: Math.round(points), elapsed })
+    }).catch(() => {});
   }
 
   // ---------- flow ----------
@@ -458,6 +504,7 @@
     render();
     paintDiffButtons();
     runStatus.textContent = 'Outline ready \u2014 memorize it, then press CUT.';
+    loadLeaderboard(diffKey);
   }
   function startCut() {
     if (phase === 'result') {
@@ -485,7 +532,8 @@
     lastIou = iou;
     const points = Scoring.cutScore(iou, difficulty, elapsed);
     addScore(points);
-    loadLeaderboard();
+    recordCut(points, elapsed);
+    loadLeaderboard(difficulty);
 
     phase = 'result';
     drawing = false;
@@ -620,8 +668,8 @@
 
   loadPlayerAndScore();
   window.addEventListener('pageshow', loadPlayerAndScore);
-  loadLeaderboard();
-  window.addEventListener('pageshow', loadLeaderboard);
+  loadLeaderboard(difficulty);
+  window.addEventListener('pageshow', () => { loadLeaderboard(difficulty); });
 })();
 </script>
 </body>
