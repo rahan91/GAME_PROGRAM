@@ -184,7 +184,10 @@
   .lb-row { display: flex; align-items: center; gap: 8px; padding: 4px 14px; font-size: 12px; }
   .lb-row.me { background: rgba(var(--acc-main),0.14); }
   .lb-row .rk { width: 18px; color: rgba(var(--acc-main),0.45); font-variant-numeric: tabular-nums; text-align: right; }
-  .lb-row .rk.top { color: rgba(230,200,120,0.9); font-weight: 600; }
+  .lb-row .rk.top { font-weight: 600; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .lb-row .rk.rk1 { background-image: linear-gradient(135deg, #ffd700, #ffaa00, #ffd700); }
+  .lb-row .rk.rk2 { background-image: linear-gradient(135deg, #c0c0c0, #e8e8e8, #a8a8a8, #d0d0d0); }
+  .lb-row .rk.rk3 { background-image: linear-gradient(135deg, #cd7f32, #e8a858, #c46a28, #daa060); }
   .lb-row .nm { flex: 1; color: rgba(var(--acc-text),0.85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .lb-row .pt { color: rgba(var(--acc-main),0.85); font-variant-numeric: tabular-nums; }
   .lb-row.me .pt { color: rgba(var(--acc-bright),1); }
@@ -293,7 +296,7 @@
     if (!rows.length) { container.innerHTML = '<div class="lb-status">No holds yet. Hold the button!</div>'; return; }
     container.innerHTML = rows.map((row, i) =>
       '<div class="lb-row' + (row.username === me ? ' me' : '') + '">' +
-      '<span class="rk' + (i < 3 ? ' top' : '') + '">' + (i + 1) + '</span>' +
+      '<span class="rk' + (i < 3 ? ' top rk' + (i + 1) : '') + '">' + (i + 1) + '</span>' +
       window.Shop.npHTML(row) +
       '<span class="pt">' + fmtHold(row.value) + '</span>' +
       '</div>'
