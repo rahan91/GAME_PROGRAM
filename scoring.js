@@ -101,7 +101,7 @@
   // You memorize a random closed outline, then reproduce it from memory with a
   // single mouse cut. Accuracy (pixel IoU vs the hidden outline) dominates the
   // score; difficulty adds a multiplier on top; finishing fast adds a small bonus.
-  var CUT_ACC_PERFECT = 400;   // accuracy component at 100% IoU (before mult)
+  var CUT_ACC_PERFECT = 200;   // accuracy component at 100% IoU (before mult)
   var CUT_ACC_POWER = 1.6;      // sub-perfect cuts decay sharply (accuracy matters)
   var CUT_TIME_MAX = 1.10;      // fast finish: +10% max, never more
   var CUT_DIFFS = {
