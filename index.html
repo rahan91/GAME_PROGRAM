@@ -101,8 +101,11 @@
       font-weight: 700;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(var(--acc-main), 0.85);
-      text-shadow: 0 0 60px rgba(var(--acc-btn), 0.3);
+      color: transparent;
+      background: linear-gradient(180deg, rgba(var(--acc-texthi), 0.95) 0%, rgba(var(--acc-main), 0.6) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: drop-shadow(0 0 18px rgba(var(--acc-btn), 0.3)) drop-shadow(0 0 60px rgba(var(--acc-btn), 0.12));
       transition: font-size 1s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .title.active h1 {
@@ -125,27 +128,50 @@
     .card {
       width: 175px;
       height: 175px;
-      border-radius: 10px;
+      border-radius: 12px;
       background: rgba(var(--acc-dim), 0.15);
       border: 1px solid rgba(var(--acc-main), 0.15);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
       opacity: 0;
       transform: translateY(120vh);
       transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+                  transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.3s, background 0.3s, box-shadow 0.3s;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-decoration: none;
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
     }
     .card.active {
       opacity: 1;
       transform: translateY(0);
     }
-    .card:hover {
-      background: rgba(var(--acc-dim), 0.25);
-      border-color: rgba(var(--acc-main), 0.3);
+    .card.active::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      background: radial-gradient(circle at 50% 120%, rgba(var(--acc-btn), 0.16) 0%, transparent 60%);
+    }
+    .card.active:hover::after { opacity: 1; }
+    @media (hover: hover) and (pointer: fine) {
+      .card.active:hover {
+        background: rgba(var(--acc-dim), 0.3);
+        border-color: rgba(var(--acc-main), 0.55);
+        transform: translateY(-6px) scale(1.03);
+        box-shadow:
+          0 14px 44px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(var(--acc-main), 0.15),
+          0 0 30px rgba(var(--acc-btn), 0.15);
+      }
+      .card.active:hover .icon { transform: scale(1.15); }
     }
     .card .icon {
       font-size: 2.4rem;
@@ -154,7 +180,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .card .icon img { border-radius: 8px; }
     .card .label {
       font-family: 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 0.75rem;
@@ -169,6 +197,12 @@
       color: rgba(var(--acc-main), 0.3);
       margin-top: 4px;
     }
+    .card:not(a) {
+      border-style: dashed;
+      background: rgba(var(--acc-dim), 0.08);
+    }
+    .card:not(a) .icon { opacity: 0.35; }
+    .card:not(a) .label { color: rgba(var(--acc-main), 0.4); }
     .card:nth-child(1), .card:nth-child(2) { transition-delay: 0s; }
     .card:nth-child(3), .card:nth-child(4) { transition-delay: 0.15s; }
     .card:nth-child(5), .card:nth-child(6) { transition-delay: 0.3s; }
@@ -260,6 +294,43 @@
       transition: background 0.2s, border-color 0.2s;
     }
     .auth-btn:hover { background: rgba(var(--acc-dim),0.4); }
+    .auth-btn {
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .auth-btn:hover {
+        background: rgba(var(--acc-main), 0.18);
+        border-color: rgba(var(--acc-main), 0.6);
+        box-shadow: 0 0 18px rgba(var(--acc-btn), 0.15);
+        color: rgba(var(--acc-texthi), 0.95);
+      }
+      .auth-btn:active { transform: translateY(1px); }
+    }
+    .shop-cta {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 10;
+      text-decoration: none;
+      color: rgba(var(--acc-main), 0.75);
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-size: 14px;
+      padding: 8px 18px;
+      border: 1px solid rgba(var(--acc-main), 0.4);
+      border-radius: 6px;
+      background: rgba(var(--acc-dim), 0.2);
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s, transform 0.2s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .shop-cta:hover {
+        background: rgba(var(--acc-main), 0.18);
+        border-color: rgba(var(--acc-main), 0.6);
+        box-shadow: 0 0 18px rgba(var(--acc-btn), 0.15);
+        color: rgba(var(--acc-texthi), 0.95);
+        transform: translateY(-1px);
+      }
+      .shop-cta:active { transform: translateY(1px); }
+    }
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -430,6 +501,7 @@
     }
   </style>
   <link rel="stylesheet" href="crt.css">
+  <link rel="stylesheet" href="ui.css">
   <script defer src="crt.js"></script>
   <script src="score.js"></script>
   <script src="shop.js"></script>
@@ -513,8 +585,7 @@
     <button id="resetPointsBtn">Reset</button>
   </div>
 
-  <a href="/shop" id="shopLink"
-     style="position:fixed;bottom:20px;left:20px;top:auto;right:auto;z-index:10;text-decoration:none;color:rgba(var(--acc-main),0.6);font-family:'IBM Plex Mono','Courier New',monospace;font-size:14px;padding:8px 18px;border:1px solid rgba(var(--acc-main),0.4);border-radius:6px;background:rgba(var(--acc-dim),0.2);transition:background 0.2s,border-color 0.2s;">Shop &rarr;</a>
+  <a href="/shop" id="shopLink" class="shop-cta">Shop &rarr;</a>
 
   <script>
     let triggered = false;

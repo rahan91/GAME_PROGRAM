@@ -1,0 +1,63 @@
+/* GAME PROGRAM — shared cosmetic polish.
+   Loaded after each page's own stylesheet so equal-specificity rules win. */
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+button {
+  font-family: inherit;
+  letter-spacing: 0.06em;
+}
+
+/* titles get a soft neon glow */
+h1 {
+  text-shadow:
+    0 0 22px rgba(var(--acc-btn), 0.16),
+    0 0 60px rgba(var(--acc-btn), 0.08);
+}
+
+/* back links slide slightly on hover */
+.back {
+  display: inline-block;
+  transition: color 0.2s, transform 0.2s, letter-spacing 0.2s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .back:hover {
+    transform: translateX(-2px);
+    letter-spacing: 0.04em;
+    color: rgba(var(--acc-texthi), 0.95);
+  }
+}
+
+/* whisper of air in hint text */
+.hint { letter-spacing: 0.05em; }
+
+/* leaderboard panels — deeper shadow + hairline highlight */
+#leaderboard, .lb {
+  border-color: rgba(var(--acc-main), 0.26);
+  box-shadow:
+    0 12px 44px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(var(--acc-main), 0.05),
+    inset 0 1px 0 rgba(var(--acc-texthi), 0.05);
+}
+
+/* rows gently light up + nudge */
+@media (hover: hover) and (pointer: fine) {
+  .lb-row {
+    transition: background 0.15s ease, padding-left 0.15s ease;
+  }
+  .lb-row:hover {
+    background: rgba(var(--acc-main), 0.09);
+    padding-left: 20px;
+  }
+}
+
+/* tactile press feedback for buttons */
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):active {
+    transform: translateY(1px);
+  }
+}

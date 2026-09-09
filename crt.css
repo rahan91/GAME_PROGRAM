@@ -84,3 +84,29 @@
   96% { opacity: 0.65; }
 }
 
+/* ---- global chrome polish ---- */
+
+::selection {
+  background: rgba(var(--acc-main), 0.32);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(var(--acc-main), 0.6);
+  outline-offset: 2px;
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--acc-main), 0.35) rgba(var(--acc-panel), 0.45);
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(var(--acc-panel), 0.45); }
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--acc-main), 0.3);
+  border: 2px solid rgba(var(--acc-panel), 0.45);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--acc-main), 0.5); }
+::-webkit-scrollbar-corner { background: transparent; }
+
