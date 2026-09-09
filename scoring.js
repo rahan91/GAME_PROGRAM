@@ -128,11 +128,11 @@
   // ---------------- Circle ----------------
   // Freehand "perfect circle" (inspired by neal.fun/perfect-circle): you draw a
   // circle from scratch and it finishes when the stroke returns to its start.
-  // Accuracy is the dominant term (squared) and means circularity, coverage is
-  // the fraction of a full loop actually drawn, and time is only a modest swing
-  // between -15% and +15%. There are no hard errors in this game.
-  var CIRCLE_ACC_PERFECT = 400;  // accuracy term at 100% (full coverage too)
-  var CIRCLE_ACC_POWER = 2.0;    // accuracy is squared: wobble hurts fast
+  // Accuracy (circularity) is the dominant term (cubed), coverage is the
+  // fraction of a full loop actually drawn, and time is only a modest swing
+  // between -15% and +15%. No hard errors in this game.
+  var CIRCLE_ACC_PERFECT = 240;  // accuracy term at 100% (full coverage too)
+  var CIRCLE_ACC_POWER = 3.0;    // accuracy is cubed: wobble hurts fast
   var CIRCLE_REF_TIME = 7.0;     // seconds that earn the neutral time mult
   var CIRCLE_TIME_MIN = 0.85;    // slowest acceptable finish: -15%
   var CIRCLE_TIME_MAX = 1.15;    // fastest finish: +15%
@@ -146,6 +146,100 @@
     var timeMult = clamp(CIRCLE_REF_TIME / Math.max(elapsedSec, 0.001), CIRCLE_TIME_MIN, CIRCLE_TIME_MAX);
     var accComp = CIRCLE_ACC_PERFECT * Math.pow(acc, CIRCLE_ACC_POWER);
     return safeScore(Math.round(accComp * cov * timeMult));
+  }
+
+  function det3(m) {
+    return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+         - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+         + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  }
+
+  // Least-squares circle center via the Kasa algebraic fit (minimizes the
+  // implicit equation sum((x-cx)^2+(y-cy)^2-R^2)^2) on mean-centred points.
+  // The point-centroid (what naive fits use) is biased toward the densest part
+  // of the stroke; the Kasa fit recovers the true center. Falls back to the
+  // centroid if the system is degenerate (short arcs).
+  function circleCenter(pts) {
+    var n = pts.length;
+    var rx = 0, ry = 0;
+    for (var i = 0; i < n; i++) { rx += pts[i][0]; ry += pts[i][1]; }
+    var mx = rx / n, my = ry / n;
+    var sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, sx3 = 0, sy3 = 0, sxy2 = 0, sx2y = 0;
+    for (i = 0; i < n; i++) {
+      var x = pts[i][0] - mx, y = pts[i][1] - my;
+      sx += x; sy += y;
+      sxx += x * x; syy += y * y; sxy += x * y;
+      sx3 += x * x * x; sy3 += y * y * y; sxy2 += x * y * y; sx2y += x * x * y;
+    }
+    var M = [[sxx, sxy, sx], [sxy, syy, sy], [sx, sy, n]];
+    var v = [sx3 + sxy2, sx2y + sy3, sxx + syy];
+    var det = det3(M); // exact n is intended; centred point sums: sx=0, sy=0
+    if (Math.abs(det) < 1e-9) return { cx: mx, cy: my };
+    var a = det3([
+      [v[0], M[0][1], M[0][2]],
+      [v[1], M[1][1], M[1][2]],
+      [v[2], M[2][1], M[2][2]]
+    ]) / det;
+    var b = det3([
+      [M[0][0], v[0], M[0][2]],
+      [M[1][0], v[1], M[1][2]],
+      [M[2][0], v[2], M[2][2]]
+    ]) / det;
+    return { cx: mx + a / 2, cy: my + b / 2 };
+  }
+
+  // Fit a circle to the stroke and grade it:
+  //  - center via Kasa least squares (robust to uneven point density)
+  //  - accuracy = 1 - RMS relative radial deviation measured per point around
+  //    the fitted center (R = mean radius), harsh on wobble and ellipses
+  //  - coverage = 1 - longest run of empty angular bins / 360: measures the
+  //    true sweep of the loop, independent of how densely the stroke samples it
+  // points: array of [x, y]. Returns null for degenerate inputs.
+  function circleFit(points) {
+    if (!Array.isArray(points) || points.length < 4) return null;
+    var c = circleCenter(points);
+    var BINS = 360;
+    var bins = new Array(BINS).fill(0);
+    var sumR = 0, sq = 0;
+    for (var i = 0; i < points.length; i++) {
+      var x = points[i][0], y = points[i][1];
+      var th = Math.atan2(y - c.cy, x - c.cx);
+      if (th < 0) th += 2 * Math.PI;
+      bins[Math.min(BINS - 1, Math.floor(th * BINS / (2 * Math.PI)))] = 1;
+      var d = Math.hypot(x - c.cx, y - c.cy);
+      sumR += d;
+    }
+    var R = sumR / points.length;
+    if (!(R > 1e-5)) return null;
+    for (i = 0; i < points.length; i++) {
+      var d = Math.hypot(points[i][0] - c.cx, points[i][1] - c.cy);
+      var rel = (d - R) / R;
+      sq += rel * rel;
+    }
+    var maxGap = 0, run = 0;
+    for (var b = 0; b < BINS; b++) {
+      if (bins[b]) { if (run > maxGap) maxGap = run; run = 0; }
+      else run++;
+    }
+    if (run > maxGap) maxGap = run;
+    var wrap = 0;
+    for (b = 0; b < BINS; b++) {
+      if (bins[b]) break;
+      wrap++;
+    }
+    var tail = 0;
+    for (b = BINS - 1; b >= 0; b--) {
+      if (bins[b]) break;
+      tail++;
+    }
+    if (wrap + tail > maxGap) maxGap = wrap + tail;
+    return {
+      cx: c.cx,
+      cy: c.cy,
+      R: R,
+      accuracy: Math.max(0, Math.min(1, 1 - Math.sqrt(sq / points.length))),
+      coverage: Math.max(0, Math.min(1, 1 - maxGap / BINS))
+    };
   }
 
   global.Scoring = {
@@ -166,6 +260,7 @@
     CUT_ACC_PERFECT: CUT_ACC_PERFECT,
     CUT_ACC_POWER: CUT_ACC_POWER,
     circleScore: circleScore,
+    circleFit: circleFit,
     CIRCLE_ACC_PERFECT: CIRCLE_ACC_PERFECT,
     CIRCLE_ACC_POWER: CIRCLE_ACC_POWER,
     CIRCLE_REF_TIME: CIRCLE_REF_TIME,

@@ -267,8 +267,6 @@
   let lastCov = 0;
   let lastPoints = 0;
 
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
   // ---------- canvas sizing (crisp at device pixel ratio) ----------
   function fit() {
     dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -287,45 +285,10 @@
     ];
   }
 
-  // ---------- geometry / accuracy ----------
-  // Fit a circle (centroid center, mean radius) and score circularity:
-  // accuracy = 1 - (mean |dist - R|) / R, i.e. how constant the radius is.
-  function fitCircle(pts) {
-    const n = pts.length;
-    if (n < 4) return null;
-    let sx = 0, sy = 0;
-    for (const p of pts) { sx += p[0]; sy += p[1]; }
-    const ccx = sx / n, ccy = sy / n;
-    const ds = [];
-    let sumR = 0;
-    for (const p of pts) {
-      const d = Math.hypot(p[0] - ccx, p[1] - ccy);
-      ds.push(d);
-      sumR += d;
-    }
-    const R = sumR / n;
-    if (!(R > 1e-5)) return null;
-    let dev = 0;
-    for (const d of ds) dev += Math.abs(d - R);
-    const accuracy = clamp(1 - (dev / n) / R, 0, 1);
-    const spread = Math.max(...ds) - Math.min(...ds);
-    return { cx: ccx, cy: ccy, R, accuracy, spread };
-  }
-  // unwrapped angular sweep around a center, as a fraction of 360deg
-  function sweepAround(pts, ccx, ccy) {
-    if (pts.length < 2) return 0;
-    let sweep = 0;
-    let prev = Math.atan2(ccy - pts[0][1], pts[0][0] - ccx);
-    for (let i = 1; i < pts.length; i++) {
-      let a = Math.atan2(ccy - pts[i][1], pts[i][0] - ccx);
-      let d = a - prev;
-      while (d < -Math.PI) d += 2 * Math.PI;
-      while (d > Math.PI) d -= 2 * Math.PI;
-      sweep += d;
-      prev = a;
-    }
-    return clamp(Math.abs(sweep) / (2 * Math.PI), 0, 1);
-  }
+  // ---------- geometry / accuracy (Scoring.circleFit) ----------
+  // Least-squares Kasa circle fit for the center, angularly binned RMS radial
+  // deviation for accuracy, occupied-bin fraction for coverage. Returns null
+  // for degenerate strokes. See scoring.js.
   function pathLength(pts) {
     let d = 0;
     for (let i = 1; i < pts.length; i++) d += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
@@ -455,10 +418,9 @@
     drawing = false;
     finished = true;
     const elapsed = (Date.now() - strokeStart) / 1000;
-    lastElapsed = elapsed;
-    lastFit = fitCircle(stroke);
+    lastFit = Scoring.circleFit(stroke);
     if (!lastFit) { abandonDraw('too short'); return; }
-    lastCov = sweepAround(stroke, lastFit.cx, lastFit.cy);
+    lastCov = lastFit.coverage;
     const accuracy = lastFit.accuracy;
     lastPoints = Scoring.circleScore(accuracy, lastCov, elapsed);
     addScore(lastPoints);
@@ -519,10 +481,10 @@
     render();
     // auto-finish when the stroke closes back onto its start with a real loop behind it
     if (stroke.length > 12 && pathLength(stroke) > 60) {
-      const est = fitCircle(stroke);
-      const sweep = est ? sweepAround(stroke, est.cx, est.cy) : 0;
+      const est = Scoring.circleFit(stroke);
+      const cov = est ? est.coverage : 0;
       const closeR = Math.max(16, (est && est.R) ? est.R * 0.10 : 20);
-      if (sweep >= 0.55 && Math.hypot(p[0] - stroke[0][0], p[1] - stroke[0][1]) < closeR) {
+      if (cov >= 0.55 && Math.hypot(p[0] - stroke[0][0], p[1] - stroke[0][1]) < closeR) {
         finishDraw();
       }
     }
@@ -531,9 +493,9 @@
     if (!drawing) return;
     drawing = false;
     if (stroke.length < 4 || pathLength(stroke) < 40) { abandonDraw('too short'); return; }
-    const est = fitCircle(stroke);
-    const sweep = est ? sweepAround(stroke, est.cx, est.cy) : 0;
-    if (sweep >= 0.5) {
+    const est = Scoring.circleFit(stroke);
+    const cov = est ? est.coverage : 0;
+    if (cov >= 0.5) {
       finishDraw();
     } else {
       abandonDraw('let go too early');

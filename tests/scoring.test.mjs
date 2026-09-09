@@ -162,13 +162,13 @@ assert(S.CUT_DIFFS.harder.color === '#f97316' && S.CUT_DIFFS.insane.color === '#
 
 console.log('\n=== Circle scoring ===');
 const circ = S.circleScore;
-assert(circ(1, 1, 7) === 400, 'perfect full cover at ref time = accuracy weight (400)');
-assert(circ(1, 1, 0.1) === 460, 'perfect full cover fastest = 400 * 1.15');
-assert(circ(1, 1, 999) === 340, 'perfect full cover slowest = 400 * 0.85');
-assert(circ(1, 0.5, 7) === 200, 'half coverage halves the score');
+assert(circ(1, 1, 7) === 240, 'perfect full cover at ref time = accuracy weight (240)');
+assert(circ(1, 1, 0.1) === 276, 'perfect full cover fastest = 240 * 1.15');
+assert(circ(1, 1, 999) === 204, 'perfect full cover slowest = 240 * 0.85');
+assert(circ(1, 0.5, 7) === 120, 'half coverage halves the score');
 assert(circ(1, 0, 7) === 0, 'no coverage = 0');
 assert(circ(1, -1, 7) === 0, 'negative coverage clamps to 0');
-assert(circ(1, 2, 7) === 400, 'coverage above 1 clamps to perfect');
+assert(circ(1, 2, 7) === 240, 'coverage above 1 clamps to perfect');
 assert(circ(0.9, 1, 7) === Math.round(S.CIRCLE_ACC_PERFECT * Math.pow(0.9, S.CIRCLE_ACC_POWER)), 'slow 90% = accuracy component');
 assert(circ(0.9, 1, 7) > circ(0.5, 1, 7), 'higher accuracy scores more');
 assert(circ(0.95, 1, 7) > circ(1, 0.5, 7), 'accuracy dominates over coverage at the same score scale');
@@ -177,6 +177,65 @@ assert(circ(-1, 1, 7) === 0, 'negative accuracy clamps to 0');
 assert(circ(NaN, 1, 7) === 0, 'NaN accuracy -> 0');
 assert(circ(1, 1, Infinity) === 0, 'infinite elapsed is non-finite -> 0 (sanitized)');
 between(circ(1, 1, 0.1), 0, 5000, 'perfect circle bounded 0..5000');
+assert(circ(0.9, 1, 7) > circ(0.85, 1, 7) * 1.18, 'cubed accuracy keeps 90% clearly worth more than 85%');
+
+console.log('\n=== Circle geometry ===');
+function sampleCircle(cx, cy, r, n, jitter) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = i / n * 2 * Math.PI;
+    const jx = (Math.random() * 2 - 1) * jitter;
+    const jy = (Math.random() * 2 - 1) * jitter;
+    pts.push([cx + (r + jx) * Math.cos(a), cy + (r + jy) * Math.sin(a)]);
+  }
+  return pts;
+}
+const cf = S.circleFit;
+{
+  const pts = sampleCircle(200, 150, 100, 400, 0);
+  const fit = cf(pts);
+  assert(!!fit, 'circleFit returns a fit for a valid circle');
+  assert(Math.abs(fit.cx - 200) < 0.5 && Math.abs(fit.cy - 150) < 0.5, 'Kasa fit recovers the true center (within 0.5px)');
+  assert(Math.abs(fit.R - 100) < 1, 'radius recovered within 1px');
+  assert(fit.accuracy > 0.995, 'perfect circle scores ~100% circularity');
+  assert(fit.coverage > 0.99, 'perfect circle covers the full loop');
+}
+{
+  // density bias: tons of points in one quadrant must not drag the center
+  const pts = sampleCircle(320, 320, 180, 60, 0);
+  for (let i = 0; i < 320; i++) {
+    const a = Math.PI / 2 * Math.random() * 0.9; // dense first quadrant
+    pts.push([320 + 180 * Math.cos(a), 320 + 180 * Math.sin(a)]);
+  }
+  const fit = cf(pts);
+  assert(Math.abs(fit.cx - 320) < 4 && Math.abs(fit.cy - 320) < 4, 'center still found despite 5x density in one quadrant');
+}
+{
+  const ellipse = [];
+  for (let i = 0; i < 400; i++) {
+    const a = i / 400 * 2 * Math.PI;
+    ellipse.push([0 + 200 * Math.cos(a), 0 + 90 * Math.sin(a)]);
+  }
+  const fit = cf(ellipse);
+  assert(fit.accuracy < 0.8 && fit.accuracy > 0.6, 'a 2.2:1 ellipse is graded harshly (well below a circle)');
+}
+{
+  const wobble18 = sampleCircle(100, 100, 120, 300, 18);
+  const f18 = cf(wobble18);
+  assert(f18.accuracy < 0.95 && f18.coverage > 0.9, '18px radial wobble drops accuracy yet keeps full-loop coverage');
+  const wobble30 = sampleCircle(100, 100, 120, 300, 30);
+  const f30 = cf(wobble30);
+  assert(f30.accuracy < 0.9, 'bigger wobble drops accuracy further');
+}
+{
+  const half = [];
+  for (let i = 0; i < 200; i++) {
+    const a = i / 199 * Math.PI; // exactly 180deg arc
+    half.push([0 + 150 * Math.cos(a), 0 + 150 * Math.sin(a)]);
+  }
+  const fit = cf(half);
+  assert(fit.coverage >= 0.48 && fit.coverage <= 0.53, 'a half-loop reports ~50% coverage');
+}
 
 console.log('\n' + (failures === 0 ? 'ALL ' + checks + ' CHECKS PASSED' : failures + ' OF ' + checks + ' CHECKS FAILED'));
 process.exit(failures === 0 ? 0 : 1);
