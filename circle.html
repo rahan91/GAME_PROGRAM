@@ -4,7 +4,7 @@
 <script>!function(){var s=document.createElement('style');s.textContent='*,*::before,*::after{cursor:url(assets/cursor-empty.png) 0 0,none!important}';document.head.appendChild(s)}()</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Circle — Can You Draw a Perfect Circle? | GAME PROGRAM</title>
+<title>DRAW</title>
   <meta name="description" content="Can you draw a perfect circle? Draw a freehand circle, close the loop and see your circularity score, how the attempt compares to other players and the points you earn.">
   <meta name="keywords" content="perfect circle, draw a circle, circularity test, drawing game, arcade, browser game, leaderboard, percentile">
   <meta name="robots" content="index, follow">
@@ -308,9 +308,11 @@
   }
   function toLogical(e) {
     const rect = board.getBoundingClientRect();
+    const cx = pointerLocked ? realX : e.clientX;
+    const cy = pointerLocked ? realY : e.clientY;
     return [
-      (e.clientX - rect.left) / rect.width * SIZE,
-      (e.clientY - rect.top) / rect.height * SIZE
+      (cx - rect.left) / rect.width * SIZE,
+      (cy - rect.top) / rect.height * SIZE
     ];
   }
 
@@ -444,6 +446,7 @@ function render() {
     drawing = false;
     finished = true;
     document.body.classList.remove('drawing');
+    try { document.exitPointerLock(); } catch (err) {}
     const elapsed = (Date.now() - strokeStart) / 1000;
     lastFit = Scoring.circleFit(stroke);
     if (!lastFit) { abandonDraw('too short'); return; }
@@ -471,6 +474,7 @@ function render() {
   function abandonDraw(reason) {
     drawing = false;
     document.body.classList.remove('drawing');
+    try { document.exitPointerLock(); } catch (err) {}
     tries++;
     triesDisplay.textContent = tries;
     stroke = [];
@@ -496,6 +500,7 @@ function render() {
     if (e.target.closest && e.target.closest('a')) return;
     e.preventDefault();
     try { board.setPointerCapture(e.pointerId); } catch (err) {}
+    try { board.requestPointerLock(); } catch (err) {}
     startDraw();
     stroke.push(toLogical(e));
     render();
@@ -529,12 +534,14 @@ function render() {
       abandonDraw('let go too early');
     }
   });
-  window.addEventListener('pointercancel', () => { drawing = false; document.body.classList.remove('drawing'); });
+  window.addEventListener('pointercancel', () => { drawing = false; document.body.classList.remove('drawing'); try { document.exitPointerLock(); } catch (err) {} });
 
   // ---------- crosshair ----------
   const cross = document.getElementById('cross');
   document.addEventListener('pointermove', (e) => {
-    cross.style.transform = 'translate3d(' + e.clientX + 'px,' + e.clientY + 'px,0) translate(-50%,-50%)';
+    const cx = pointerLocked ? realX : e.clientX;
+    const cy = pointerLocked ? realY : e.clientY;
+    cross.style.transform = 'translate3d(' + cx + 'px,' + cy + 'px,0) translate(-50%,-50%)';
   });
   board.addEventListener('pointerenter', () => cross.classList.add('on'));
   board.addEventListener('pointerleave', () => cross.classList.remove('on'));
@@ -563,6 +570,8 @@ function render() {
   let realX = window.innerWidth / 2, realY = window.innerHeight / 2;
   let curX = realX, curY = realY;
   let cursorSpritesState = null;
+  let pointerLocked = false;
+  let lockX = realX, lockY = realY;
   const TRAIL = 3;
   const trail = [], trailX = [], trailY = [];
   for (let i = 0; i < TRAIL; i++) {
@@ -579,8 +588,20 @@ function render() {
     trailY.push(realY);
   }
   document.addEventListener('pointermove', (e) => {
-    realX = e.clientX;
-    realY = e.clientY;
+    if (pointerLocked) {
+      lockX += e.movementX;
+      lockY += e.movementY;
+      realX = lockX;
+      realY = lockY;
+    } else {
+      realX = e.clientX;
+      realY = e.clientY;
+    }
+  });
+  document.addEventListener('pointerlockchange', () => {
+    const locked = document.pointerLockElement === board;
+    if (locked && !pointerLocked) { lockX = realX; lockY = realY; }
+    pointerLocked = locked;
   });
   function paintCursor() {
     if (cursorSpritesState && cursorSpritesState.arrow) {
