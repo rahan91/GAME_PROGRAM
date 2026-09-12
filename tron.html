@@ -378,6 +378,7 @@
   </div>
 
   <div id="lobbyStatus" style="margin-top:8px"></div>
+  <div id="autoCountdown" style="display:none;margin-top:8px;font-size:13px;letter-spacing:1px;color:rgba(var(--acc-bright),0.9);"></div>
   <div id="loginBanner" style="display:none;margin-top:12px;padding:10px 18px;border:1px solid rgba(220,180,120,0.3);border-radius:8px;background:rgba(220,180,120,0.08);font-size:13px;color:rgba(230,200,140,0.85);">
     You need to <a href="/gallery" style="color:rgba(230,200,140,0.9);text-decoration:underline;">log in</a> to play online.
   </div>
@@ -774,12 +775,25 @@
   });
 
   // ---- Polling ----
+  let autoCountdown = null;
   function startPolling() {
     stopPolling();
     pollTimer = setInterval(pollState, 100);
   }
   function stopPolling() {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    cancelAutoCountdown();
+  }
+  function cancelAutoCountdown() {
+    if (autoCountdown) { clearTimeout(autoCountdown); autoCountdown = null; }
+    const el = document.getElementById('autoCountdown');
+    if (el) el.style.display = 'none';
+  }
+  function showAutoCountdown(seconds) {
+    const el = document.getElementById('autoCountdown');
+    if (!el) return;
+    el.style.display = '';
+    el.textContent = 'Starting in ' + seconds + 's...';
   }
 
   async function pollState() {
@@ -803,6 +817,28 @@
       updateLobbyPlayers(data);
       isHost = data.room && data.room.hostId === myUserId;
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+
+      if (isHost) {
+        const players = data.players || [];
+        const readyCount = players.filter(p => p.ready).length;
+        const total = players.length;
+        if (total >= 2 && readyCount === total && !autoCountdown) {
+          autoCountdown = setTimeout(() => {
+            autoCountdown = null;
+            document.getElementById('startBtn').click();
+          }, 3000);
+          showAutoCountdown(3);
+        } else if (total >= 2 && readyCount >= 2 && readyCount < total && !autoCountdown) {
+          const delay = Math.max(3, 10 - readyCount);
+          autoCountdown = setTimeout(() => {
+            autoCountdown = null;
+            document.getElementById('startBtn').click();
+          }, delay * 1000);
+          showAutoCountdown(delay);
+        } else if (readyCount < 2 || (total >= 2 && readyCount < Math.ceil(total * 0.6))) {
+          cancelAutoCountdown();
+        }
+      }
     }
 
     if (status === 'playing' || status === 'countdown') {
