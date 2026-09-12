@@ -106,7 +106,10 @@ async function handleJoin(db, user, body, now) {
   const playerCount = await getPlayerCount(db, room.id);
   if (playerCount >= (room.max_players || MAX_PLAYERS)) return json({ error: 'Room is full' }, 409);
 
-  const side = playerCount % 2 === 0 ? 'left' : 'right';
+  // Assign side: count per side, put on the side with fewer players
+  const leftCount = await db.prepare("SELECT COUNT(*) as c FROM pong_players WHERE room_id = ? AND side = 'left'").bind(room.id).first();
+  const rightCount = await db.prepare("SELECT COUNT(*) as c FROM pong_players WHERE room_id = ? AND side = 'right'").bind(room.id).first();
+  const side = (leftCount.c <= rightCount.c) ? 'left' : 'right';
   const color = COLORS[playerCount % COLORS.length];
 
   await db.prepare(
@@ -176,6 +179,9 @@ async function handleStart(db, user, body, now) {
 
   const playerCount = await getPlayerCount(db, room.id);
   if (playerCount < 2) return json({ error: 'Need at least 2 players' }, 400);
+
+  const readyCount = await db.prepare('SELECT COUNT(*) as c FROM pong_players WHERE room_id = ? AND ready = 1').bind(room.id).first();
+  if (readyCount.c < 2) return json({ error: 'Need at least 2 ready players' }, 400);
 
   await db.prepare("UPDATE pong_rooms SET status = 'playing', expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 

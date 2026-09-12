@@ -1,13 +1,5 @@
 import { json, getUserFromRequest } from '../../_lib/auth.js';
 
-function calculateElo(ratingA, ratingB, scoreA, kFactor) {
-  const expectedA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
-  return {
-    newA: Math.round(ratingA + kFactor * (scoreA - expectedA)),
-    newB: Math.round(ratingB + kFactor * ((1 - scoreA) - (1 - expectedA))),
-  };
-}
-
 function getKFactor(gamesPlayed) {
   if (gamesPlayed < 10) return 50;
   if (gamesPlayed < 30) return 40;

@@ -1088,6 +1088,7 @@
 
   // ---- Input Loop ----
   let inputRunning = false;
+  let lastSentDir = 0;
   function startInputLoop() {
     if (inputRunning) return;
     inputRunning = true;
@@ -1108,11 +1109,12 @@
     // Touch override
     if (touchDir !== 0) dir = touchDir;
 
-    if (roomCode) {
+    if (roomCode && dir !== lastSentDir) {
+      lastSentDir = dir;
       apiPost('/api/pong/move', { room: roomCode, dir });
     }
 
-    setTimeout(() => requestAnimationFrame(sendInput), 33);
+    setTimeout(sendInput, 33);
   }
 
   // ---- Resize handler ----

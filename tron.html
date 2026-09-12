@@ -1090,6 +1090,7 @@
 
   // ---- Input Loop ----
   let inputRunning = false;
+  let lastSentDir = null;
   function startInputLoop() {
     if (inputRunning) return;
     inputRunning = true;
@@ -1118,7 +1119,8 @@
     // Swipe override
     if (swipeDir) dir = swipeDir;
 
-    if (dir && roomCode) {
+    if (dir && roomCode && dir !== lastSentDir) {
+      lastSentDir = dir;
       apiPost('/api/tron/move', { room: roomCode, dir });
     }
 

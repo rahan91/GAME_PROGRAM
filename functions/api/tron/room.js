@@ -181,6 +181,9 @@ async function handleStart(db, user, body, now) {
   const playerCount = await getPlayerCount(db, room.id);
   if (playerCount < 2) return json({ error: 'Need at least 2 players' }, 400);
 
+  const readyCount = await db.prepare('SELECT COUNT(*) as c FROM tron_players WHERE room_id = ? AND ready = 1').bind(room.id).first();
+  if (readyCount.c < 2) return json({ error: 'Need at least 2 ready players' }, 400);
+
   await db.prepare("UPDATE tron_rooms SET status = 'playing', expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
   const allPlayers = await db.prepare('SELECT user_id FROM tron_players WHERE room_id = ?').bind(room.id).all();
