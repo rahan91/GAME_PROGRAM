@@ -236,6 +236,8 @@
   #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0 / auto 30px; }
   #cursorfx.finger { background: url('assets/cursor-finger.png') no-repeat 0 0 / auto 30px; }
 
+  body.drawing #cross { opacity: 0 !important; }
+
   @media (max-width: 640px) {
     h1 { font-size: 1.25rem; letter-spacing: 4px; }
     #hud { top: 56px; font-size: 12px; gap: 3px 14px; }
@@ -652,6 +654,7 @@
 
     phase = 'result';
     drawing = false;
+    document.body.classList.remove('drawing');
     board.classList.remove('select');
     accDisplay.textContent = Math.round(iou * 1000) / 10 + '%';
     resAcc.textContent = (Math.round(iou * 1000) / 10) + '%';
@@ -689,6 +692,7 @@
     if (phase !== 'cut') return;
     e.preventDefault();
     drawing = true;
+    document.body.classList.add('drawing');
     stroke = [toLogical(e)];
     render();
   });
@@ -704,10 +708,10 @@
   });
   window.addEventListener('pointerup', (e) => {
     if (!drawing) return;
-    if (stroke.length < 2) { drawing = false; return; }
+    if (stroke.length < 2) { drawing = false; document.body.classList.remove('drawing'); return; }
     endCut(Date.now());
   });
-  window.addEventListener('pointercancel', () => { drawing = false; });
+  window.addEventListener('pointercancel', () => { drawing = false; document.body.classList.remove('drawing'); });
 
   goBtn.addEventListener('click', startCut);
 

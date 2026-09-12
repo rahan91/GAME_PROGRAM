@@ -262,15 +262,21 @@
       localStorage.setItem(ACCENT_CACHE_KEY, JSON.stringify({ accent: (equipped && equipped.accent) || null }));
     } catch (e) {}
   }
-  function applyImmediateAccent() {
+  function cachedAccentColor() {
     try {
       var c = JSON.parse(localStorage.getItem(ACCENT_CACHE_KEY) || 'null');
-      if (c && c.accent) {
-        var it = window.ShopCatalog.item(c.accent);
-        if (it && it.color) { applyAccent(it.color); return; }
-      }
-    } catch (e) {}
+      if (!c || !c.accent) return null;
+      var it = window.ShopCatalog.item(c.accent);
+      return (it && it.color) || null;
+    } catch (e) { return null; }
+  }
+  function applyImmediateAccent() {
+    // Returns true when an accent was applied from cache (no server round-trip
+    // needed), so callers can reveal any hidden pre-paint guard immediately.
+    var col = cachedAccentColor();
+    if (col) { applyAccent(col); return true; }
     applyAccentFromState(localData());
+    return false;
   }
 
   function accentRgba(alpha, tone) {
@@ -458,16 +464,27 @@
   };
 
   if (typeof document !== 'undefined') {
-    try {
-      applyImmediateAccent();
-    } catch (e) {}
-    document.addEventListener('DOMContentLoaded', function () {
-      try {
-        serverState().then(function (s) {
-          if (s) applyAccentFromState(s);
-          else applyAccentFromState(localData());
-        }).catch(function () {});
-      } catch (e) {}
-    });
+    // FOUC guard: never paint the page with a wrong accent. While the document
+    // is still parsing we hide it, apply the best-known accent (cache or server),
+    // then reveal. A timeout prevents an endless blank screen if the API is slow.
+    var revealed = false;
+    function revealPage() {
+      if (revealed) return;
+      revealed = true;
+      try { document.documentElement.style.visibility = ''; } catch (e) {}
+    }
+    var appliedCache = false;
+    if (document.readyState === 'loading') {
+      try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
+    }
+    try { appliedCache = applyImmediateAccent(); } catch (e) {}
+    if (appliedCache) revealPage();
+    setTimeout(revealPage, appliedCache ? 0 : 1200);
+    serverState().then(function (s) {
+      if (s) applyAccentFromState(s);
+      else applyAccentFromState(localData());
+      revealPage();
+    }).catch(function () { revealPage(); });
+    document.addEventListener('DOMContentLoaded', revealPage);
   }
 })();
