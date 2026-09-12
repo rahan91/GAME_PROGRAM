@@ -8,7 +8,7 @@ export async function onRequestGet(context) {
   const db = context.env.DATABASE;
 
   const room = await db.prepare(
-    'SELECT id, code, status, host_id FROM tron_rooms WHERE code = ?'
+    'SELECT id, code, status, host_id, max_players, speed FROM tron_rooms WHERE code = ?'
   ).bind(code.toUpperCase()).first();
   if (!room) return json({ error: 'Room not found' }, 404);
 
@@ -24,7 +24,7 @@ export async function onRequestGet(context) {
   }
 
   return json({
-    room: { id: room.id, code: room.code, status: room.status, hostId: room.host_id },
+    room: { id: room.id, code: room.code, status: room.status, hostId: room.host_id, maxPlayers: room.max_players, speed: room.speed },
     players: (players.results || []).map((p) => ({
       id: p.id,
       userId: p.user_id,

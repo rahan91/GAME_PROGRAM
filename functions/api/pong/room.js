@@ -58,12 +58,14 @@ async function handleCreate(db, user, body, now) {
   const roomId = crypto.randomUUID();
   const code = generateCode();
   const mode = (body && body.mode === 'teams') ? 'teams' : 'ffa';
+  const maxPlayers = [2, 4, 6, 8].includes(Number(body?.maxPlayers)) ? Number(body.maxPlayers) : 8;
+  const speed = ['slow', 'medium', 'fast'].includes(body?.speed) ? body.speed : 'medium';
   const expiresAt = now + ROOM_EXPIRY_SECONDS;
 
   await db.prepare(
-    `INSERT INTO pong_rooms (id, code, mode, status, host_id, created_at, expires_at)
-     VALUES (?, ?, ?, 'waiting', ?, ?, ?)`
-  ).bind(roomId, code, mode, user.id, now, expiresAt).run();
+    `INSERT INTO pong_rooms (id, code, mode, status, host_id, max_players, speed, created_at, expires_at)
+     VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, ?)`
+  ).bind(roomId, code, mode, user.id, maxPlayers, speed, now, expiresAt).run();
 
   await db.prepare(
     `INSERT INTO pong_players (room_id, user_id, username, rating, side, paddle_y, alive, ready, dir, color, joined_at)
@@ -71,7 +73,7 @@ async function handleCreate(db, user, body, now) {
   ).bind(roomId, user.id, user.username, COLORS[0], now).run();
 
   const playerIndex = 0;
-  return json({ code, mode, status: 'waiting', playerIndex });
+  return json({ code, mode, maxPlayers, speed, status: 'waiting', playerIndex });
 }
 
 async function handleJoin(db, user, body, now) {
@@ -101,7 +103,7 @@ async function handleJoin(db, user, body, now) {
   }
 
   const playerCount = await getPlayerCount(db, room.id);
-  if (playerCount >= MAX_PLAYERS) return json({ error: 'Room is full' }, 409);
+  if (playerCount >= (room.max_players || MAX_PLAYERS)) return json({ error: 'Room is full' }, 409);
 
   const side = playerCount % 2 === 0 ? 'left' : 'right';
   const color = COLORS[playerCount % COLORS.length];
@@ -114,7 +116,7 @@ async function handleJoin(db, user, body, now) {
   await db.prepare('UPDATE pong_rooms SET expires_at = ? WHERE id = ?').bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
   const playerIndex = playerCount;
-  return json({ code: room.code, mode: room.mode, status: room.status, playerIndex });
+  return json({ code: room.code, mode: room.mode, maxPlayers: room.max_players, speed: room.speed, status: room.status, playerIndex });
 }
 
 async function handleLeave(db, user, body) {
@@ -186,14 +188,16 @@ async function handleStart(db, user, body, now) {
     await db.prepare('UPDATE pong_players SET paddle_y = 0.5, alive = 1 WHERE room_id = ? AND user_id = ?').bind(room.id, p.user_id).run();
   }
 
-  await db.prepare(`INSERT INTO pong_ball (room_id, x, y, vx, vy, speed) VALUES (?, 0.5, 0.5, 0.03, 0.01, 5)`).bind(room.id).run();
+  const spd = room.speed === 'fast' ? 8 : room.speed === 'slow' ? 3 : 5;
+  const vx = room.speed === 'fast' ? 0.045 : room.speed === 'slow' ? 0.02 : 0.03;
+  await db.prepare(`INSERT INTO pong_ball (room_id, x, y, vx, vy, speed) VALUES (?, 0.5, 0.5, ?, 0.01, ?)`).bind(room.id, vx, spd).run();
 
   return json({ ok: true, status: 'playing' });
 }
 
 async function findMatch(db, now) {
   const candidates = await db.prepare(
-    `SELECT r.id, r.code, r.mode, r.status, r.host_id,
+    `SELECT r.id, r.code, r.mode, r.status, r.host_id, r.max_players, r.speed,
             (SELECT COUNT(*) FROM pong_players p WHERE p.room_id = r.id) as player_count
      FROM pong_rooms r
      WHERE r.status = 'waiting' AND r.expires_at > ?
@@ -201,7 +205,7 @@ async function findMatch(db, now) {
   ).bind(now).all();
 
   for (const room of (candidates.results || [])) {
-    if (room.player_count < MAX_PLAYERS) return room;
+    if (room.player_count < (room.max_players || MAX_PLAYERS)) return room;
   }
   return null;
 }

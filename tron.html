@@ -137,6 +137,24 @@
   }
 
   .mode-row { display: flex; gap: 8px; margin-bottom: 12px; }
+
+  .settings-group { margin-bottom: 16px; text-align: center; }
+  .settings-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(var(--acc-main),0.5); margin-bottom: 6px; }
+  .settings-options { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .settings-opt {
+    font-family: inherit; font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer;
+    padding: 6px 14px; border-radius: 14px;
+    background: rgba(0,0,0,0.25); color: rgba(var(--acc-main),0.5);
+    border: 1px solid rgba(var(--acc-main),0.15);
+    transition: all 0.15s;
+  }
+  .settings-opt.active {
+    color: rgba(var(--acc-texthi),0.9);
+    border-color: rgba(var(--acc-btn),0.5);
+    background: rgba(var(--acc-btn),0.15);
+  }
+  .settings-opt:hover { color: rgba(var(--acc-texthi),0.9); }
     font-size: 18px; letter-spacing: 4px; color: rgba(var(--acc-bright),1);
     padding: 12px 24px; border-radius: 8px;
     background: rgba(0,0,0,0.3); border: 1px solid rgba(var(--acc-main),0.25);
@@ -308,6 +326,25 @@
 <h1>Tron</h1>
 
 <div id="lobbyScreen" class="screen active">
+  <div class="settings-group">
+    <div class="settings-label">Max Players</div>
+    <div class="settings-options" id="maxPlayersOpts">
+      <button class="settings-opt" data-val="2">2</button>
+      <button class="settings-opt" data-val="4">4</button>
+      <button class="settings-opt" data-val="6">6</button>
+      <button class="settings-opt active" data-val="8">8</button>
+    </div>
+  </div>
+
+  <div class="settings-group">
+    <div class="settings-label">Speed</div>
+    <div class="settings-options" id="speedOpts">
+      <button class="settings-opt" data-val="slow">Slow</button>
+      <button class="settings-opt active" data-val="medium">Medium</button>
+      <button class="settings-opt" data-val="fast">Fast</button>
+    </div>
+  </div>
+
   <div class="lobby-row">
     <button class="lobby-btn primary" id="createBtn">Create Room</button>
   </div>
@@ -327,6 +364,7 @@
 
   <div id="roomInfo" style="display:none;text-align:center">
     <div class="room-code" id="roomCode"></div>
+    <div id="roomSettings" style="margin-top:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);"></div>
     <div class="lobby-row" style="margin-top:14px">
       <button class="lobby-btn" id="readyBtn">Ready</button>
       <button class="lobby-btn primary" id="startBtn" style="display:none">Start</button>
@@ -575,12 +613,33 @@
     } catch (e) { return null; }
   }
 
+  // ---- Settings buttons ----
+  let selectedMaxPlayers = 8;
+  let selectedSpeed = 'medium';
+  document.querySelectorAll('#maxPlayersOpts .settings-opt').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedMaxPlayers = Number(btn.dataset.val);
+      document.querySelectorAll('#maxPlayersOpts .settings-opt').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+  document.querySelectorAll('#speedOpts .settings-opt').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedSpeed = btn.dataset.val;
+      document.querySelectorAll('#speedOpts .settings-opt').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  function showRoomSettings(maxPlayers, speed) {
+    const label = `${maxPlayers} players &middot; ${speed}`;
+    document.getElementById('roomSettings').innerHTML = label;
+  }
+
   // ---- Lobby: Create ----
   document.getElementById('createBtn').addEventListener('click', async () => {
     if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
     const status = document.getElementById('lobbyStatus');
     status.textContent = 'Creating room...';
-    const data = await apiPost('/api/tron/room', { action: 'create', player: playerUsername });
+    const data = await apiPost('/api/tron/room', { action: 'create', player: playerUsername, maxPlayers: selectedMaxPlayers, speed: selectedSpeed });
     if (!data || data.error) {
       status.textContent = data ? data.error : 'Failed to create room';
       return;
@@ -591,6 +650,7 @@
     ready = false;
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
+    showRoomSettings(data.maxPlayers, data.speed);
     document.getElementById('startBtn').style.display = isHost ? '' : 'none';
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
@@ -615,6 +675,7 @@
     ready = false;
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
+    showRoomSettings(data.maxPlayers, data.speed);
     document.getElementById('startBtn').style.display = 'none';
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
@@ -638,6 +699,7 @@
     ready = false;
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
+    showRoomSettings(data.maxPlayers, data.speed);
     document.getElementById('startBtn').style.display = 'none';
     document.getElementById('playerList').style.display = '';
     status.textContent = '';

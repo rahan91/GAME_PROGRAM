@@ -64,12 +64,14 @@ async function handleCreate(db, user, body, now) {
 
   const roomId = crypto.randomUUID();
   const code = generateCode();
+  const maxPlayers = [2, 4, 6, 8].includes(Number(body?.maxPlayers)) ? Number(body.maxPlayers) : 8;
+  const speed = ['slow', 'medium', 'fast'].includes(body?.speed) ? body.speed : 'medium';
   const expiresAt = now + ROOM_EXPIRY_SECONDS;
 
   await db.prepare(
-    `INSERT INTO tron_rooms (id, code, status, host_id, created_at, expires_at)
-     VALUES (?, ?, 'waiting', ?, ?, ?)`
-  ).bind(roomId, code, user.id, now, expiresAt).run();
+    `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, created_at, expires_at)
+     VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?)`
+  ).bind(roomId, code, user.id, maxPlayers, speed, now, expiresAt).run();
 
   const pos = START_POSITIONS[0];
   await db.prepare(
@@ -107,7 +109,7 @@ async function handleJoin(db, user, body, now) {
   }
 
   const playerCount = await getPlayerCount(db, room.id);
-  if (playerCount >= MAX_PLAYERS) return json({ error: 'Room is full' }, 409);
+  if (playerCount >= (room.max_players || MAX_PLAYERS)) return json({ error: 'Room is full' }, 409);
 
   const pos = START_POSITIONS[playerCount % START_POSITIONS.length];
   const color = COLORS[playerCount % COLORS.length];
@@ -119,7 +121,7 @@ async function handleJoin(db, user, body, now) {
 
   await db.prepare('UPDATE tron_rooms SET expires_at = ? WHERE id = ?').bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
-  return json({ code: room.code, status: room.status, playerIndex: playerCount });
+  return json({ code: room.code, maxPlayers: room.max_players, speed: room.speed, status: room.status, playerIndex: playerCount });
 }
 
 async function handleLeave(db, user, body) {
@@ -196,7 +198,7 @@ async function handleStart(db, user, body, now) {
 
 async function findMatch(db, now) {
   const candidates = await db.prepare(
-    `SELECT r.id, r.code, r.status, r.host_id,
+    `SELECT r.id, r.code, r.status, r.host_id, r.max_players, r.speed,
             (SELECT COUNT(*) FROM tron_players p WHERE p.room_id = r.id) as player_count
      FROM tron_rooms r
      WHERE r.status = 'waiting' AND r.expires_at > ?
@@ -204,7 +206,7 @@ async function findMatch(db, now) {
   ).bind(now).all();
 
   for (const room of (candidates.results || [])) {
-    if (room.player_count < MAX_PLAYERS) return room;
+    if (room.player_count < (room.max_players || MAX_PLAYERS)) return room;
   }
   return null;
 }
