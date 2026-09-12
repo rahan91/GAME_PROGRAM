@@ -374,6 +374,7 @@
 <div id="gameScreen" class="screen">
   <canvas id="gameCanvas"></canvas>
   <div id="gameHud"></div>
+  <button class="lobby-btn" id="endGameBtn" style="display:none;position:fixed;top:12px;right:12px;z-index:100;font-size:11px;padding:8px 16px;background:rgba(180,40,40,0.8);border:1px solid rgba(255,80,80,0.4)">End Game</button>
 </div>
 
 <div id="resultsScreen" class="screen">
@@ -473,7 +474,8 @@
       const user = data.user || null;
       isLoggedIn = !!(user && user.username);
       if (user && user.username) playerUsername = user.username;
-    } catch { isLoggedIn = false; }
+      window.__user = user || {};
+    } catch { isLoggedIn = false; window.__user = {}; }
     document.getElementById('loginBanner').style.display = isLoggedIn ? 'none' : '';
   }
   loadPlayer();
@@ -624,7 +626,7 @@
       return;
     }
     roomCode = data.code;
-    isHost = false;
+    isHost = String(data.hostId) === String(window.__user.id);
     myPlayerIndex = data.playerIndex;
     ready = false;
     selectedMode = data.mode || 'ffa';
@@ -646,7 +648,7 @@
     const data = await apiPost('/api/pong/room', { action: 'join', player: playerUsername });
     if (data && !data.error) {
       roomCode = data.code;
-      isHost = false;
+      isHost = String(data.hostId) === String(window.__user.id);
       myPlayerIndex = data.playerIndex;
       ready = false;
       selectedMode = data.mode || 'ffa';
@@ -726,6 +728,16 @@
       showScreen('lobby');
       await apiPost('/api/pong/room', { action: 'ready', code: roomCode, player: playerUsername, ready: false });
       startPolling();
+    }
+  });
+
+  document.getElementById('endGameBtn').addEventListener('click', async () => {
+    if (!roomCode || !isHost) return;
+    const winnerUsername = prompt('Enter winner username (leave empty for draw):');
+    const data = await apiPost('/api/pong/room', { action: 'end', code: roomCode, winnerName: winnerUsername || null });
+    if (data && data.ok) {
+      const state = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
+      if (state && state.room && state.room.status === 'finished') enterResults(state);
     }
   });
 
@@ -839,6 +851,7 @@
     stopPolling();
     gameState = data;
     resizeCanvas();
+    document.getElementById('endGameBtn').style.display = isHost ? '' : 'none';
     if (data.countdown > 0) {
       showCountdown(data.countdown);
     } else {
@@ -879,7 +892,7 @@
   }
 
   function renderResults(data) {
-    const winner = data.winner || 'Unknown';
+    const winner = data.winnerName || data.winner || 'Unknown';
     const isTeamWin = data.room && data.room.mode === 'teams';
     let html = '';
     if (isTeamWin) {

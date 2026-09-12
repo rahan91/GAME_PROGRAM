@@ -501,7 +501,8 @@
       const user = data.user || null;
       isLoggedIn = !!(user && user.username);
       if (user && user.username) playerUsername = user.username;
-    } catch { isLoggedIn = false; }
+      window.__user = user || {};
+    } catch { isLoggedIn = false; window.__user = {}; }
     document.getElementById('loginBanner').style.display = isLoggedIn ? 'none' : '';
   }
   loadPlayer();
@@ -674,7 +675,7 @@
       return;
     }
     roomCode = data.code;
-    isHost = false;
+    isHost = String(data.hostId) === String(window.__user.id);
     myPlayerIndex = data.playerIndex;
     ready = false;
     document.getElementById('roomInfo').style.display = '';
@@ -694,7 +695,7 @@
     const data = await apiPost('/api/tron/room', { action: 'join', player: playerUsername });
     if (data && !data.error) {
       roomCode = data.code;
-      isHost = false;
+      isHost = String(data.hostId) === String(window.__user.id);
       myPlayerIndex = data.playerIndex;
       ready = false;
       document.getElementById('roomInfo').style.display = '';

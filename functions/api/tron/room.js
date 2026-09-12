@@ -104,7 +104,7 @@ async function handleJoin(db, user, body, now) {
         `INSERT INTO tron_rooms (id, code, status, host_id, created_at, expires_at)
          VALUES (?, ?, 'waiting', ?, ?, ?)`
       ).bind(roomId, roomCode, user.id, now, expiresAt).run();
-      room = { id: roomId, code: roomCode, status: 'waiting', host_id: user.id };
+      room = { id: roomId, code: roomCode, status: 'waiting', host_id: user.id, max_players: 8, speed: 'medium' };
     }
   }
 
@@ -121,7 +121,7 @@ async function handleJoin(db, user, body, now) {
 
   await db.prepare('UPDATE tron_rooms SET expires_at = ? WHERE id = ?').bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
-  return json({ code: room.code, maxPlayers: room.max_players, speed: room.speed, status: room.status, playerIndex: playerCount });
+  return json({ code: room.code, maxPlayers: room.max_players, speed: room.speed, status: room.status, playerIndex: playerCount, hostId: room.host_id });
 }
 
 async function handleLeave(db, user, body) {

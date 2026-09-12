@@ -46,6 +46,7 @@ export async function onRequestPost(context) {
   if (action === 'leave') return handleLeave(db, user, body);
   if (action === 'ready') return handleReady(db, user, body);
   if (action === 'start') return handleStart(db, user, body, now);
+  if (action === 'end') return handleEnd(db, user, body);
   return json({ error: 'Unknown action' }, 400);
 }
 
@@ -98,7 +99,7 @@ async function handleJoin(db, user, body, now) {
         `INSERT INTO pong_rooms (id, code, mode, status, host_id, created_at, expires_at)
          VALUES (?, ?, 'ffa', 'waiting', ?, ?, ?)`
       ).bind(roomId, roomCode, user.id, now, expiresAt).run();
-      room = { id: roomId, code: roomCode, mode: 'ffa', status: 'waiting', host_id: user.id };
+      room = { id: roomId, code: roomCode, mode: 'ffa', status: 'waiting', host_id: user.id, max_players: 8, speed: 'medium' };
     }
   }
 
@@ -116,7 +117,7 @@ async function handleJoin(db, user, body, now) {
   await db.prepare('UPDATE pong_rooms SET expires_at = ? WHERE id = ?').bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
   const playerIndex = playerCount;
-  return json({ code: room.code, mode: room.mode, maxPlayers: room.max_players, speed: room.speed, status: room.status, playerIndex });
+  return json({ code: room.code, mode: room.mode, maxPlayers: room.max_players, speed: room.speed, status: room.status, playerIndex, hostId: room.host_id });
 }
 
 async function handleLeave(db, user, body) {
@@ -193,6 +194,28 @@ async function handleStart(db, user, body, now) {
   await db.prepare(`INSERT INTO pong_ball (room_id, x, y, vx, vy, speed) VALUES (?, 0.5, 0.5, ?, 0.01, ?)`).bind(room.id, vx, spd).run();
 
   return json({ ok: true, status: 'playing' });
+}
+
+async function handleEnd(db, user, body) {
+  const code = String(body && body.code || '').toUpperCase();
+  if (!code) return json({ error: 'Missing code' }, 400);
+
+  const room = await findRoomByCode(db, code);
+  if (!room) return json({ error: 'Room not found' }, 404);
+  if (Number(room.host_id) !== Number(user.id)) return json({ error: 'Not host' }, 403);
+  if (room.status !== 'playing') return json({ error: 'Game not in progress' }, 409);
+
+  let winnerId = null;
+  if (body && body.winnerName) {
+    const winner = await db.prepare('SELECT user_id FROM pong_players WHERE room_id = ? AND username = ?').bind(room.id, String(body.winnerName)).first();
+    if (winner) winnerId = winner.user_id;
+  }
+  await db.prepare(
+    "UPDATE pong_rooms SET status = 'finished', winner_id = ? WHERE id = ?"
+  ).bind(winnerId, room.id).run();
+  await db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id).run();
+
+  return json({ ok: true, status: 'finished' });
 }
 
 async function findMatch(db, now) {

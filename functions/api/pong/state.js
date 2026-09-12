@@ -3,9 +3,17 @@ import { json } from '../../_lib/auth.js';
 const PADDLE_SPEED = 0.025;
 const PADDLE_HALF = 0.06;
 const BALL_BASE_SPEED = 0.012;
-const WIN_SCORE = 5;
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function findNearestPaddle(players, ballY, side) {
+  const candidates = players.filter(p => p.side === side && p.alive);
+  if (!candidates.length) return null;
+  return candidates.reduce((best, p) => {
+    const dist = Math.abs(p.paddle_y - ballY);
+    return dist < best.dist ? { paddle: p, dist } : best;
+  }, { paddle: candidates[0], dist: Infinity }).paddle;
+}
 
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
@@ -78,7 +86,7 @@ export async function onRequestGet(context) {
     const baseSpd = ballRow.speed || BALL_BASE_SPEED;
     const curSpd = Math.sqrt(bvx * bvx + bvy * bvy);
     if (curSpd > 0) {
-      const target = baseSpd * speedMul * 1.2;
+      const target = baseSpd * speedMul * 1.15;
       bvx = (bvx / curSpd) * Math.min(curSpd, target);
       bvy = (bvy / curSpd) * Math.min(curSpd, target);
     }
@@ -94,40 +102,16 @@ export async function onRequestGet(context) {
       bx = 0.5; by = 0.5;
       const dir = scoredSide === 'left' ? 1 : -1;
       bvx = baseSpd * speedMul * dir;
-      bvy = (Math.random() - 0.5) * 0.008;
+      bvy = (Math.random() - 0.5) * 0.006;
 
-      if (room.mode === 'teams') {
-        // Kill one random player from the scored-against side
-        const victims = alivePlayers.filter(p => p.side === scoredSide);
-        if (victims.length > 0) {
-          const victim = victims[Math.floor(Math.random() * victims.length)];
-          await db.prepare('UPDATE pong_players SET alive = 0 WHERE id = ?').bind(victim.id).run();
-          victim.alive = 0;
-        }
-      } else {
-        // FFA: kill all on scored-against side
-        for (const p of alivePlayers) {
-          if (p.side === scoredSide) {
-            await db.prepare('UPDATE pong_players SET alive = 0 WHERE id = ?').bind(p.id).run();
-            p.alive = 0;
-          }
-        }
+      // Kill nearest paddle to ball (works for both modes)
+      const victim = findNearestPaddle(alivePlayers, by, scoredSide);
+      if (victim) {
+        await db.prepare('UPDATE pong_players SET alive = 0 WHERE id = ?').bind(victim.id).run();
+        victim.alive = 0;
       }
 
-      // Check win
-      const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
-      const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
-      let winnerId = null;
-      if (leftAlive === 0) winnerId = players.find(p => p.side === 'right' && p.alive)?.user_id || null;
-      if (rightAlive === 0) winnerId = players.find(p => p.side === 'left' && p.alive)?.user_id || null;
-
-      if (winnerId || leftAlive === 0 || rightAlive === 0) {
-        await db.prepare(
-          "UPDATE pong_rooms SET status = 'finished', winner_id = ? WHERE id = ?"
-        ).bind(winnerId, room.id).run();
-        room.status = 'finished';
-        await db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id).run();
-      }
+      // Game continues — host ends manually via /api/pong/room action=end
     }
 
     if (room.status === 'playing') {
@@ -147,9 +131,14 @@ export async function onRequestGet(context) {
   ).bind(room.id).first();
 
   let winner = null;
+  let winnerName = null;
   if (room.status === 'finished') {
     const finished = await db.prepare('SELECT winner_id FROM pong_rooms WHERE id = ?').bind(room.id).first();
     winner = finished ? finished.winner_id : null;
+    if (winner) {
+      const winnerPlayer = await db.prepare('SELECT username FROM pong_players WHERE room_id = ? AND user_id = ?').bind(room.id, winner).first();
+      winnerName = winnerPlayer ? winnerPlayer.username : null;
+    }
   }
 
   return json({
@@ -169,5 +158,6 @@ export async function onRequestGet(context) {
       ? { x: finalBall.x, y: finalBall.y, vx: finalBall.vx, vy: finalBall.vy }
       : { x: 0.5, y: 0.5, vx: 0, vy: 0 },
     winner,
+    winnerName,
   });
 }
