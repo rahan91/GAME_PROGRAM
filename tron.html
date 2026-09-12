@@ -830,8 +830,8 @@
 
     if (status === 'waiting') {
       updateLobbyPlayers(data);
-      const hid = data.room ? String(data.room.hostId) : '';
-      isHost = hid !== '' && hid === String(myUserId);
+
+      isHost = data.room && String(data.room.hostId) === String(myUserId);
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
       document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
 
@@ -839,13 +839,9 @@
         const players = data.players || [];
         const readyCount = players.filter(p => p.ready).length;
         const total = players.length;
-        const allReady = total >= 2 && readyCount === total;
-
-        if (allReady && !autoCountdown) {
-          startAutoCountdown(3);
-        } else if (total >= 2 && readyCount >= 2 && readyCount < total && !autoCountdown) {
-          startAutoCountdown(5);
-        } else if (total >= 2 && readyCount < 2) {
+        if (total >= 2 && readyCount === total) {
+          if (!autoCountdown) startAutoCountdown(3);
+        } else {
           cancelAutoCountdown();
         }
       }
@@ -878,18 +874,6 @@
       '<span class="pr" style="color:' + (p.color || 'rgba(var(--acc-main),0.5)') + '">&#9679;</span>' +
       '</div>'
     ).join('');
-
-    if (isHost) {
-      const readyCount = players.filter(p => p.ready).length;
-      const enoughPlayers = players.length >= 2 && readyCount >= 2;
-      document.getElementById('startBtn').style.display = enoughPlayers ? '' : 'none';
-    }
-
-    if (data.room && data.room.hostId) {
-      isHost = String(data.room.hostId) === String(myUserId);
-      document.getElementById('startBtn').style.display = isHost ? '' : 'none';
-      document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
-    }
   }
 
   // ---- Enter Game ----
