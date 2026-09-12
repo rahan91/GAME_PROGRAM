@@ -38,7 +38,7 @@
     }
 
     var style = document.createElement('style');
-    style.textContent = 'html * { cursor: url("assets/cursor-empty.png") 0 0, none !important; }';
+    style.textContent = 'html * { cursor: url("assets/cursor-empty.cur") 0 0, none !important; }';
     document.head.appendChild(style);
 
     var sprites = { arrow: null, finger: null, border: '' };

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-<script>!function(){var s=document.createElement('style');s.textContent='*,*::before,*::after{cursor:url(assets/cursor-empty.png) 0 0,none!important}';document.head.appendChild(s)}()</script>
+<script>!function(){var s=document.createElement('style');s.textContent='*,*::before,*::after{cursor:url(assets/cursor-empty.cur) 0 0,none!important}';document.head.appendChild(s)}()</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DRAW</title>
@@ -50,7 +50,7 @@
     user-select: none;
     cursor: none !important;
   }
-  *, *::before, *::after { cursor: url('assets/cursor-empty.png') 0 0, none !important; }
+  *, *::before, *::after { cursor: url('assets/cursor-empty.cur') 0 0, none !important; }
 
   .orb {
     position: fixed;
@@ -563,7 +563,7 @@ function render() {
   // ---------- cursorfx ----------
   // Inject cursor: none globally (fallback for CSS)
   const _curStyle = document.createElement('style');
-  _curStyle.textContent = 'html * { cursor: url("assets/cursor-empty.png") 0 0, none !important; }';
+  _curStyle.textContent = 'html * { cursor: url("assets/cursor-empty.cur") 0 0, none !important; }';
   document.head.appendChild(_curStyle);
 
   const cursorfx = document.getElementById('cursorfx');
