@@ -1,0 +1,2 @@
+ALTER TABLE pong_rooms ADD COLUMN score_left INTEGER DEFAULT 0;
+ALTER TABLE pong_rooms ADD COLUMN score_right INTEGER DEFAULT 0;

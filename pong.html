@@ -1016,7 +1016,7 @@
     const players = state.players || [];
     const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
     const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillStyle = 'rgba(255,255,255,0.20)';
     ctx.font = 'bold 120px "IBM Plex Mono", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

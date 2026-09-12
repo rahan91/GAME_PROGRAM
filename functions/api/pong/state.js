@@ -3,6 +3,7 @@ import { json } from '../../_lib/auth.js';
 const PADDLE_SPEED = 0.025;
 const PADDLE_HALF = 0.06;
 const BALL_BASE_SPEED = 0.012;
+const WIN_SCORE = 5;
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -31,6 +32,7 @@ export async function onRequestGet(context) {
   if (room.status === 'playing' && ballRow && players.length >= 2) {
     const speedMul = room.speed === 'fast' ? 1.5 : room.speed === 'slow' ? 0.7 : 1;
 
+    // Move paddles
     for (const p of players) {
       if (!p.alive) continue;
       const d = p.dir || 0;
@@ -42,14 +44,17 @@ export async function onRequestGet(context) {
       }
     }
 
+    // Move ball
     let bx = ballRow.x + ballRow.vx * speedMul;
     let by = ballRow.y + ballRow.vy * speedMul;
     let bvx = ballRow.vx;
     let bvy = ballRow.vy;
 
-    if (by <= 0.01) { by = 0.01; bvy = Math.abs(bvy); }
-    if (by >= 0.99) { by = 0.99; bvy = -Math.abs(bvy); }
+    // Wall bounce
+    if (by <= 0.02) { by = 0.02; bvy = Math.abs(bvy); }
+    if (by >= 0.98) { by = 0.98; bvy = -Math.abs(bvy); }
 
+    // Paddle collision
     const alivePlayers = players.filter(p => p.alive);
     for (const p of alivePlayers) {
       const paddleTop = p.paddle_y - PADDLE_HALF;
@@ -57,18 +62,19 @@ export async function onRequestGet(context) {
       if (by >= paddleTop && by <= paddleBot) {
         if (p.side === 'left' && bx <= 0.04 && bvx < 0) {
           bx = 0.04;
-          bvx = Math.abs(bvx) * 1.02;
+          bvx = Math.abs(bvx) * 1.03;
           const hitPos = (by - p.paddle_y) / PADDLE_HALF;
-          bvy += hitPos * 0.004;
+          bvy += hitPos * 0.005;
         } else if (p.side === 'right' && bx >= 0.96 && bvx > 0) {
           bx = 0.96;
-          bvx = -Math.abs(bvx) * 1.02;
+          bvx = -Math.abs(bvx) * 1.03;
           const hitPos = (by - p.paddle_y) / PADDLE_HALF;
-          bvy += hitPos * 0.004;
+          bvy += hitPos * 0.005;
         }
       }
     }
 
+    // Clamp speed
     const baseSpd = ballRow.speed || BALL_BASE_SPEED;
     const curSpd = Math.sqrt(bvx * bvx + bvy * bvy);
     if (curSpd > 0) {
@@ -76,48 +82,58 @@ export async function onRequestGet(context) {
       bvx = (bvx / curSpd) * Math.min(curSpd, target);
       bvy = (bvy / curSpd) * Math.min(curSpd, target);
     }
-
     bvx = clamp(bvx, -0.04, 0.04);
     bvy = clamp(bvy, -0.03, 0.03);
 
-    let scored = false;
-    if (bx < -0.02) {
-      scored = true;
-      for (const p of alivePlayers) {
-        if (p.side === 'left') {
-          await db.prepare('UPDATE pong_players SET alive = 0 WHERE id = ?').bind(p.id).run();
-          p.alive = 0;
+    // Scoring
+    let scoredSide = null;
+    if (bx < -0.02) scoredSide = 'left';
+    else if (bx > 1.02) scoredSide = 'right';
+
+    if (scoredSide) {
+      bx = 0.5; by = 0.5;
+      const dir = scoredSide === 'left' ? 1 : -1;
+      bvx = baseSpd * speedMul * dir;
+      bvy = (Math.random() - 0.5) * 0.008;
+
+      if (room.mode === 'teams') {
+        // Kill one random player from the scored-against side
+        const victims = alivePlayers.filter(p => p.side === scoredSide);
+        if (victims.length > 0) {
+          const victim = victims[Math.floor(Math.random() * victims.length)];
+          await db.prepare('UPDATE pong_players SET alive = 0 WHERE id = ?').bind(victim.id).run();
+          victim.alive = 0;
+        }
+      } else {
+        // FFA: kill all on scored-against side
+        for (const p of alivePlayers) {
+          if (p.side === scoredSide) {
+            await db.prepare('UPDATE pong_players SET alive = 0 WHERE id = ?').bind(p.id).run();
+            p.alive = 0;
+          }
         }
       }
-      bx = 0.5; by = 0.5;
-      bvx = baseSpd * speedMul;
-      bvy = (Math.random() - 0.5) * 0.008;
-    } else if (bx > 1.02) {
-      scored = true;
-      for (const p of alivePlayers) {
-        if (p.side === 'right') {
-          await db.prepare('UPDATE pong_players SET alive = 0 WHERE id = ?').bind(p.id).run();
-          p.alive = 0;
-        }
+
+      // Check win
+      const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
+      const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
+      let winnerId = null;
+      if (leftAlive === 0) winnerId = players.find(p => p.side === 'right' && p.alive)?.user_id || null;
+      if (rightAlive === 0) winnerId = players.find(p => p.side === 'left' && p.alive)?.user_id || null;
+
+      if (winnerId || leftAlive === 0 || rightAlive === 0) {
+        await db.prepare(
+          "UPDATE pong_rooms SET status = 'finished', winner_id = ? WHERE id = ?"
+        ).bind(winnerId, room.id).run();
+        room.status = 'finished';
+        await db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id).run();
       }
-      bx = 0.5; by = 0.5;
-      bvx = -baseSpd * speedMul;
-      bvy = (Math.random() - 0.5) * 0.008;
     }
 
-    await db.prepare(
-      'UPDATE pong_ball SET x = ?, y = ?, vx = ?, vy = ? WHERE room_id = ?'
-    ).bind(bx, by, bvx, bvy, room.id).run();
-
-    const stillAlive = players.filter(p => p.alive);
-    if (stillAlive.length <= 1) {
-      const winnerId = stillAlive.length === 1 ? stillAlive[0].user_id : null;
+    if (room.status === 'playing') {
       await db.prepare(
-        "UPDATE pong_rooms SET status = 'finished', winner_id = ? WHERE id = ?"
-      ).bind(winnerId, room.id).run();
-      room.status = 'finished';
-
-      await db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id).run();
+        'UPDATE pong_ball SET x = ?, y = ?, vx = ?, vy = ? WHERE room_id = ?'
+      ).bind(bx, by, bvx, bvy, room.id).run();
     }
   }
 
