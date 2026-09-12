@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-<script>!function(){var s=document.createElement('style');s.textContent='*,*::before,*::after{cursor:url(assets/cursor-empty.cur) 0 0,none!important}';document.head.appendChild(s)}()</script>
+<script>!function(){var s=document.createElement('style');s.textContent='html,body,html body,html body *,html body *::before,html body *::after{cursor:url(assets/cursor-empty.cur) 0 0,none!important}';document.head.appendChild(s)}()</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CUT</title>
@@ -128,8 +128,9 @@
     background: rgba(0,0,0,0.28);
     border: 1px solid rgba(var(--acc-main),0.16);
     box-shadow: 0 12px 40px rgba(0,0,0,0.35) inset, 0 0 0 1px rgba(0,0,0,0.3);
-    cursor: none; touch-action: none;
+    cursor: none !important; touch-action: none;
   }
+  canvas { cursor: none !important; }
   #board.select { }
 
   #goBtn {
