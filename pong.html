@@ -543,31 +543,7 @@
     isHost = false;
     myPlayerIndex = data.playerIndex;
     ready = false;
-    selectedMode = data.mode || 'ffa';
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
-    document.getElementById('roomInfo').style.display = '';
-    document.getElementById('roomCode').textContent = roomCode;
-    document.getElementById('startBtn').style.display = 'none';
-    document.getElementById('playerList').style.display = '';
-    status.textContent = '';
-    startPolling();
-  });
-
-  // ---- Lobby: Quick Match ----
-  document.getElementById('quickBtn').addEventListener('click', async () => {
-    const status = document.getElementById('lobbyStatus');
-    status.textContent = 'Looking for a match...';
-    const data = await apiPost('/api/pong/room', { action: 'join', player: playerUsername, quick: true });
-    if (!data || data.error) {
-      status.textContent = data ? data.error : 'No rooms available. Creating one...';
-      document.getElementById('createBtn').click();
-      return;
-    }
-    roomCode = data.code;
-    isHost = false;
-    myPlayerIndex = data.playerIndex;
-    ready = false;
-    selectedMode = data.mode || 'ffa';
+    selectedMode = (data.room && data.room.mode) || data.mode || 'ffa';
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
@@ -666,24 +642,23 @@
       return;
     }
 
+    const status = data.room ? data.room.status : null;
+
     // Lobby update
-    if (data.phase === 'lobby') {
+    if (status === 'waiting') {
       updateLobbyPlayers(data);
-      if (data.started) {
-        gameState = data;
-        stopPolling();
-        enterGame(data);
-      }
+      isHost = data.room && data.room.hostId === (window.__user && window.__user.id);
+      document.getElementById('startBtn').style.display = isHost ? '' : 'none';
     }
 
     // In-game update
-    if (data.phase === 'playing' || data.phase === 'countdown') {
+    if (status === 'playing' || status === 'countdown') {
       gameState = data;
       if (currentScreen !== 'game') enterGame(data);
     }
 
     // Results
-    if (data.phase === 'results') {
+    if (status === 'finished') {
       gameState = data;
       if (currentScreen !== 'results') enterResults(data);
     }
@@ -698,24 +673,22 @@
       container.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:rgba(var(--acc-main),0.45)">Waiting for players...</div>';
       return;
     }
-    container.innerHTML = players.map((p) =>
-      '<div class="pl-row' + (p.name === playerUsername ? ' me' : '') + '">' +
+    container.innerHTML = players.map((p, i) =>
+      '<div class="pl-row' + (p.username === playerUsername ? ' me' : '') + '">' +
       '<div class="ready-dot' + (p.ready ? ' on' : '') + '"></div>' +
-      '<span class="pn">' + (p.name || 'anon') + '</span>' +
-      '<span class="pr">' + (p.side === 'left' ? 'L' : 'R') + '#' + p.num + '</span>' +
+      '<span class="pn">' + (p.username || 'anon') + '</span>' +
+      '<span class="pr">' + (p.side === 'left' ? 'L' : 'R') + '#' + (i + 1) + '</span>' +
       '</div>'
     ).join('');
 
-    // Update start button visibility
     if (isHost) {
       const readyCount = players.filter(p => p.ready).length;
       const enoughPlayers = players.length >= 2 && readyCount >= 2;
       document.getElementById('startBtn').style.display = enoughPlayers ? '' : 'none';
     }
 
-    // Re-check host status
-    if (data.host) {
-      isHost = data.host === playerUsername;
+    if (data.room && data.room.hostId) {
+      isHost = data.room.hostId === (window.__user && window.__user.id);
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
     }
   }
@@ -748,7 +721,7 @@
 
   function renderResults(data) {
     const winner = data.winner || 'Unknown';
-    const isTeamWin = data.mode === 'teams';
+    const isTeamWin = data.room && data.room.mode === 'teams';
     let html = '';
     if (isTeamWin) {
       html = (data.winnerTeam === 'left' ? 'Left Team' : 'Right Team') + ' Wins!';
@@ -909,7 +882,7 @@
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.font = '10px "IBM Plex Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(p.name || '', px + pw / 2, py - 6);
+      ctx.fillText(p.username || '', px + pw / 2, py - 6);
     });
 
     // Dead paddles (faded)

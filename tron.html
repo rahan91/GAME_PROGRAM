@@ -712,24 +712,20 @@
       return;
     }
 
-    // Lobby update
-    if (data.phase === 'lobby') {
+    const status = data.room ? data.room.status : null;
+
+    if (status === 'waiting') {
       updateLobbyPlayers(data);
-      if (data.started) {
-        gameState = data;
-        stopPolling();
-        enterGame(data);
-      }
+      isHost = data.room && data.room.hostId === (window.__user && window.__user.id);
+      document.getElementById('startBtn').style.display = isHost ? '' : 'none';
     }
 
-    // In-game update
-    if (data.phase === 'playing' || data.phase === 'countdown') {
+    if (status === 'playing' || status === 'countdown') {
       gameState = data;
       if (currentScreen !== 'game') enterGame(data);
     }
 
-    // Results
-    if (data.phase === 'results') {
+    if (status === 'finished') {
       gameState = data;
       if (currentScreen !== 'results') enterResults(data);
     }
@@ -745,23 +741,21 @@
       return;
     }
     container.innerHTML = players.map((p) =>
-      '<div class="pl-row' + (p.name === playerUsername ? ' me' : '') + '">' +
+      '<div class="pl-row' + (p.username === playerUsername ? ' me' : '') + '">' +
       '<div class="ready-dot' + (p.ready ? ' on' : '') + '"></div>' +
-      '<span class="pn">' + (p.name || 'anon') + '</span>' +
+      '<span class="pn">' + (p.username || 'anon') + '</span>' +
       '<span class="pr" style="color:' + (p.color || 'rgba(var(--acc-main),0.5)') + '">&#9679;</span>' +
       '</div>'
     ).join('');
 
-    // Update start button visibility
     if (isHost) {
       const readyCount = players.filter(p => p.ready).length;
       const enoughPlayers = players.length >= 2 && readyCount >= 2;
       document.getElementById('startBtn').style.display = enoughPlayers ? '' : 'none';
     }
 
-    // Re-check host status
-    if (data.host) {
-      isHost = data.host === playerUsername;
+    if (data.room && data.room.hostId) {
+      isHost = data.room.hostId === (window.__user && window.__user.id);
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
     }
   }
@@ -954,7 +948,7 @@
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.font = '10px "IBM Plex Mono", monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(p.name || '', nx, ny - 10);
+        ctx.fillText(p.username || '', nx, ny - 10);
       }
     });
 
