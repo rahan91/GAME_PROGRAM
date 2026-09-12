@@ -692,6 +692,7 @@
     myPlayerIndex = -1;
     ready = false;
     stopPolling();
+    stopGamePoll();
     stopRenderLoop();
     stopInputLoop();
     document.getElementById('roomInfo').style.display = 'none';
@@ -845,12 +846,31 @@
     }
     startRenderLoop();
     startInputLoop();
+    startGamePoll();
   }
+
+  // ---- Game State Polling ----
+  let gamePollTimer = null;
+  function startGamePoll() {
+    stopGamePoll();
+    gamePollTimer = setInterval(async () => {
+      if (!roomCode || currentScreen !== 'game') { stopGamePoll(); return; }
+      const data = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
+      if (!data || data.error) return;
+      gameState = data;
+      if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
+        stopGamePoll();
+        if (data.room.status === 'finished') enterResults(data);
+      }
+    }, 50);
+  }
+  function stopGamePoll() { if (gamePollTimer) { clearInterval(gamePollTimer); gamePollTimer = null; } }
 
   // ---- Enter Results ----
   function enterResults(data) {
     showScreen('results');
     stopPolling();
+    stopGamePoll();
     stopRenderLoop();
     stopInputLoop();
     gameState = data;
@@ -1005,7 +1025,7 @@
       } else {
         px = W - pw - 12;
       }
-      py = p.y != null ? p.y : H / 2 - ph / 2;
+      py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2;
 
       // Glow
       ctx.save();
@@ -1030,7 +1050,7 @@
       let px;
       if (p.side === 'left') px = 12;
       else px = W - pw - 12;
-      const py = p.y != null ? p.y : H / 2 - ph / 2;
+      const py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2;
       ctx.fillStyle = 'rgba(255,255,255,0.04)';
       ctx.beginPath();
       ctx.roundRect(px, py, pw, ph, 4);
@@ -1039,8 +1059,8 @@
 
     // Ball
     if (state.ball) {
-      const bx = state.ball.x;
-      const by = state.ball.y;
+      const bx = (state.ball.x || 0.5) * W;
+      const by = (state.ball.y || 0.5) * H;
       const bs = 10;
 
       // Trail
