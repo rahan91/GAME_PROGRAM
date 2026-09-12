@@ -155,11 +155,6 @@
     background: rgba(var(--acc-btn),0.15);
   }
   .settings-opt:hover { color: rgba(var(--acc-texthi),0.9); }
-    font-size: 18px; letter-spacing: 4px; color: rgba(var(--acc-bright),1);
-    padding: 12px 24px; border-radius: 8px;
-    background: rgba(0,0,0,0.3); border: 1px solid rgba(var(--acc-main),0.25);
-    text-align: center;
-  }
 
   .player-list {
     width: min(420px, 90vw); max-height: 220px; overflow-y: auto;
@@ -387,6 +382,7 @@
 <div id="gameScreen" class="screen">
   <canvas id="gameCanvas"></canvas>
   <div id="gameHud"></div>
+  <button class="lobby-btn" id="endGameBtn" style="display:none;position:fixed;top:12px;right:12px;z-index:100;font-size:11px;padding:8px 16px;background:rgba(180,40,40,0.8);border:1px solid rgba(255,80,80,0.4)">End Game</button>
 </div>
 
 <div id="resultsScreen" class="screen">
@@ -756,6 +752,7 @@
     myPlayerIndex = -1;
     ready = false;
     stopPolling();
+    stopGamePoll();
     stopRenderLoop();
     stopInputLoop();
     showScreen('lobby');
@@ -771,6 +768,17 @@
       showScreen('lobby');
       await apiPost('/api/tron/room', { action: 'ready', code: roomCode, player: playerUsername, ready: false });
       startPolling();
+    }
+  });
+
+  document.getElementById('endGameBtn').addEventListener('click', async () => {
+    if (!roomCode || !isHost) return;
+    const winnerUsername = prompt('Enter winner username (leave empty for draw):');
+    if (!winnerUsername) return;
+    const data = await apiPost('/api/tron/room', { action: 'end', code: roomCode, winnerName: winnerUsername });
+    if (data && data.ok) {
+      const state = await apiGet('/api/tron/state?room=' + encodeURIComponent(roomCode));
+      if (state && state.room && state.room.status === 'finished') enterResults(state);
     }
   });
 
@@ -843,6 +851,7 @@
     stopPolling();
     gameState = data;
     resizeCanvas();
+    document.getElementById('endGameBtn').style.display = isHost ? '' : 'none';
     if (data.countdown > 0) {
       showCountdown(data.countdown);
     } else {
@@ -850,12 +859,31 @@
     }
     startRenderLoop();
     startInputLoop();
+    startGamePoll();
   }
+
+  // ---- Game State Polling ----
+  let gamePollTimer = null;
+  function startGamePoll() {
+    stopGamePoll();
+    gamePollTimer = setInterval(async () => {
+      if (!roomCode || currentScreen !== 'game') { stopGamePoll(); return; }
+      const data = await apiGet('/api/tron/state?room=' + encodeURIComponent(roomCode));
+      if (!data || data.error) return;
+      gameState = data;
+      if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
+        stopGamePoll();
+        if (data.room.status === 'finished') enterResults(data);
+      }
+    }, 80);
+  }
+  function stopGamePoll() { if (gamePollTimer) { clearInterval(gamePollTimer); gamePollTimer = null; } }
 
   // ---- Enter Results ----
   function enterResults(data) {
     showScreen('results');
     stopPolling();
+    stopGamePoll();
     stopRenderLoop();
     stopInputLoop();
     gameState = data;
@@ -864,7 +892,7 @@
   }
 
   function renderResults(data) {
-    const winner = data.winner || 'Unknown';
+    const winner = data.winnerName || data.winner || 'Unknown';
     document.getElementById('resWinner').textContent = winner + ' Wins!';
 
     let sub = '';
@@ -963,6 +991,10 @@
     ctx.strokeRect(1, 1, W - 2, H - 2);
 
     const players = state.players || [];
+    const gw = (state.gridSize && state.gridSize.w) || 640;
+    const gh = (state.gridSize && state.gridSize.h) || 480;
+    const scaleX = W / gw;
+    const scaleY = H / gh;
 
     // Draw trails
     players.forEach((p) => {
@@ -984,38 +1016,34 @@
 
       ctx.strokeStyle = color;
       ctx.beginPath();
-      const scale = W / (state.gridSize || 150);
-      const startX = p.trail[0].x * scale + scale / 2;
-      const startY = p.trail[0].y * scale + scale / 2;
+      const startX = p.trail[0].x * scaleX + scaleX / 2;
+      const startY = p.trail[0].y * scaleY + scaleY / 2;
       ctx.moveTo(startX, startY);
 
       for (let i = 1; i < p.trail.length; i++) {
-        const tx = p.trail[i].x * scale + scale / 2;
-        const ty = p.trail[i].y * scale + scale / 2;
+        const tx = p.trail[i].x * scaleX + scaleX / 2;
+        const ty = p.trail[i].y * scaleY + scaleY / 2;
         ctx.lineTo(tx, ty);
       }
       ctx.stroke();
       ctx.restore();
 
       // Draw head (current position)
-      if (p.trail.length > 0) {
-        const last = p.trail[p.trail.length - 1];
-        const hx = last.x * scale + scale / 2;
-        const hy = last.y * scale + scale / 2;
+      const hx = p.x * scaleX + scaleX / 2;
+      const hy = p.y * scaleY + scaleY / 2;
 
-        ctx.save();
-        if (!isDead) {
-          ctx.shadowColor = color;
-          ctx.shadowBlur = 12;
-        } else {
-          ctx.globalAlpha = 0.35;
-        }
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(hx, hy, isDead ? 3 : 4.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+      ctx.save();
+      if (!isDead) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 12;
+      } else {
+        ctx.globalAlpha = 0.35;
       }
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(hx, hy, isDead ? 3 : 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
       // Player name above head
       if (p.trail.length > 0 && !isDead) {

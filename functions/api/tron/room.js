@@ -53,6 +53,7 @@ export async function onRequestPost(context) {
   if (action === 'leave') return handleLeave(db, user, body);
   if (action === 'ready') return handleReady(db, user, body);
   if (action === 'start') return handleStart(db, user, body, now);
+  if (action === 'end') return handleEnd(db, user, body);
   return json({ error: 'Unknown action' }, 400);
 }
 
@@ -194,6 +195,27 @@ async function handleStart(db, user, body, now) {
   }
 
   return json({ ok: true, status: 'playing' });
+}
+
+async function handleEnd(db, user, body) {
+  const code = String(body && body.code || '').toUpperCase();
+  if (!code) return json({ error: 'Missing code' }, 400);
+
+  const room = await db.prepare("SELECT id, code, status, host_id FROM tron_rooms WHERE code = ?").bind(code).first();
+  if (!room) return json({ error: 'Room not found' }, 404);
+  if (Number(room.host_id) !== Number(user.id)) return json({ error: 'Not host' }, 403);
+  if (room.status !== 'playing') return json({ error: 'Game not in progress' }, 409);
+
+  let winnerId = null;
+  if (body && body.winnerName) {
+    const winner = await db.prepare('SELECT user_id FROM tron_players WHERE room_id = ? AND username = ?').bind(room.id, String(body.winnerName)).first();
+    if (winner) winnerId = winner.user_id;
+  }
+  await db.prepare(
+    "UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?"
+  ).bind(winnerId, room.id).run();
+
+  return json({ ok: true, status: 'finished' });
 }
 
 async function findMatch(db, now) {
