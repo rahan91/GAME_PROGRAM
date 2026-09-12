@@ -492,6 +492,7 @@
   // ---- Auth / Player ----
   let isLoggedIn = false;
   let playerUsername = 'anonymous';
+  let myUserId = null;
   async function loadPlayer() {
     try {
       const res = await fetch('/api/me');
@@ -499,6 +500,7 @@
       const user = data.user || null;
       isLoggedIn = !!(user && user.username);
       if (user && user.username) playerUsername = user.username;
+      if (user && user.id) myUserId = user.id;
     } catch { isLoggedIn = false; }
     document.getElementById('loginBanner').style.display = isLoggedIn ? 'none' : '';
   }
@@ -799,8 +801,7 @@
 
     if (status === 'waiting') {
       updateLobbyPlayers(data);
-      const hostP = (data.players || []).find(p => p.userId === (data.room && data.room.hostId));
-      isHost = !!(hostP && hostP.username === playerUsername);
+      isHost = data.room && data.room.hostId === myUserId;
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
     }
 
@@ -839,8 +840,7 @@
     }
 
     if (data.room && data.room.hostId) {
-      const hostPlayer = players.find(p => p.userId === data.room.hostId);
-      isHost = !!(hostPlayer && hostPlayer.username === playerUsername);
+      isHost = data.room.hostId === myUserId;
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
     }
   }
