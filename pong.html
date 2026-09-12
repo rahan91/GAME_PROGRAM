@@ -1010,9 +1010,8 @@
 
     // Paddles
     const players = state.players || [];
-    const paddleW = 80 - (players.length - 2) * 5;
-    const pw = Math.max(40, paddleW);
-    const ph = 60;
+    const pw = 12;
+    const ph = 90;
 
     players.forEach((p) => {
       if (!p.alive) return;
@@ -1090,22 +1089,20 @@
     }
 
     // Score display on canvas
-    if (state.mode === 'teams') {
-      const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
-      const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
-      ctx.fillStyle = 'rgba(255,255,255,0.15)';
-      ctx.font = 'bold 48px "IBM Plex Mono", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(leftAlive, W / 2 - 60, 52);
-      ctx.fillText(rightAlive, W / 2 + 60, 52);
-    } else {
+    const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
+    const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = 'bold 48px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(leftAlive, W / 2 - 60, 56);
+    ctx.fillText(rightAlive, W / 2 + 60, 56);
+
+    if (state.mode !== 'teams') {
       const alive = players.filter(p => p.alive);
-      if (alive.length <= 4) {
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
-        ctx.font = 'bold 14px "IBM Plex Mono", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(alive.length + ' remaining', W / 2, 24);
-      }
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      ctx.font = '12px "IBM Plex Mono", monospace';
+      ctx.fillText(alive.length + ' remaining', W / 2, 24);
     }
   }
 
