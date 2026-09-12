@@ -795,7 +795,8 @@
     }
 
     if (data.room && data.room.hostId) {
-      isHost = data.room.hostId === (window.__user && window.__user.id);
+      const hostPlayer = players.find(p => p.userId === data.room.hostId);
+      isHost = !!(hostPlayer && hostPlayer.username === playerUsername);
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
     }
   }
