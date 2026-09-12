@@ -771,6 +771,10 @@
     if (status === 'waiting') {
       updateLobbyPlayers(data);
 
+      // Update myPlayerIndex from current players list
+      const me = (data.players || []).findIndex(p => p.userId === window.__user.id);
+      if (me >= 0) myPlayerIndex = me;
+
       isHost = myPlayerIndex === 0;
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
       document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
@@ -859,8 +863,8 @@
     const winner = data.winnerName || data.winner || 'Unknown';
     const isTeamWin = data.room && data.room.mode === 'teams';
     let html = '';
-    if (isTeamWin) {
-      html = (data.winnerTeam === 'left' ? 'Left Team' : 'Right Team') + ' Wins!';
+    if (isTeamWin && data.winnerSide) {
+      html = (data.winnerSide === 'left' ? 'Left Team' : 'Right Team') + ' Wins! (' + winner + ')';
     } else {
       html = winner + ' Wins!';
     }
@@ -886,11 +890,12 @@
         body: JSON.stringify({ points: data.points, game: 'pong' })
       }).catch(() => {});
     }
-    if (roomCode) {
+    if (roomCode && data.winner) {
+      const playerIds = (data.players || []).map(p => p.userId).filter(Boolean);
       fetch('/api/pong/elo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room: roomCode, player: playerUsername })
+        body: JSON.stringify({ room: roomCode, winner_id: data.winner, players: playerIds })
       }).catch(() => {});
     }
   }
@@ -934,7 +939,7 @@
   // ---- Canvas Resize ----
   function resizeCanvas() {
     if (!gameState) return;
-    const pc = gameState.playerCount || 2;
+    const pc = (gameState.players || []).length || 2;
     const w = 640 + (pc - 2) * 80;
     const h = 480;
     canvas.width = w;
@@ -1004,7 +1009,7 @@
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
     ctx.font = '11px "IBM Plex Mono", monospace';
     ctx.textBaseline = 'top';
-    if (state.mode === 'teams') {
+    if (state.room && state.room.mode === 'teams') {
       ctx.fillText('LEFT', W * 0.25, 16);
       ctx.fillText('RIGHT', W * 0.75, 16);
     }
@@ -1077,7 +1082,7 @@
     const aliveCount = players.filter(p => p.alive).length;
     let html = '<span class="stat">Room <b>' + (roomCode || '-') + '</b></span>';
     html += '<span class="stat">Players <b>' + aliveCount + '/' + players.length + '</b></span>';
-    html += '<span class="stat">' + (state.mode === 'teams' ? 'Teams' : 'FFA') + '</span>';
+    html += '<span class="stat">' + (state.room && state.room.mode === 'teams' ? 'Teams' : 'FFA') + '</span>';
     hud.innerHTML = html;
   }
 

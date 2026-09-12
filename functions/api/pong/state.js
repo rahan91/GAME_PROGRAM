@@ -37,7 +37,11 @@ export async function onRequestGet(context) {
     'SELECT x, y, vx, vy, speed FROM pong_ball WHERE room_id = ?'
   ).bind(room.id).first();
 
-  if (room.status === 'playing' && ballRow && players.length >= 2) {
+  const alivePlayers = players.filter(p => p.alive);
+  const hasLeft = alivePlayers.some(p => p.side === 'left');
+  const hasRight = alivePlayers.some(p => p.side === 'right');
+
+  if (room.status === 'playing' && ballRow && hasLeft && hasRight) {
     const speedMul = room.speed === 'fast' ? 1.5 : room.speed === 'slow' ? 0.7 : 1;
 
     // Move paddles
@@ -63,8 +67,10 @@ export async function onRequestGet(context) {
     if (by >= 0.98) { by = 0.98; bvy = -Math.abs(bvy); }
 
     // Paddle collision
-    const alivePlayers = players.filter(p => p.alive);
+    let hitLeft = false, hitRight = false;
     for (const p of alivePlayers) {
+      if (p.side === 'left' && hitLeft) continue;
+      if (p.side === 'right' && hitRight) continue;
       const paddleTop = p.paddle_y - PADDLE_HALF;
       const paddleBot = p.paddle_y + PADDLE_HALF;
       if (by >= paddleTop && by <= paddleBot) {
@@ -73,11 +79,13 @@ export async function onRequestGet(context) {
           bvx = Math.abs(bvx) * 1.03;
           const hitPos = (by - p.paddle_y) / PADDLE_HALF;
           bvy += hitPos * 0.005;
+          hitLeft = true;
         } else if (p.side === 'right' && bx >= 0.96 && bvx > 0) {
           bx = 0.96;
           bvx = -Math.abs(bvx) * 1.03;
           const hitPos = (by - p.paddle_y) / PADDLE_HALF;
           bvy += hitPos * 0.005;
+          hitRight = true;
         }
       }
     }
@@ -132,12 +140,14 @@ export async function onRequestGet(context) {
 
   let winner = null;
   let winnerName = null;
+  let winnerSide = null;
   if (room.status === 'finished') {
     const finished = await db.prepare('SELECT winner_id FROM pong_rooms WHERE id = ?').bind(room.id).first();
     winner = finished ? finished.winner_id : null;
     if (winner) {
-      const winnerPlayer = await db.prepare('SELECT username FROM pong_players WHERE room_id = ? AND user_id = ?').bind(room.id, winner).first();
+      const winnerPlayer = await db.prepare('SELECT username, side FROM pong_players WHERE room_id = ? AND user_id = ?').bind(room.id, winner).first();
       winnerName = winnerPlayer ? winnerPlayer.username : null;
+      winnerSide = winnerPlayer ? winnerPlayer.side : null;
     }
   }
 
@@ -159,5 +169,6 @@ export async function onRequestGet(context) {
       : { x: 0.5, y: 0.5, vx: 0, vy: 0 },
     winner,
     winnerName,
+    winnerSide,
   });
 }

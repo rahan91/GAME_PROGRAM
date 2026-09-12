@@ -69,6 +69,8 @@ export async function onRequestGet(context) {
           p.trail.push({ x: p.x, y: p.y });
           p.x = nx;
           p.y = ny;
+          // Update occupied set so subsequent players in same tick detect this new position
+          occupied.add(nx + ',' + ny);
         }
       }
 

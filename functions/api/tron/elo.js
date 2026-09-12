@@ -54,6 +54,14 @@ export async function onRequestPost(context) {
     ratings[row.user_id] = row;
   }
 
+  const usernameEntries = await db.prepare(
+    `SELECT user_id, username FROM tron_players WHERE room_id = ? AND user_id IN (${players.map(() => '?').join(',')})`
+  ).bind(roomId, ...players).all();
+  const usernames = {};
+  for (const row of (usernameEntries.results || [])) {
+    usernames[row.user_id] = row.username;
+  }
+
   const winnerRating = ratings[winnerId] ? ratings[winnerId].rating : 1200;
   const winnerGames = ratings[winnerId] ? ratings[winnerId].games_played : 0;
   const winnerK = getKFactor(winnerGames);
@@ -73,7 +81,7 @@ export async function onRequestPost(context) {
     const l = ratings[pid] ? ratings[pid].losses : 0;
     const prov = ratings[pid] ? ratings[pid].is_provisional : 1;
 
-    const isWinner = pid === winnerId;
+    const isWinner = String(pid) === winnerId;
     const scoreA = isWinner ? 1 : 0;
     const opponentRatings = players
       .filter((p) => p !== pid)
@@ -116,7 +124,7 @@ export async function onRequestPost(context) {
            total = total + excluded.total,
            plays = plays + 1,
            updated_at = excluded.updated_at`
-      ).bind(pid, '', points, Math.floor(Date.now() / 1000)).run();
+      ).bind(pid, usernames[pid] || '', points, Math.floor(Date.now() / 1000)).run();
     }
   }
 

@@ -157,7 +157,7 @@ async function handleReady(db, user, body) {
   ).bind(room.id, user.id).first();
   if (!player) return json({ error: 'Not in room' }, 404);
 
-  const newReady = player.ready ? 0 : 1;
+  const newReady = body && body.ready !== undefined ? (body.ready ? 1 : 0) : (player.ready ? 0 : 1);
   await db.prepare(
     'UPDATE pong_players SET ready = ? WHERE room_id = ? AND user_id = ?'
   ).bind(newReady, room.id, user.id).run();

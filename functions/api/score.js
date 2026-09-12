@@ -52,6 +52,8 @@ export async function onRequestPost(context) {
     'SELECT total, plays, spent FROM scores WHERE user_id = ?'
   ).bind(user.id).first();
 
+  if (!row) return json({ total: 0, plays: 0, spent: 0, balance: 0 });
+
   return json({
     total: row.total,
     plays: row.plays,
