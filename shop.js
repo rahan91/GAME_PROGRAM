@@ -464,27 +464,19 @@
   };
 
   if (typeof document !== 'undefined') {
-    // FOUC guard: never paint the page with a wrong accent. While the document
-    // is still parsing we hide it, apply the best-known accent (cache or server),
-    // then reveal. A timeout prevents an endless blank screen if the API is slow.
-    var revealed = false;
-    function revealPage() {
-      if (revealed) return;
-      revealed = true;
-      try { document.documentElement.style.visibility = ''; } catch (e) {}
-    }
-    var appliedCache = false;
-    if (document.readyState === 'loading') {
-      try { document.documentElement.style.visibility = 'hidden'; } catch (e) {}
-    }
-    try { appliedCache = applyImmediateAccent(); } catch (e) {}
-    if (appliedCache) revealPage();
-    setTimeout(revealPage, appliedCache ? 0 : 1200);
-    serverState().then(function (s) {
-      if (s) applyAccentFromState(s);
-      else applyAccentFromState(localData());
-      revealPage();
-    }).catch(function () { revealPage(); });
-    document.addEventListener('DOMContentLoaded', revealPage);
+    // Apply the best-known accent immediately (from cache or local data) so
+    // the page never paints with the wrong colours. Server state reconciles
+    // asynchronously on DOMContentLoaded.
+    try {
+      applyImmediateAccent();
+    } catch (e) {}
+    document.addEventListener('DOMContentLoaded', function () {
+      try {
+        serverState().then(function (s) {
+          if (s) applyAccentFromState(s);
+          else applyAccentFromState(localData());
+        }).catch(function () {});
+      } catch (e) {}
+    });
   }
 })();

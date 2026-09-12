@@ -394,6 +394,18 @@
     }
     requestAnimationFrame(cursorTick);
   }
+  // Apply equipped cursor sprite immediately at load so the user never sees
+  // the default arrow while waiting for the server round-trip.
+  (async function () {
+    try {
+      const s = await Shop.state();
+      const cur = Shop.installed(s.equipped, Shop.CURSOR);
+      if (cur && cur.color) {
+        cursorSpritesState = await Shop.cursorSprites(cur.color);
+        paintCursor();
+      }
+    } catch (e) {}
+  })();
 
   // ---------- canvas sizing (crisp at device pixel ratio) ----------
   function fit() {
