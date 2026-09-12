@@ -4,7 +4,7 @@
 <script>!function(){var s=document.createElement('style');s.textContent='html,body,html body,html body *,html body *::before,html body *::after{cursor:url(assets/cursor-empty.cur) 0 0,none!important}';document.head.appendChild(s)}()</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PONG</title>
+<title>BOUNCE</title>
   <meta name="description" content="Multiplayer Pong — 2 to 8 players, free-for-all or teams. Create a room, invite friends, and battle it out in classic Pong.">
   <meta name="keywords" content="pong, multiplayer pong, retro game, arcade, browser game, leaderboard, pvp">
   <meta name="robots" content="index, follow">
@@ -351,6 +351,7 @@
   <div id="roomInfo" style="display:none;text-align:center">
     <div class="room-code" id="roomCode"></div>
     <div id="roomSettings" style="margin-top:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);"></div>
+    <div id="hostBadge" style="margin-top:4px;font-size:11px;letter-spacing:1px;color:rgba(var(--acc-bright),0.7);"></div>
     <div class="lobby-row" style="margin-top:14px">
       <button class="lobby-btn" id="readyBtn">Ready</button>
       <button class="lobby-btn primary" id="startBtn" style="display:none">Start</button>
@@ -643,8 +644,25 @@
   document.getElementById('quickBtn').addEventListener('click', async () => {
     if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
     const status = document.getElementById('lobbyStatus');
-    status.textContent = 'Creating room...';
-    document.getElementById('createBtn').click();
+    status.textContent = 'Looking for a match...';
+    const data = await apiPost('/api/pong/room', { action: 'join', player: playerUsername });
+    if (data && !data.error) {
+      roomCode = data.code;
+      isHost = false;
+      myPlayerIndex = data.playerIndex;
+      ready = false;
+      selectedMode = data.mode || 'ffa';
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
+      document.getElementById('roomInfo').style.display = '';
+      document.getElementById('roomCode').textContent = roomCode;
+      showRoomSettings(data.mode, data.maxPlayers, data.speed);
+      document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('playerList').style.display = '';
+      status.textContent = '';
+      startPolling();
+    } else {
+      document.getElementById('createBtn').click();
+    }
   });
 
   // ---- Lobby: Ready ----
@@ -767,21 +785,22 @@
     // Lobby update
     if (status === 'waiting') {
       updateLobbyPlayers(data);
-      isHost = data.room && data.room.hostId === myUserId;
+      const hid = data.room ? String(data.room.hostId) : '';
+      isHost = hid !== '' && hid === String(myUserId);
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+      document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
 
       if (isHost) {
         const players = data.players || [];
         const readyCount = players.filter(p => p.ready).length;
         const total = players.length;
         const allReady = total >= 2 && readyCount === total;
-        const mostReady = total >= 2 && readyCount >= Math.ceil(total * 0.6) && readyCount < total;
 
         if (allReady && !autoCountdown) {
           startAutoCountdown(3);
-        } else if (mostReady && !autoCountdown) {
+        } else if (total >= 2 && readyCount >= 2 && readyCount < total && !autoCountdown) {
           startAutoCountdown(5);
-        } else if (!allReady && !mostReady) {
+        } else if (total >= 2 && readyCount < 2) {
           cancelAutoCountdown();
         }
       }
@@ -824,8 +843,9 @@
     }
 
     if (data.room && data.room.hostId) {
-      isHost = data.room.hostId === myUserId;
+      isHost = String(data.room.hostId) === String(myUserId);
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+      document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
     }
   }
 
