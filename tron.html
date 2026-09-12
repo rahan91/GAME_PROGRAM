@@ -650,11 +650,13 @@
     roomCode = data.code;
     isHost = true;
     myPlayerIndex = data.playerIndex;
-    ready = false;
+    ready = true;
+    document.getElementById('readyBtn').textContent = 'Unready';
+    await apiPost('/api/tron/room', { action: 'ready', code: roomCode, player: playerUsername, ready: true });
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
     showRoomSettings(data.maxPlayers, data.speed);
-    document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+    document.getElementById('startBtn').style.display = 'none';
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
     startPolling();
@@ -689,24 +691,8 @@
   document.getElementById('quickBtn').addEventListener('click', async () => {
     if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
     const status = document.getElementById('lobbyStatus');
-    status.textContent = 'Looking for a match...';
-    const data = await apiPost('/api/tron/room', { action: 'join', player: playerUsername, quick: true });
-    if (!data || data.error) {
-      status.textContent = data ? data.error : 'No rooms available. Creating one...';
-      document.getElementById('createBtn').click();
-      return;
-    }
-    roomCode = data.code;
-    isHost = false;
-    myPlayerIndex = data.playerIndex;
-    ready = false;
-    document.getElementById('roomInfo').style.display = '';
-    document.getElementById('roomCode').textContent = roomCode;
-    showRoomSettings(data.maxPlayers, data.speed);
-    document.getElementById('startBtn').style.display = 'none';
-    document.getElementById('playerList').style.display = '';
-    status.textContent = '';
-    startPolling();
+    status.textContent = 'Creating room...';
+    document.getElementById('createBtn').click();
   });
 
   // ---- Lobby: Ready ----
@@ -776,6 +762,8 @@
 
   // ---- Polling ----
   let autoCountdown = null;
+  let autoCountdownTick = null;
+  let autoCountdownSec = 0;
   function startPolling() {
     stopPolling();
     pollTimer = setInterval(pollState, 100);
@@ -786,14 +774,25 @@
   }
   function cancelAutoCountdown() {
     if (autoCountdown) { clearTimeout(autoCountdown); autoCountdown = null; }
+    if (autoCountdownTick) { clearInterval(autoCountdownTick); autoCountdownTick = null; }
     const el = document.getElementById('autoCountdown');
     if (el) el.style.display = 'none';
   }
-  function showAutoCountdown(seconds) {
+  function startAutoCountdown(seconds) {
+    cancelAutoCountdown();
+    autoCountdownSec = seconds;
     const el = document.getElementById('autoCountdown');
-    if (!el) return;
-    el.style.display = '';
-    el.textContent = 'Starting in ' + seconds + 's...';
+    if (el) { el.style.display = ''; el.textContent = 'Starting in ' + seconds + 's...'; }
+    autoCountdownTick = setInterval(() => {
+      autoCountdownSec--;
+      if (el) el.textContent = 'Starting in ' + autoCountdownSec + 's...';
+      if (autoCountdownSec <= 0) { clearInterval(autoCountdownTick); autoCountdownTick = null; }
+    }, 1000);
+    autoCountdown = setTimeout(() => {
+      autoCountdown = null;
+      cancelAutoCountdown();
+      document.getElementById('startBtn').click();
+    }, seconds * 1000);
   }
 
   async function pollState() {
@@ -822,20 +821,14 @@
         const players = data.players || [];
         const readyCount = players.filter(p => p.ready).length;
         const total = players.length;
-        if (total >= 2 && readyCount === total && !autoCountdown) {
-          autoCountdown = setTimeout(() => {
-            autoCountdown = null;
-            document.getElementById('startBtn').click();
-          }, 3000);
-          showAutoCountdown(3);
-        } else if (total >= 2 && readyCount >= 2 && readyCount < total && !autoCountdown) {
-          const delay = Math.max(3, 10 - readyCount);
-          autoCountdown = setTimeout(() => {
-            autoCountdown = null;
-            document.getElementById('startBtn').click();
-          }, delay * 1000);
-          showAutoCountdown(delay);
-        } else if (readyCount < 2 || (total >= 2 && readyCount < Math.ceil(total * 0.6))) {
+        const allReady = total >= 2 && readyCount === total;
+        const mostReady = total >= 2 && readyCount >= Math.ceil(total * 0.6) && readyCount < total;
+
+        if (allReady && !autoCountdown) {
+          startAutoCountdown(3);
+        } else if (mostReady && !autoCountdown) {
+          startAutoCountdown(5);
+        } else if (!allReady && !mostReady) {
           cancelAutoCountdown();
         }
       }
