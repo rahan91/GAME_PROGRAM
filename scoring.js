@@ -135,7 +135,7 @@
   //      * size      — how well the mean radius matches the guide ring radius
   //  - coverage is the fraction of the loop actually drawn
   //  - time is only a modest swing between -15% and +15%. No hard errors.
-  var CIRCLE_ACC_PERFECT = 20;   // accuracy term at 100% (full coverage too)
+  var CIRCLE_ACC_PERFECT = 45;   // accuracy term at 100% (full coverage too)
   var CIRCLE_ACC_POWER = 3.0;    // accuracy is cubed: wobble hurts fast
   var CIRCLE_ACC_K = 2.5;        // circularity calibration: score drops 2.5x
                                  // faster than the raw radial error, matching

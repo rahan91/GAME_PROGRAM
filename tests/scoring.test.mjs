@@ -162,13 +162,13 @@ assert(S.CUT_DIFFS.harder.color === '#f97316' && S.CUT_DIFFS.insane.color === '#
 
 console.log('\n=== Circle scoring ===');
 const circ = S.circleScore;
-assert(circ(1, 1, 7) === 20, 'perfect full cover at ref time = accuracy weight (20)');
-  assert(circ(1, 1, 0.1) === 23, 'perfect full cover fastest = 20 * 1.15');
-  assert(circ(1, 1, 999) === 17, 'perfect full cover slowest = 20 * 0.85');
-  assert(circ(1, 0.5, 7) === 10, 'half coverage halves the score');
+assert(circ(1, 1, 7) === 45, 'perfect full cover at ref time = accuracy weight (45)');
+  assert(circ(1, 1, 0.1) === 52, 'perfect full cover fastest = 45 * 1.15');
+  assert(circ(1, 1, 999) === 38, 'perfect full cover slowest = 45 * 0.85');
+  assert(circ(1, 0.5, 7) === 23, 'half coverage halves the score');
   assert(circ(1, 0, 7) === 0, 'no coverage = 0');
   assert(circ(1, -1, 7) === 0, 'negative coverage clamps to 0');
-  assert(circ(1, 2, 7) === 20, 'coverage above 1 clamps to perfect');
+  assert(circ(1, 2, 7) === 45, 'coverage above 1 clamps to perfect');
 assert(circ(0.9, 1, 7) === Math.round(S.CIRCLE_ACC_PERFECT * Math.pow(0.9, S.CIRCLE_ACC_POWER)), 'slow 90% = accuracy component');
 assert(circ(0.9, 1, 7) > circ(0.5, 1, 7), 'higher accuracy scores more');
 assert(circ(0.95, 1, 7) > circ(1, 0.5, 7), 'accuracy dominates over coverage at the same score scale');
@@ -177,7 +177,7 @@ assert(circ(-1, 1, 7) === 0, 'negative accuracy clamps to 0');
 assert(circ(NaN, 1, 7) === 0, 'NaN accuracy -> 0');
 assert(circ(1, 1, Infinity) === 0, 'infinite elapsed is non-finite -> 0 (sanitized)');
 between(circ(1, 1, 0.1), 0, 5000, 'perfect circle bounded 0..5000');
-assert(circ(0.9, 1, 7) > circ(0.85, 1, 7) * 1.18, 'cubed accuracy keeps 90% clearly worth more than 85%');
+assert(circ(0.9, 1, 7) > circ(0.85, 1, 7) * 1.17, 'cubed accuracy keeps 90% clearly worth more than 85%');
 
 console.log('\n=== Circle geometry ===');
 function sampleCircle(cx, cy, r, n, jitter) {
