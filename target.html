@@ -48,7 +48,7 @@ body {
     overflow: hidden;
     cursor: none !important;
   }
-  *, *::before, *::after { cursor: none !important; }
+  *, *::before, *::after { cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGklEQVR4nO3BAQEAAACCIP+vbkhAAQAAAO8GECAAARlDNO4AAAAASUVORK5CYII=') 0 0, none !important; }
 
   .orb {
     position: fixed;
@@ -345,7 +345,7 @@ body {
 
   // Inject cursor: none globally (fallback for CSS)
   const _curStyle = document.createElement('style');
-  _curStyle.textContent = 'html * { cursor: none !important; }';
+  _curStyle.textContent = 'html * { cursor: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGklEQVR4nO3BAQEAAACCIP+vbkhAAQAAAO8GECAAARlDNO4AAAAASUVORK5CYII=") 0 0, none !important; }';
   document.head.appendChild(_curStyle);
 
   // The drawn cursor trails the pointer slightly (sluggish aim). Hits resolve
