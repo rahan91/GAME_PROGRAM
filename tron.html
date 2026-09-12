@@ -734,6 +734,7 @@
     myPlayerIndex = -1;
     ready = false;
     stopPolling();
+    stopGamePoll();
     stopRenderLoop();
     stopInputLoop();
     document.getElementById('roomInfo').style.display = 'none';
@@ -774,8 +775,7 @@
   document.getElementById('endGameBtn').addEventListener('click', async () => {
     if (!roomCode || !isHost) return;
     const winnerUsername = prompt('Enter winner username (leave empty for draw):');
-    if (!winnerUsername) return;
-    const data = await apiPost('/api/tron/room', { action: 'end', code: roomCode, winnerName: winnerUsername });
+    const data = await apiPost('/api/tron/room', { action: 'end', code: roomCode, winnerName: winnerUsername || null });
     if (data && data.ok) {
       const state = await apiGet('/api/tron/state?room=' + encodeURIComponent(roomCode));
       if (state && state.room && state.room.status === 'finished') enterResults(state);
