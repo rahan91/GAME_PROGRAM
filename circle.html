@@ -162,6 +162,8 @@
   #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0 / auto 30px; }
   #cursorfx.finger { background: url('assets/cursor-finger.png') no-repeat 0 0 / auto 30px; }
 
+  body.drawing #cursorfx, body.drawing .curtrail { opacity: 0 !important; }
+
   @media (pointer: coarse) {
     #cursorfx { display: none; }
   }
@@ -433,11 +435,13 @@ function render() {
     lastFit = null;
     strokeStart = Date.now();
     overlay.classList.remove('show');
+    document.body.classList.add('drawing');
     render();
   }
   function finishDraw() {
     drawing = false;
     finished = true;
+    document.body.classList.remove('drawing');
     const elapsed = (Date.now() - strokeStart) / 1000;
     lastFit = Scoring.circleFit(stroke);
     if (!lastFit) { abandonDraw('too short'); return; }
@@ -464,6 +468,7 @@ function render() {
   }
   function abandonDraw(reason) {
     drawing = false;
+    document.body.classList.remove('drawing');
     tries++;
     triesDisplay.textContent = tries;
     stroke = [];
@@ -522,7 +527,7 @@ function render() {
       abandonDraw('let go too early');
     }
   });
-  window.addEventListener('pointercancel', () => { drawing = false; });
+  window.addEventListener('pointercancel', () => { drawing = false; document.body.classList.remove('drawing'); });
 
   // ---------- crosshair ----------
   const cross = document.getElementById('cross');
@@ -560,6 +565,7 @@ function render() {
   const trail = [], trailX = [], trailY = [];
   for (let i = 0; i < TRAIL; i++) {
     const t = document.createElement('div');
+    t.className = 'curtrail';
     t.style.cssText =
       'position:fixed;top:0;left:0;width:31px;height:40px;pointer-events:none;' +
       'z-index:99;will-change:transform;image-rendering:pixelated;' +

@@ -250,9 +250,27 @@
   }
 
   function applyAccentFromState(s) {
+    saveAccentCache(s && s.equipped);
     var k = s && s.equipped ? s.equipped.accent : null;
     var item = k ? window.ShopCatalog.item(k) : null;
     applyAccent((item && item.color) || null);
+  }
+
+  var ACCENT_CACHE_KEY = 'shopAccentCache';
+  function saveAccentCache(equipped) {
+    try {
+      localStorage.setItem(ACCENT_CACHE_KEY, JSON.stringify({ accent: (equipped && equipped.accent) || null }));
+    } catch (e) {}
+  }
+  function applyImmediateAccent() {
+    try {
+      var c = JSON.parse(localStorage.getItem(ACCENT_CACHE_KEY) || 'null');
+      if (c && c.accent) {
+        var it = window.ShopCatalog.item(c.accent);
+        if (it && it.color) { applyAccent(it.color); return; }
+      }
+    } catch (e) {}
+    applyAccentFromState(localData());
   }
 
   function accentRgba(alpha, tone) {
@@ -441,7 +459,7 @@
 
   if (typeof document !== 'undefined') {
     try {
-      applyAccentFromState(localData());
+      applyImmediateAccent();
     } catch (e) {}
     document.addEventListener('DOMContentLoaded', function () {
       try {

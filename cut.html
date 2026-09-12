@@ -742,6 +742,37 @@
   board.addEventListener('pointerenter', () => cross.classList.add('on'));
   board.addEventListener('pointerleave', () => cross.classList.remove('on'));
 
+  async function applyCosmetics() {
+    try {
+      const s = await Shop.state();
+      Shop.applyAccentFromState(s);
+      const cur = Shop.installed(s.equipped, Shop.CURSOR);
+      if (cur && cur.color) {
+        strokeColor = cur.color;
+      } else {
+        strokeColor = 'rgba(210,222,232,0.95)';
+      }
+      cursorSpritesState = (cur && cur.color) ? await Shop.cursorSprites(cur.color) : { arrow: null, finger: null, border: '' };
+      paintCursor();
+    } catch (e) {}
+  }
+  async function loadPlayerAndScore() {
+    try {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      const user = data.user || null;
+      isLoggedIn = !!(user && user.username);
+      if (user && user.username) document.getElementById('playerName').textContent = user.username;
+      serverTotal = (user && Number.isFinite(user.total))
+        ? user.total
+        : (user && Number.isFinite(user.balance)) ? user.balance : null;
+    } catch {
+      isLoggedIn = false;
+    }
+    await applyCosmetics();
+    refreshScoreDisplay();
+  }
+
   // ---------- boot ----------
   setInterval(() => {
     if (phase !== 'cut') return;
