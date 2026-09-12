@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>!function(){var s=document.createElement('style');s.textContent='html,body,html body,html body *,html body *::before,html body *::after{cursor:url(assets/cursor-empty.cur) 0 0,none!important}';document.head.appendChild(s)}()</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PONG</title>
+  <meta name="description" content="Multiplayer Pong — 2 to 8 players, free-for-all or teams. Create a room, invite friends, and battle it out in classic Pong.">
+  <meta name="keywords" content="pong, multiplayer pong, retro game, arcade, browser game, leaderboard, pvp">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#1c1c1c">
+  <link rel="canonical" href="https://game-program.pages.dev/pong">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GAME PROGRAM">
+  <meta property="og:title" content="Pong — Multiplayer Pong | GAME PROGRAM">
+  <meta property="og:description" content="Multiplayer Pong for 2-8 players. Free-for-all or teams mode.">
+  <meta property="og:url" content="https://game-program.pages.dev/pong">
+  <meta property="og:image" content="https://game-program.pages.dev/assets/target-icon.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Pong — Multiplayer Pong | GAME PROGRAM">
+  <meta name="twitter:description" content="Multiplayer Pong for 2-8 players. Free-for-all or teams mode.">
+  <meta name="twitter:image" content="https://game-program.pages.dev/assets/target-icon.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Pong",
+    "url": "https://game-program.pages.dev/pong",
+    "description": "Multiplayer Pong for 2-8 players. Free-for-all or teams mode.",
+    "genre": "Arcade",
+    "gamePlatform": "Web Browser",
+    "operatingSystem": "Any",
+    "applicationCategory": "Game",
+    "inLanguage": "en"
+  }
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #1c1c1c;
+    color: #e0e0e0;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+    cursor: none !important;
+  }
+  *, *::before, *::after { cursor: url('assets/cursor-empty.cur') 0 0, none !important; }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    animation: float 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .orb--1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(var(--acc-dim),0.18) 0%, transparent 70%);
+    top: 0%; left: 5%;
+  }
+  .orb--2 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(var(--acc-orb),0.14) 0%, transparent 70%);
+    bottom: 0%; right: 0%;
+    animation-delay: -4s;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.03); }
+  }
+
+  .back {
+    position: fixed; top: 20px; left: 20px; z-index: 10;
+    color: rgba(var(--acc-main),0.6); text-decoration: none;
+    font-size: 14px; transition: color 0.2s;
+  }
+  .back:hover { color: rgba(var(--acc-main),1); }
+
+  h1 {
+    position: fixed; top: 20px; left: 0; right: 0;
+    text-align: center; pointer-events: none;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 6px;
+    text-transform: uppercase; color: rgba(var(--acc-main),0.85);
+  }
+
+  .enter { animation: enterIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  @keyframes enterIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen { display: none; position: fixed; inset: 0; z-index: 5; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  /* ---- Lobby ---- */
+  #lobby { gap: 20px; padding-top: 70px; }
+  .lobby-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .lobby-input {
+    font-family: inherit; font-size: 14px; letter-spacing: 2px;
+    padding: 10px 16px; border-radius: 8px;
+    background: rgba(0,0,0,0.35); color: rgba(var(--acc-texthi),0.95);
+    border: 1px solid rgba(var(--acc-main),0.3);
+    outline: none; text-transform: uppercase; width: 180px;
+    text-align: center;
+  }
+  .lobby-input::placeholder { color: rgba(var(--acc-main),0.35); }
+  .lobby-input:focus { border-color: rgba(var(--acc-main),0.6); }
+  .lobby-btn {
+    font-family: inherit; font-size: 13px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer;
+    padding: 10px 20px; border-radius: 8px;
+    background: rgba(var(--acc-btn),0.18);
+    color: rgba(var(--acc-texthi),0.95);
+    border: 1px solid rgba(var(--acc-btn),0.4);
+    transition: background 0.15s;
+  }
+  .lobby-btn:hover { background: rgba(var(--acc-btn),0.35); }
+  .lobby-btn:disabled { opacity: 0.35; cursor: default; }
+  .lobby-btn.primary {
+    background: rgba(var(--acc-btn),0.3);
+    border-color: rgba(var(--acc-btn),0.6);
+  }
+  .lobby-btn.primary:hover { background: rgba(var(--acc-btn),0.5); }
+
+  .mode-row { display: flex; gap: 8px; }
+  .mode-btn {
+    font-family: inherit; font-size: 12px; letter-spacing: 1.5px;
+    text-transform: uppercase; cursor: pointer;
+    padding: 8px 18px; border-radius: 20px;
+    background: rgba(0,0,0,0.3); color: rgba(var(--acc-main),0.6);
+    border: 1px solid rgba(var(--acc-main),0.2);
+    transition: all 0.15s;
+  }
+  .mode-btn.active {
+    color: rgba(var(--acc-texthi),0.95);
+    border-color: rgba(var(--acc-btn),0.5);
+    background: rgba(var(--acc-btn),0.2);
+  }
+  .mode-btn:hover { color: rgba(var(--acc-texthi),0.95); }
+
+  .room-code {
+    font-size: 18px; letter-spacing: 4px; color: rgba(var(--acc-bright),1);
+    padding: 12px 24px; border-radius: 8px;
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(var(--acc-main),0.25);
+    text-align: center;
+  }
+
+  .player-list {
+    width: min(420px, 90vw); max-height: 220px; overflow-y: auto;
+    border: 1px solid rgba(var(--acc-main),0.2);
+    border-radius: 12px; background: rgba(var(--acc-panel),0.82);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    backdrop-filter: blur(3px);
+  }
+  .player-list h3 {
+    font-size: 10px; font-weight: 400; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(var(--acc-main),0.85);
+    padding: 10px 14px 7px; border-bottom: 1px solid rgba(var(--acc-main),0.18);
+    position: sticky; top: 0; background: rgba(var(--acc-panel),0.95);
+  }
+  .player-list .lb-body { padding: 4px 0; }
+  .pl-row {
+    display: flex; align-items: center; gap: 8px; padding: 5px 14px; font-size: 12px;
+  }
+  .pl-row.me { background: rgba(var(--acc-main),0.14); }
+  .pl-row .pn { flex: 1; color: rgba(var(--acc-text),0.85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl-row .pr { font-size: 10px; color: rgba(var(--acc-main),0.5); letter-spacing: 1px; }
+  .pl-row .ready-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(var(--acc-main),0.25);
+  }
+  .pl-row .ready-dot.on { background: rgba(100,220,140,0.9); box-shadow: 0 0 6px rgba(100,220,140,0.4); }
+
+  #lobbyStatus {
+    font-size: 12px; color: rgba(var(--acc-main),0.55);
+    text-align: center; min-height: 18px;
+  }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 0; right: 0;
+    text-align: center; color: rgba(var(--acc-main),0.35);
+    font-size: 12px; pointer-events: none; z-index: 6;
+  }
+
+  /* ---- Game Canvas ---- */
+  #gameScreen { gap: 0; padding-top: 64px; }
+  #gameCanvas {
+    display: block;
+    width: min(90vmin, 700px);
+    max-width: 90vw;
+    aspect-ratio: auto;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(var(--acc-main),0.14);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35) inset;
+    cursor: none !important;
+    touch-action: none;
+  }
+  canvas { cursor: none !important; }
+  #gameHud {
+    position: fixed; top: 64px; left: 0; right: 0;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 4px 16px; padding: 0 12px;
+    pointer-events: none; z-index: 8;
+    font-size: 12px; color: rgba(var(--acc-main),0.7);
+  }
+  #gameHud .stat { letter-spacing: 0.08em; }
+  #gameHud b { color: rgba(var(--acc-texthi),0.95); }
+
+  #countdown {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 72px; font-weight: 700; letter-spacing: 4px;
+    color: rgba(var(--acc-texthi),0.95);
+    text-shadow: 0 0 30px rgba(var(--acc-bright),0.5);
+    pointer-events: none; z-index: 20; opacity: 0; transition: opacity 0.2s;
+  }
+  #countdown.show { opacity: 1; }
+
+  /* ---- Results ---- */
+  #resultsScreen { gap: 16px; }
+  .results-winner {
+    font-size: 28px; font-weight: 700; letter-spacing: 3px;
+    color: rgba(var(--acc-bright),1);
+    text-shadow: 0 0 20px rgba(var(--acc-bright),0.3);
+  }
+  .results-sub {
+    font-size: 14px; color: rgba(var(--acc-main),0.8);
+    text-align: center; line-height: 1.8;
+  }
+  .results-sub b { color: rgba(var(--acc-bright),1); }
+  .results-row {
+    display: flex; gap: 10px; margin-top: 8px;
+  }
+
+  /* ---- Cursor ---- */
+  #cursorfx {
+    position: fixed; top: 0; left: 0;
+    width: 31px; height: 40px;
+    background-size: auto 30px;
+    pointer-events: none;
+    z-index: 100;
+    will-change: transform;
+    image-rendering: pixelated;
+    transform: translate3d(0, 0, 0);
+  }
+  #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0 / auto 30px; }
+  #cursorfx.finger { background: url('assets/cursor-finger.png') no-repeat 0 0 / auto 30px; }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 1.2rem; letter-spacing: 4px; }
+    .lobby-input { width: 150px; font-size: 12px; }
+    .lobby-btn { font-size: 11px; padding: 8px 14px; }
+    .player-list { max-height: 180px; }
+    #gameCanvas { width: min(95vmin, 600px); }
+    .results-winner { font-size: 22px; }
+  }
+  @media (pointer: coarse) {
+    #cursorfx { display: none; }
+  }
+</style>
+  <link rel="stylesheet" href="crt.css">
+  <link rel="stylesheet" href="ui.css">
+  <script defer src="crt.js"></script>
+  <script src="score.js"></script>
+  <script src="scoring.js"></script>
+  <script src="shop.js"></script>
+</head>
+<body>
+
+<div class="orb orb--1"></div>
+<div class="orb orb--2"></div>
+
+<a class="back" href="/gallery">&larr; Gallery</a>
+
+<h1>Pong</h1>
+
+<div id="lobbyScreen" class="screen active">
+  <div class="mode-row">
+    <button class="mode-btn active" data-mode="ffa">FFA</button>
+    <button class="mode-btn" data-mode="teams">Teams</button>
+  </div>
+
+  <div class="lobby-row">
+    <button class="lobby-btn primary" id="createBtn">Create Room</button>
+    <span style="color:rgba(var(--acc-main),0.4);font-size:12px">or</span>
+    <input class="lobby-input" id="joinInput" placeholder="Room Code" maxlength="6" autocomplete="off" spellcheck="false">
+    <button class="lobby-btn" id="joinBtn">Join</button>
+  </div>
+
+  <div class="lobby-row">
+    <button class="lobby-btn" id="quickBtn">Quick Match</button>
+  </div>
+
+  <div id="roomInfo" style="display:none;text-align:center">
+    <div class="room-code" id="roomCode"></div>
+    <div style="margin-top:10px">
+      <button class="lobby-btn" id="readyBtn">Ready</button>
+      <button class="lobby-btn primary" id="startBtn" style="display:none">Start</button>
+      <button class="lobby-btn" id="leaveBtn">Leave</button>
+    </div>
+  </div>
+
+  <div class="player-list" id="playerList" style="display:none">
+    <h3>Players</h3>
+    <div class="lb-body" id="plRows"></div>
+  </div>
+
+  <div id="lobbyStatus"></div>
+</div>
+
+<div id="gameScreen" class="screen">
+  <canvas id="gameCanvas"></canvas>
+  <div id="gameHud"></div>
+</div>
+
+<div id="resultsScreen" class="screen">
+  <div class="results-winner" id="resWinner"></div>
+  <div class="results-sub" id="resSub"></div>
+  <div class="results-row">
+    <button class="lobby-btn primary" id="rematchBtn">Rematch</button>
+    <button class="lobby-btn" id="backLobbyBtn">Back to Lobby</button>
+  </div>
+</div>
+
+<div id="countdown"></div>
+
+<div id="cursorfx" class="arrow"></div>
+
+<div class="hint">2-8 players &middot; Create or join a room &middot; W/S or Arrow keys to move</div>
+
+<script>
+(() => {
+  // ---- Cursor FX ----
+  const _curStyle = document.createElement('style');
+  _curStyle.textContent = 'html * { cursor: url("assets/cursor-empty.cur") 0 0, none !important; }';
+  document.head.appendChild(_curStyle);
+
+  const cursorfx = document.getElementById('cursorfx');
+  let realX = window.innerWidth / 2, realY = window.innerHeight / 2;
+  let curX = realX, curY = realY;
+  let cursorSpritesState = null;
+  const TRAIL = 3;
+  const trail = [], trailX = [], trailY = [];
+  for (let i = 0; i < TRAIL; i++) {
+    const t = document.createElement('div');
+    t.style.cssText =
+      'position:fixed;top:0;left:0;width:31px;height:40px;pointer-events:none;' +
+      'z-index:99;will-change:transform;image-rendering:pixelated;' +
+      'transform:translate3d(-100px,-100px,0);opacity:' + (0.3 - i * 0.08).toFixed(2) + ';' +
+      'background-size:auto 30px;background-repeat:no-repeat;';
+    document.body.appendChild(t);
+    trail.push(t);
+    trailX.push(realX);
+    trailY.push(realY);
+  }
+  document.addEventListener('pointermove', (e) => {
+    realX = e.clientX;
+    realY = e.clientY;
+  });
+  function paintCursor() {
+    if (cursorSpritesState && cursorSpritesState.arrow) {
+      cursorfx.style.backgroundImage = 'url("' + cursorSpritesState.arrow + '")';
+      cursorfx.style.backgroundRepeat = 'no-repeat';
+      cursorfx.style.filter = cursorSpritesState.border || '';
+    } else {
+      cursorfx.style.backgroundImage = '';
+      cursorfx.style.filter = '';
+    }
+  }
+  function cursorTick() {
+    curX += (realX - curX) * 0.24;
+    curY += (realY - curY) * 0.24;
+    cursorfx.style.transform = 'translate3d(' + curX + 'px,' + curY + 'px,0)';
+    const url = cursorSpritesState && cursorSpritesState.arrow
+      ? cursorSpritesState.arrow
+      : 'assets/cursor-arrow.png';
+    const filt = cursorSpritesState ? (cursorSpritesState.border || '') : '';
+    for (let i = TRAIL - 1; i > 0; i--) {
+      trailX[i] += (trailX[i - 1] - trailX[i]) * 0.35;
+      trailY[i] += (trailY[i - 1] - trailY[i]) * 0.35;
+    }
+    trailX[0] += (curX - trailX[0]) * 0.4;
+    trailY[0] += (curY - trailY[0]) * 0.4;
+    for (let j = 0; j < TRAIL; j++) {
+      trail[j].style.backgroundImage = 'url("' + url + '")';
+      trail[j].style.filter = filt;
+      trail[j].style.transform = 'translate3d(' + trailX[j] + 'px,' + trailY[j] + 'px,0)';
+    }
+    requestAnimationFrame(cursorTick);
+  }
+  requestAnimationFrame(cursorTick);
+
+  async function applyCosmetics() {
+    try {
+      const s = await Shop.state();
+      const cur = Shop.installed(s.equipped, Shop.CURSOR);
+      cursorSpritesState = (cur && cur.color) ? await Shop.cursorSprites(cur.color) : { arrow: null, finger: null, border: '' };
+      paintCursor();
+    } catch (e) {}
+  }
+  applyCosmetics();
+
+  // ---- Auth / Player ----
+  let isLoggedIn = false;
+  let playerUsername = 'anonymous';
+  async function loadPlayer() {
+    try {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      const user = data.user || null;
+      isLoggedIn = !!(user && user.username);
+      if (user && user.username) playerUsername = user.username;
+    } catch { isLoggedIn = false; }
+  }
+  loadPlayer();
+
+  // ---- Pong Cosmetics (paddle color) ----
+  let myPaddleColor = '#8cb496';
+  async function loadPongColor() {
+    try {
+      const s = await Shop.state();
+      const item = Shop.installed(s.equipped, Shop.PONG);
+      myPaddleColor = (item && item.color) || '#8cb496';
+    } catch (e) { myPaddleColor = '#8cb496'; }
+  }
+  loadPongColor();
+
+  // ---- State ----
+  const lobbyScreen = document.getElementById('lobbyScreen');
+  const gameScreen = document.getElementById('gameScreen');
+  const resultsScreen = document.getElementById('resultsScreen');
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const countdownEl = document.getElementById('countdown');
+
+  let currentScreen = 'lobby';
+  let roomCode = null;
+  let isHost = false;
+  let myPlayerIndex = -1;
+  let selectedMode = 'ffa';
+  let ready = false;
+  let pollTimer = null;
+  let gameState = null;
+  let lastStateTime = 0;
+
+  // Key state
+  const keys = {};
+  document.addEventListener('keydown', (e) => { keys[e.code] = true; });
+  document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+  // Touch state
+  let touchDir = 0;
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const y = t.clientY - rect.top;
+    touchDir = y < rect.height / 2 ? -1 : 1;
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const y = t.clientY - rect.top;
+    touchDir = y < rect.height / 2 ? -1 : 1;
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => { touchDir = 0; });
+  canvas.addEventListener('touchcancel', () => { touchDir = 0; });
+
+  // ---- Screen management ----
+  function showScreen(name) {
+    currentScreen = name;
+    lobbyScreen.classList.toggle('active', name === 'lobby');
+    gameScreen.classList.toggle('active', name === 'game');
+    resultsScreen.classList.toggle('active', name === 'results');
+  }
+
+  // ---- Mode buttons ----
+  document.querySelectorAll('.mode-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedMode = btn.dataset.mode;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  // ---- API helpers ----
+  async function apiPost(endpoint, body) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return await res.json();
+    } catch (e) { return null; }
+  }
+  async function apiGet(url) {
+    try {
+      const res = await fetch(url);
+      return await res.json();
+    } catch (e) { return null; }
+  }
+
+  // ---- Lobby: Create ----
+  document.getElementById('createBtn').addEventListener('click', async () => {
+    const status = document.getElementById('lobbyStatus');
+    status.textContent = 'Creating room...';
+    const data = await apiPost('/api/pong/room', { action: 'create', player: playerUsername, mode: selectedMode });
+    if (!data || data.error) {
+      status.textContent = data ? data.error : 'Failed to create room';
+      return;
+    }
+    roomCode = data.code;
+    isHost = true;
+    myPlayerIndex = data.playerIndex;
+    ready = false;
+    document.getElementById('roomInfo').style.display = '';
+    document.getElementById('roomCode').textContent = roomCode;
+    document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+    document.getElementById('playerList').style.display = '';
+    status.textContent = '';
+    startPolling();
+  });
+
+  // ---- Lobby: Join ----
+  document.getElementById('joinBtn').addEventListener('click', async () => {
+    const code = document.getElementById('joinInput').value.trim().toUpperCase();
+    if (!code || code.length < 4) return;
+    const status = document.getElementById('lobbyStatus');
+    status.textContent = 'Joining room...';
+    const data = await apiPost('/api/pong/room', { action: 'join', code, player: playerUsername });
+    if (!data || data.error) {
+      status.textContent = data ? data.error : 'Failed to join room';
+      return;
+    }
+    roomCode = data.code;
+    isHost = false;
+    myPlayerIndex = data.playerIndex;
+    ready = false;
+    selectedMode = data.mode || 'ffa';
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
+    document.getElementById('roomInfo').style.display = '';
+    document.getElementById('roomCode').textContent = roomCode;
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('playerList').style.display = '';
+    status.textContent = '';
+    startPolling();
+  });
+
+  // ---- Lobby: Quick Match ----
+  document.getElementById('quickBtn').addEventListener('click', async () => {
+    const status = document.getElementById('lobbyStatus');
+    status.textContent = 'Looking for a match...';
+    const data = await apiPost('/api/pong/room', { action: 'join', player: playerUsername, quick: true });
+    if (!data || data.error) {
+      status.textContent = data ? data.error : 'No rooms available. Creating one...';
+      document.getElementById('createBtn').click();
+      return;
+    }
+    roomCode = data.code;
+    isHost = false;
+    myPlayerIndex = data.playerIndex;
+    ready = false;
+    selectedMode = data.mode || 'ffa';
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
+    document.getElementById('roomInfo').style.display = '';
+    document.getElementById('roomCode').textContent = roomCode;
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('playerList').style.display = '';
+    status.textContent = '';
+    startPolling();
+  });
+
+  // ---- Lobby: Ready ----
+  document.getElementById('readyBtn').addEventListener('click', async () => {
+    if (!roomCode) return;
+    ready = !ready;
+    document.getElementById('readyBtn').textContent = ready ? 'Unready' : 'Ready';
+    await apiPost('/api/pong/room', { action: 'ready', code: roomCode, player: playerUsername, ready });
+  });
+
+  // ---- Lobby: Start ----
+  document.getElementById('startBtn').addEventListener('click', async () => {
+    if (!roomCode || !isHost) return;
+    const status = document.getElementById('lobbyStatus');
+    status.textContent = 'Starting game...';
+    const data = await apiPost('/api/pong/room', { action: 'start', code: roomCode, player: playerUsername });
+    if (!data || data.error) {
+      status.textContent = data ? data.error : 'Failed to start';
+    }
+  });
+
+  // ---- Lobby: Leave ----
+  document.getElementById('leaveBtn').addEventListener('click', async () => {
+    if (roomCode) {
+      await apiPost('/api/pong/room', { action: 'leave', code: roomCode, player: playerUsername });
+    }
+    roomCode = null;
+    isHost = false;
+    myPlayerIndex = -1;
+    ready = false;
+    stopPolling();
+    stopRenderLoop();
+    stopInputLoop();
+    document.getElementById('roomInfo').style.display = 'none';
+    document.getElementById('playerList').style.display = 'none';
+    document.getElementById('readyBtn').textContent = 'Ready';
+    document.getElementById('lobbyStatus').textContent = '';
+  });
+
+  // ---- Lobby: Results -> Lobby / Rematch ----
+  document.getElementById('backLobbyBtn').addEventListener('click', async () => {
+    if (roomCode) {
+      await apiPost('/api/pong/room', { action: 'leave', code: roomCode, player: playerUsername });
+    }
+    roomCode = null;
+    isHost = false;
+    myPlayerIndex = -1;
+    ready = false;
+    stopPolling();
+    stopRenderLoop();
+    stopInputLoop();
+    showScreen('lobby');
+    document.getElementById('roomInfo').style.display = 'none';
+    document.getElementById('playerList').style.display = 'none';
+    document.getElementById('readyBtn').textContent = 'Ready';
+    document.getElementById('lobbyStatus').textContent = '';
+  });
+  document.getElementById('rematchBtn').addEventListener('click', async () => {
+    if (roomCode) {
+      ready = false;
+      document.getElementById('readyBtn').textContent = 'Ready';
+      showScreen('lobby');
+      await apiPost('/api/pong/room', { action: 'ready', code: roomCode, player: playerUsername, ready: false });
+      startPolling();
+    }
+  });
+
+  // ---- Polling ----
+  function startPolling() {
+    stopPolling();
+    pollTimer = setInterval(pollState, 50);
+  }
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  async function pollState() {
+    if (!roomCode) return;
+    const data = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
+    if (!data) return;
+
+    if (data.error || data.destroyed) {
+      stopPolling();
+      roomCode = null;
+      showScreen('lobby');
+      document.getElementById('roomInfo').style.display = 'none';
+      document.getElementById('playerList').style.display = 'none';
+      document.getElementById('lobbyStatus').textContent = data.error || 'Room closed';
+      return;
+    }
+
+    // Lobby update
+    if (data.phase === 'lobby') {
+      updateLobbyPlayers(data);
+      if (data.started) {
+        gameState = data;
+        stopPolling();
+        enterGame(data);
+      }
+    }
+
+    // In-game update
+    if (data.phase === 'playing' || data.phase === 'countdown') {
+      gameState = data;
+      if (currentScreen !== 'game') enterGame(data);
+    }
+
+    // Results
+    if (data.phase === 'results') {
+      gameState = data;
+      if (currentScreen !== 'results') enterResults(data);
+    }
+
+    lastStateTime = Date.now();
+  }
+
+  function updateLobbyPlayers(data) {
+    const container = document.getElementById('plRows');
+    const players = data.players || [];
+    if (!players.length) {
+      container.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:rgba(var(--acc-main),0.45)">Waiting for players...</div>';
+      return;
+    }
+    container.innerHTML = players.map((p) =>
+      '<div class="pl-row' + (p.name === playerUsername ? ' me' : '') + '">' +
+      '<div class="ready-dot' + (p.ready ? ' on' : '') + '"></div>' +
+      '<span class="pn">' + (p.name || 'anon') + '</span>' +
+      '<span class="pr">' + (p.side === 'left' ? 'L' : 'R') + '#' + p.num + '</span>' +
+      '</div>'
+    ).join('');
+
+    // Update start button visibility
+    if (isHost) {
+      const readyCount = players.filter(p => p.ready).length;
+      const enoughPlayers = players.length >= 2 && readyCount >= 2;
+      document.getElementById('startBtn').style.display = enoughPlayers ? '' : 'none';
+    }
+
+    // Re-check host status
+    if (data.host) {
+      isHost = data.host === playerUsername;
+      document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+    }
+  }
+
+  // ---- Enter Game ----
+  function enterGame(data) {
+    showScreen('game');
+    stopPolling();
+    gameState = data;
+    resizeCanvas();
+    if (data.countdown > 0) {
+      showCountdown(data.countdown);
+    } else {
+      countdownEl.classList.remove('show');
+    }
+    startRenderLoop();
+    startInputLoop();
+  }
+
+  // ---- Enter Results ----
+  function enterResults(data) {
+    showScreen('results');
+    stopPolling();
+    stopRenderLoop();
+    stopInputLoop();
+    gameState = data;
+    renderResults(data);
+    startPolling();
+  }
+
+  function renderResults(data) {
+    const winner = data.winner || 'Unknown';
+    const isTeamWin = data.mode === 'teams';
+    let html = '';
+    if (isTeamWin) {
+      html = (data.winnerTeam === 'left' ? 'Left Team' : 'Right Team') + ' Wins!';
+    } else {
+      html = winner + ' Wins!';
+    }
+    document.getElementById('resWinner').textContent = html;
+
+    let sub = '';
+    if (data.points != null) sub += 'Points: <b>' + Shop.fmt(data.points) + '</b>';
+    if (data.eloChange != null) {
+      const sign = data.eloChange > 0 ? '+' : '';
+      sub += ' &middot; ELO: <b>' + sign + data.eloChange + '</b>';
+    }
+    if (data.myPlacement != null) {
+      sub += ' &middot; Placement: <b>#' + data.myPlacement + '</b>';
+    }
+    document.getElementById('resSub').innerHTML = sub;
+
+    // Report ELO + score locally
+    if (isLoggedIn && data.points != null) {
+      ScoreBoard.add(playerUsername, data.points);
+      fetch('/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points: data.points, game: 'pong' })
+      }).catch(() => {});
+    }
+    if (roomCode) {
+      fetch('/api/pong/elo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room: roomCode, player: playerUsername })
+      }).catch(() => {});
+    }
+  }
+
+  // ---- Countdown ----
+  function showCountdown(num) {
+    countdownEl.textContent = num;
+    countdownEl.classList.add('show');
+    let n = num;
+    const iv = setInterval(() => {
+      n--;
+      if (n <= 0) {
+        clearInterval(iv);
+        countdownEl.classList.remove('show');
+      } else {
+        countdownEl.textContent = n;
+      }
+    }, 1000);
+  }
+
+  // ---- roundRect polyfill ----
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+      if (typeof r === 'number') r = [r, r, r, r];
+      else if (!Array.isArray(r)) r = [0, 0, 0, 0];
+      const [tl, tr, br, bl] = r;
+      this.moveTo(x + tl, y);
+      this.lineTo(x + w - tr, y);
+      this.quadraticCurveTo(x + w, y, x + w, y + tr);
+      this.lineTo(x + w, y + h - br);
+      this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+      this.lineTo(x + bl, y + h);
+      this.quadraticCurveTo(x, y + h, x, y + h - bl);
+      this.lineTo(x, y + tl);
+      this.quadraticCurveTo(x, y, x + tl, y);
+      this.closePath();
+      return this;
+    };
+  }
+
+  // ---- Canvas Resize ----
+  function resizeCanvas() {
+    if (!gameState) return;
+    const pc = gameState.playerCount || 2;
+    const w = 640 + (pc - 2) * 80;
+    const h = 480;
+    canvas.width = w;
+    canvas.height = h;
+    canvas.style.aspectRatio = w + '/' + h;
+  }
+
+  // ---- Render Loop ----
+  let renderRunning = false;
+  function startRenderLoop() {
+    if (renderRunning) return;
+    renderRunning = true;
+    requestAnimationFrame(renderFrame);
+  }
+  function stopRenderLoop() { renderRunning = false; }
+
+  function renderFrame() {
+    if (!renderRunning) return;
+    if (!gameState || currentScreen !== 'game') { renderRunning = false; return; }
+    drawGame(gameState);
+    updateGameHud(gameState);
+    requestAnimationFrame(renderFrame);
+  }
+
+  // ---- Draw Game ----
+  function drawGame(state) {
+    const W = canvas.width;
+    const H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += 40) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // Center line
+    ctx.setLineDash([8, 8]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(W / 2, 0);
+    ctx.lineTo(W / 2, H);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Paddles
+    const players = state.players || [];
+    const paddleW = 80 - (players.length - 2) * 5;
+    const pw = Math.max(40, paddleW);
+    const ph = 60;
+
+    players.forEach((p) => {
+      if (!p.alive) return;
+      const color = p.color || 'rgba(140,180,150,0.85)';
+      const glow = p.color || 'rgba(140,180,150,0.5)';
+
+      let px, py;
+      if (p.side === 'left') {
+        px = 12;
+      } else {
+        px = W - pw - 12;
+      }
+      py = p.y != null ? p.y : H / 2 - ph / 2;
+
+      // Glow
+      ctx.save();
+      ctx.shadowColor = glow;
+      ctx.shadowBlur = 16;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(px, py, pw, ph, 4);
+      ctx.fill();
+      ctx.restore();
+
+      // Name above paddle
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = '10px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.name || '', px + pw / 2, py - 6);
+    });
+
+    // Dead paddles (faded)
+    players.forEach((p) => {
+      if (p.alive) return;
+      let px;
+      if (p.side === 'left') px = 12;
+      else px = W - pw - 12;
+      const py = p.y != null ? p.y : H / 2 - ph / 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.beginPath();
+      ctx.roundRect(px, py, pw, ph, 4);
+      ctx.fill();
+    });
+
+    // Ball
+    if (state.ball) {
+      const bx = state.ball.x;
+      const by = state.ball.y;
+      const bs = 10;
+
+      // Trail
+      if (state.ball.trail) {
+        state.ball.trail.forEach((t, i) => {
+          const alpha = 0.15 * (1 - i / state.ball.trail.length);
+          ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+          ctx.fillRect(t.x - bs / 2, t.y - bs / 2, bs, bs);
+        });
+      }
+
+      // Ball glow
+      ctx.save();
+      ctx.shadowColor = 'rgba(255,255,255,0.8)';
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(bx - bs / 2, by - bs / 2, bs, bs);
+      ctx.restore();
+    }
+
+    // Particles
+    if (state.particles) {
+      state.particles.forEach((pt) => {
+        ctx.fillStyle = 'rgba(255,255,255,' + (pt.life || 0.5) + ')';
+        ctx.fillRect(pt.x - 1.5, pt.y - 1.5, 3, 3);
+      });
+    }
+
+    // Score display on canvas
+    if (state.mode === 'teams') {
+      const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
+      const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.font = 'bold 48px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(leftAlive, W / 2 - 60, 52);
+      ctx.fillText(rightAlive, W / 2 + 60, 52);
+    } else {
+      const alive = players.filter(p => p.alive);
+      if (alive.length <= 4) {
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.font = 'bold 14px "IBM Plex Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(alive.length + ' remaining', W / 2, 24);
+      }
+    }
+  }
+
+  function updateGameHud(state) {
+    const players = state.players || [];
+    const hud = document.getElementById('gameHud');
+    const aliveCount = players.filter(p => p.alive).length;
+    let html = '<span class="stat">Room <b>' + (roomCode || '-') + '</b></span>';
+    html += '<span class="stat">Players <b>' + aliveCount + '/' + players.length + '</b></span>';
+    html += '<span class="stat">' + (state.mode === 'teams' ? 'Teams' : 'FFA') + '</span>';
+    hud.innerHTML = html;
+  }
+
+  // ---- Input Loop ----
+  let inputRunning = false;
+  function startInputLoop() {
+    if (inputRunning) return;
+    inputRunning = true;
+    sendInput();
+  }
+  function stopInputLoop() { inputRunning = false; }
+
+  function sendInput() {
+    if (!inputRunning || currentScreen !== 'game') { inputRunning = false; return; }
+
+    let dir = 0;
+    // Keyboard
+    const w = keys['KeyW'] || keys['ArrowUp'];
+    const s = keys['KeyS'] || keys['ArrowDown'];
+    if (w && !s) dir = -1;
+    else if (s && !w) dir = 1;
+
+    // Touch override
+    if (touchDir !== 0) dir = touchDir;
+
+    if (roomCode) {
+      apiPost('/api/pong/move', { room: roomCode, dir });
+    }
+
+    setTimeout(() => requestAnimationFrame(sendInput), 33);
+  }
+
+  // ---- Resize handler ----
+  window.addEventListener('resize', resizeCanvas);
+
+  // ---- Context menu prevention ----
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // ---- Boot ----
+  showScreen('lobby');
+
+  // Re-check auth on pageshow
+  window.addEventListener('pageshow', () => {
+    loadPlayer();
+    loadPongColor();
+  });
+})();
+</script>
+</body>
+</html>

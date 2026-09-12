@@ -1,4 +1,4 @@
-export const SLOTS = ['maze', 'cursor', 'target', 'accent', 'nameplate'];
+export const SLOTS = ['maze', 'cursor', 'target', 'accent', 'nameplate', 'pong', 'tron'];
 
 export const ITEMS = [
   { key: 'maze:default', default: true, slot: 'maze',   name: 'Default',    color: null, price: 0 },
@@ -62,6 +62,24 @@ export const ITEMS = [
     colors: ['#FF2864', '#FFAF00', '#FFFF0A', '#96FF96', '#05C8FF', '#9696FF', '#B428FF'] },
   { key: 'nameplate:fiery-red',    slot: 'nameplate', name: 'Fiery Red',    color: null, price: 200000,
     colors: ['#FF2864', '#FFAF00', '#FFFF0A'], speed: 1.2 },
+
+  { key: 'pong:default', default: true, slot: 'pong', name: 'Default', color: null, price: 0 },
+  { key: 'pong:teal',    slot: 'pong', name: 'Teal',    color: '#14b8a6', price: 3000 },
+  { key: 'pong:blue',    slot: 'pong', name: 'Blue',    color: '#3b82f6', price: 5000 },
+  { key: 'pong:indigo',  slot: 'pong', name: 'Indigo',  color: '#6366f1', price: 7000 },
+  { key: 'pong:violet',  slot: 'pong', name: 'Violet',  color: '#8b5cf6', price: 9000 },
+  { key: 'pong:red',     slot: 'pong', name: 'Red',     color: '#e5484d', price: 11000 },
+  { key: 'pong:orange',  slot: 'pong', name: 'Orange',  color: '#f97316', price: 13000 },
+  { key: 'pong:gold',    slot: 'pong', name: 'Gold',    color: '#eab308', price: 15000 },
+
+  { key: 'tron:default', default: true, slot: 'tron', name: 'Default', color: null, price: 0 },
+  { key: 'tron:teal',    slot: 'tron', name: 'Teal',    color: '#14b8a6', price: 3000 },
+  { key: 'tron:blue',    slot: 'tron', name: 'Blue',    color: '#3b82f6', price: 5000 },
+  { key: 'tron:indigo',  slot: 'tron', name: 'Indigo',  color: '#6366f1', price: 7000 },
+  { key: 'tron:violet',  slot: 'tron', name: 'Violet',  color: '#8b5cf6', price: 9000 },
+  { key: 'tron:red',     slot: 'tron', name: 'Red',     color: '#e5484d', price: 11000 },
+  { key: 'tron:orange',  slot: 'tron', name: 'Orange',  color: '#f97316', price: 13000 },
+  { key: 'tron:gold',    slot: 'tron', name: 'Gold',    color: '#eab308', price: 15000 },
 ];
 
 export const ITEM_BY_KEY = Object.fromEntries(ITEMS.map((i) => [i.key, i]));

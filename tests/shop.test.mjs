@@ -25,6 +25,12 @@ const NAMEPLATE_PRICES = {
   'light-purple': 50000, lime: 60000, yellow: 72000, cyan: 80000, red: 94000, purple: 100000,
   amber: 130000, rainbow: 160000, 'fiery-red': 200000,
 };
+const PONG_PRICES = {
+  teal: 3000, blue: 5000, indigo: 7000, violet: 9000, red: 11000, orange: 13000, gold: 15000,
+};
+const TRON_PRICES = {
+  teal: 3000, blue: 5000, indigo: 7000, violet: 9000, red: 11000, orange: 13000, gold: 15000,
+};
 
 for (const [color, price] of Object.entries(MAZE_PRICES)) {
   check(`maze ${color} = ${price}`, () => {
@@ -83,7 +89,27 @@ for (const [color, price] of Object.entries(NAMEPLATE_PRICES)) {
   });
 }
 
-for (const slot of ['maze', 'cursor', 'target', 'accent', 'nameplate']) {
+for (const [color, price] of Object.entries(PONG_PRICES)) {
+  check(`pong ${color} = ${price}`, () => {
+    const i = item(`pong:${color}`);
+    assert.ok(i, `pong:${color} exists`);
+    assert.equal(i.slot, 'pong');
+    assert.equal(i.price, price);
+    assert.match(i.color, /^#[0-9a-f]{6}$/i);
+  });
+}
+
+for (const [color, price] of Object.entries(TRON_PRICES)) {
+  check(`tron ${color} = ${price}`, () => {
+    const i = item(`tron:${color}`);
+    assert.ok(i, `tron:${color} exists`);
+    assert.equal(i.slot, 'tron');
+    assert.equal(i.price, price);
+    assert.match(i.color, /^#[0-9a-f]{6}$/i);
+  });
+}
+
+for (const slot of ['maze', 'cursor', 'target', 'accent', 'nameplate', 'pong', 'tron']) {
   check(`${slot} default item`, () => {
     const i = item(`${slot}:default`);
     assert.ok(i, `${slot}:default exists`);

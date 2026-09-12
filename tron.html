@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script>!function(){var s=document.createElement('style');s.textContent='html,body,html body,html body *,html body *::before,html body *::after{cursor:url(assets/cursor-empty.cur) 0 0,none!important}';document.head.appendChild(s)}()</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRON</title>
+  <meta name="description" content="Multiplayer Tron Light Cycles — 2 to 8 players, leave glowing trails and be the last one standing.">
+  <meta name="keywords" content="tron, light cycles, multiplayer, arcade, browser game, leaderboard, pvp">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#1c1c1c">
+  <link rel="canonical" href="https://game-program.pages.dev/tron">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GAME PROGRAM">
+  <meta property="og:title" content="Tron — Multiplayer Light Cycles | GAME PROGRAM">
+  <meta property="og:description" content="Multiplayer Tron for 2-8 players. Leave glowing trails and be the last one standing.">
+  <meta property="og:url" content="https://game-program.pages.dev/tron">
+  <meta property="og:image" content="https://game-program.pages.dev/assets/target-icon.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Tron — Multiplayer Light Cycles | GAME PROGRAM">
+  <meta name="twitter:description" content="Multiplayer Tron for 2-8 players. Leave glowing trails and be the last one standing.">
+  <meta name="twitter:image" content="https://game-program.pages.dev/assets/target-icon.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Tron",
+    "url": "https://game-program.pages.dev/tron",
+    "description": "Multiplayer Tron Light Cycles for 2-8 players. Be the last one standing.",
+    "genre": "Arcade",
+    "gamePlatform": "Web Browser",
+    "operatingSystem": "Any",
+    "applicationCategory": "Game",
+    "inLanguage": "en"
+  }
+  </script>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #1c1c1c;
+    color: #e0e0e0;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    overflow: hidden;
+    user-select: none;
+    cursor: none !important;
+  }
+  *, *::before, *::after { cursor: url('assets/cursor-empty.cur') 0 0, none !important; }
+
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    animation: float 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .orb--1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(var(--acc-dim),0.18) 0%, transparent 70%);
+    top: 0%; left: 5%;
+  }
+  .orb--2 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(var(--acc-orb),0.14) 0%, transparent 70%);
+    bottom: 0%; right: 0%;
+    animation-delay: -4s;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.03); }
+  }
+
+  .back {
+    position: fixed; top: 20px; left: 20px; z-index: 10;
+    color: rgba(var(--acc-main),0.6); text-decoration: none;
+    font-size: 14px; transition: color 0.2s;
+  }
+  .back:hover { color: rgba(var(--acc-main),1); }
+
+  h1 {
+    position: fixed; top: 20px; left: 0; right: 0;
+    text-align: center; pointer-events: none;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-weight: 700; letter-spacing: 6px;
+    text-transform: uppercase; color: rgba(var(--acc-main),0.85);
+  }
+
+  .enter { animation: enterIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  @keyframes enterIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen { display: none; position: fixed; inset: 0; z-index: 5; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+  /* ---- Lobby ---- */
+  #lobby { gap: 20px; padding-top: 70px; }
+  .lobby-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .lobby-input {
+    font-family: inherit; font-size: 14px; letter-spacing: 2px;
+    padding: 10px 16px; border-radius: 8px;
+    background: rgba(0,0,0,0.35); color: rgba(var(--acc-texthi),0.95);
+    border: 1px solid rgba(var(--acc-main),0.3);
+    outline: none; text-transform: uppercase; width: 180px;
+    text-align: center;
+  }
+  .lobby-input::placeholder { color: rgba(var(--acc-main),0.35); }
+  .lobby-input:focus { border-color: rgba(var(--acc-main),0.6); }
+  .lobby-btn {
+    font-family: inherit; font-size: 13px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer;
+    padding: 10px 20px; border-radius: 8px;
+    background: rgba(var(--acc-btn),0.18);
+    color: rgba(var(--acc-texthi),0.95);
+    border: 1px solid rgba(var(--acc-btn),0.4);
+    transition: background 0.15s;
+  }
+  .lobby-btn:hover { background: rgba(var(--acc-btn),0.35); }
+  .lobby-btn:disabled { opacity: 0.35; cursor: default; }
+  .lobby-btn.primary {
+    background: rgba(var(--acc-btn),0.3);
+    border-color: rgba(var(--acc-btn),0.6);
+  }
+  .lobby-btn.primary:hover { background: rgba(var(--acc-btn),0.5); }
+
+  .room-code {
+    font-size: 18px; letter-spacing: 4px; color: rgba(var(--acc-bright),1);
+    padding: 12px 24px; border-radius: 8px;
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(var(--acc-main),0.25);
+    text-align: center;
+  }
+
+  .player-list {
+    width: min(420px, 90vw); max-height: 220px; overflow-y: auto;
+    border: 1px solid rgba(var(--acc-main),0.2);
+    border-radius: 12px; background: rgba(var(--acc-panel),0.82);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    backdrop-filter: blur(3px);
+  }
+  .player-list h3 {
+    font-size: 10px; font-weight: 400; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(var(--acc-main),0.85);
+    padding: 10px 14px 7px; border-bottom: 1px solid rgba(var(--acc-main),0.18);
+    position: sticky; top: 0; background: rgba(var(--acc-panel),0.95);
+  }
+  .player-list .lb-body { padding: 4px 0; }
+  .pl-row {
+    display: flex; align-items: center; gap: 8px; padding: 5px 14px; font-size: 12px;
+  }
+  .pl-row.me { background: rgba(var(--acc-main),0.14); }
+  .pl-row .pn { flex: 1; color: rgba(var(--acc-text),0.85); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl-row .pr { font-size: 10px; color: rgba(var(--acc-main),0.5); letter-spacing: 1px; }
+  .pl-row .ready-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(var(--acc-main),0.25);
+  }
+  .pl-row .ready-dot.on { background: rgba(100,220,140,0.9); box-shadow: 0 0 6px rgba(100,220,140,0.4); }
+
+  #lobbyStatus {
+    font-size: 12px; color: rgba(var(--acc-main),0.55);
+    text-align: center; min-height: 18px;
+  }
+
+  .hint {
+    position: fixed; bottom: 18px; left: 0; right: 0;
+    text-align: center; color: rgba(var(--acc-main),0.35);
+    font-size: 12px; pointer-events: none; z-index: 6;
+  }
+
+  /* ---- Game Canvas ---- */
+  #gameScreen { gap: 0; padding-top: 64px; }
+  #gameCanvas {
+    display: block;
+    width: min(90vmin, 600px);
+    max-width: 90vw;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    background: rgba(0,0,0,0.28);
+    border: 1px solid rgba(var(--acc-main),0.14);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35) inset;
+    cursor: none !important;
+    touch-action: none;
+  }
+  canvas { cursor: none !important; }
+  #gameHud {
+    position: fixed; top: 64px; left: 0; right: 0;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 4px 16px; padding: 0 12px;
+    pointer-events: none; z-index: 8;
+    font-size: 12px; color: rgba(var(--acc-main),0.7);
+  }
+  #gameHud .stat { letter-spacing: 0.08em; }
+  #gameHud b { color: rgba(var(--acc-texthi),0.95); }
+
+  #countdown {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 72px; font-weight: 700; letter-spacing: 4px;
+    color: rgba(var(--acc-texthi),0.95);
+    text-shadow: 0 0 30px rgba(var(--acc-bright),0.5);
+    pointer-events: none; z-index: 20; opacity: 0; transition: opacity 0.2s;
+  }
+  #countdown.show { opacity: 1; }
+
+  /* ---- D-Pad (Mobile) ---- */
+  #dpad {
+    display: none;
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 15; pointer-events: auto;
+  }
+  #dpad.active { display: grid; }
+  .dpad-grid {
+    display: grid;
+    grid-template-columns: 60px 60px 60px;
+    grid-template-rows: 60px 60px 60px;
+    gap: 4px;
+  }
+  .dpad-btn {
+    width: 60px; height: 60px;
+    border-radius: 12px;
+    border: 1px solid rgba(var(--acc-main),0.3);
+    background: rgba(0,0,0,0.5);
+    color: rgba(var(--acc-texthi),0.8);
+    font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+  .dpad-btn:active {
+    background: rgba(var(--acc-main),0.3);
+    border-color: rgba(var(--acc-main),0.6);
+  }
+  .dpad-btn.disabled {
+    opacity: 0.25;
+    pointer-events: none;
+  }
+  .dpad-empty { width: 60px; height: 60px; }
+
+  /* ---- Results ---- */
+  #resultsScreen { gap: 16px; }
+  .results-winner {
+    font-size: 28px; font-weight: 700; letter-spacing: 3px;
+    color: rgba(var(--acc-bright),1);
+    text-shadow: 0 0 20px rgba(var(--acc-bright),0.3);
+  }
+  .results-sub {
+    font-size: 14px; color: rgba(var(--acc-main),0.8);
+    text-align: center; line-height: 1.8;
+  }
+  .results-sub b { color: rgba(var(--acc-bright),1); }
+  .results-row {
+    display: flex; gap: 10px; margin-top: 8px;
+  }
+
+  /* ---- Cursor ---- */
+  #cursorfx {
+    position: fixed; top: 0; left: 0;
+    width: 31px; height: 40px;
+    background-size: auto 30px;
+    pointer-events: none;
+    z-index: 100;
+    will-change: transform;
+    image-rendering: pixelated;
+    transform: translate3d(0, 0, 0);
+  }
+  #cursorfx.arrow  { background: url('assets/cursor-arrow.png') no-repeat 0 0 / auto 30px; }
+  #cursorfx.finger { background: url('assets/cursor-finger.png') no-repeat 0 0 / auto 30px; }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 1.2rem; letter-spacing: 4px; }
+    .lobby-input { width: 150px; font-size: 12px; }
+    .lobby-btn { font-size: 11px; padding: 8px 14px; }
+    .player-list { max-height: 180px; }
+    #gameCanvas { width: min(95vmin, 500px); }
+    .results-winner { font-size: 22px; }
+  }
+  @media (pointer: coarse) {
+    #cursorfx { display: none; }
+  }
+</style>
+  <link rel="stylesheet" href="crt.css">
+  <link rel="stylesheet" href="ui.css">
+  <script defer src="crt.js"></script>
+  <script src="score.js"></script>
+  <script src="scoring.js"></script>
+  <script src="shop.js"></script>
+</head>
+<body>
+
+<div class="orb orb--1"></div>
+<div class="orb orb--2"></div>
+
+<a class="back" href="/gallery">&larr; Gallery</a>
+
+<h1>Tron</h1>
+
+<div id="lobbyScreen" class="screen active">
+  <div class="lobby-row">
+    <button class="lobby-btn primary" id="createBtn">Create Room</button>
+    <span style="color:rgba(var(--acc-main),0.4);font-size:12px">or</span>
+    <input class="lobby-input" id="joinInput" placeholder="Room Code" maxlength="6" autocomplete="off" spellcheck="false">
+    <button class="lobby-btn" id="joinBtn">Join</button>
+  </div>
+
+  <div class="lobby-row">
+    <button class="lobby-btn" id="quickBtn">Quick Match</button>
+  </div>
+
+  <div id="roomInfo" style="display:none;text-align:center">
+    <div class="room-code" id="roomCode"></div>
+    <div style="margin-top:10px">
+      <button class="lobby-btn" id="readyBtn">Ready</button>
+      <button class="lobby-btn primary" id="startBtn" style="display:none">Start</button>
+      <button class="lobby-btn" id="leaveBtn">Leave</button>
+    </div>
+  </div>
+
+  <div class="player-list" id="playerList" style="display:none">
+    <h3>Players</h3>
+    <div class="lb-body" id="plRows"></div>
+  </div>
+
+  <div id="lobbyStatus"></div>
+</div>
+
+<div id="gameScreen" class="screen">
+  <canvas id="gameCanvas"></canvas>
+  <div id="gameHud"></div>
+</div>
+
+<div id="resultsScreen" class="screen">
+  <div class="results-winner" id="resWinner"></div>
+  <div class="results-sub" id="resSub"></div>
+  <div class="results-row">
+    <button class="lobby-btn primary" id="rematchBtn">Rematch</button>
+    <button class="lobby-btn" id="backLobbyBtn">Back to Lobby</button>
+  </div>
+</div>
+
+<div id="countdown"></div>
+
+<div id="dpad">
+  <div class="dpad-grid">
+    <div class="dpad-empty"></div>
+    <button class="dpad-btn" data-dir="up" aria-label="Up">&#9650;</button>
+    <div class="dpad-empty"></div>
+    <button class="dpad-btn" data-dir="left" aria-label="Left">&#9664;</button>
+    <div class="dpad-empty"></div>
+    <button class="dpad-btn" data-dir="right" aria-label="Right">&#9654;</button>
+    <div class="dpad-empty"></div>
+    <button class="dpad-btn" data-dir="down" aria-label="Down">&#9660;</button>
+    <div class="dpad-empty"></div>
+  </div>
+</div>
+
+<div id="cursorfx" class="arrow"></div>
+
+<div class="hint">2-8 players &middot; Create or join a room &middot; Arrow keys or WASD to move</div>
+
+<script>
+(() => {
+  // ---- Cursor FX ----
+  const _curStyle = document.createElement('style');
+  _curStyle.textContent = 'html * { cursor: url("assets/cursor-empty.cur") 0 0, none !important; }';
+  document.head.appendChild(_curStyle);
+
+  const cursorfx = document.getElementById('cursorfx');
+  let realX = window.innerWidth / 2, realY = window.innerHeight / 2;
+  let curX = realX, curY = realY;
+  let cursorSpritesState = null;
+  const TRAIL = 3;
+  const trail = [], trailX = [], trailY = [];
+  for (let i = 0; i < TRAIL; i++) {
+    const t = document.createElement('div');
+    t.style.cssText =
+      'position:fixed;top:0;left:0;width:31px;height:40px;pointer-events:none;' +
+      'z-index:99;will-change:transform;image-rendering:pixelated;' +
+      'transform:translate3d(-100px,-100px,0);opacity:' + (0.3 - i * 0.08).toFixed(2) + ';' +
+      'background-size:auto 30px;background-repeat:no-repeat;';
+    document.body.appendChild(t);
+    trail.push(t);
+    trailX.push(realX);
+    trailY.push(realY);
+  }
+  document.addEventListener('pointermove', (e) => {
+    realX = e.clientX;
+    realY = e.clientY;
+  });
+  function paintCursor() {
+    if (cursorSpritesState && cursorSpritesState.arrow) {
+      cursorfx.style.backgroundImage = 'url("' + cursorSpritesState.arrow + '")';
+      cursorfx.style.backgroundRepeat = 'no-repeat';
+      cursorfx.style.filter = cursorSpritesState.border || '';
+    } else {
+      cursorfx.style.backgroundImage = '';
+      cursorfx.style.filter = '';
+    }
+  }
+  function cursorTick() {
+    curX += (realX - curX) * 0.24;
+    curY += (realY - curY) * 0.24;
+    cursorfx.style.transform = 'translate3d(' + curX + 'px,' + curY + 'px,0)';
+    const url = cursorSpritesState && cursorSpritesState.arrow
+      ? cursorSpritesState.arrow
+      : 'assets/cursor-arrow.png';
+    const filt = cursorSpritesState ? (cursorSpritesState.border || '') : '';
+    for (let i = TRAIL - 1; i > 0; i--) {
+      trailX[i] += (trailX[i - 1] - trailX[i]) * 0.35;
+      trailY[i] += (trailY[i - 1] - trailY[i]) * 0.35;
+    }
+    trailX[0] += (curX - trailX[0]) * 0.4;
+    trailY[0] += (curY - trailY[0]) * 0.4;
+    for (let j = 0; j < TRAIL; j++) {
+      trail[j].style.backgroundImage = 'url("' + url + '")';
+      trail[j].style.filter = filt;
+      trail[j].style.transform = 'translate3d(' + trailX[j] + 'px,' + trailY[j] + 'px,0)';
+    }
+    requestAnimationFrame(cursorTick);
+  }
+  requestAnimationFrame(cursorTick);
+
+  async function applyCosmetics() {
+    try {
+      const s = await Shop.state();
+      const cur = Shop.installed(s.equipped, Shop.CURSOR);
+      cursorSpritesState = (cur && cur.color) ? await Shop.cursorSprites(cur.color) : { arrow: null, finger: null, border: '' };
+      paintCursor();
+    } catch (e) {}
+  }
+  applyCosmetics();
+
+  // ---- Auth / Player ----
+  let isLoggedIn = false;
+  let playerUsername = 'anonymous';
+  async function loadPlayer() {
+    try {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      const user = data.user || null;
+      isLoggedIn = !!(user && user.username);
+      if (user && user.username) playerUsername = user.username;
+    } catch { isLoggedIn = false; }
+  }
+  loadPlayer();
+
+  // ---- Tron Cosmetics (trail color) ----
+  let myTronColor = '#00e5ff';
+  async function loadTronColor() {
+    try {
+      const s = await Shop.state();
+      const item = Shop.installed(s.equipped, Shop.TRON);
+      myTronColor = (item && item.color) || '#00e5ff';
+    } catch (e) { myTronColor = '#00e5ff'; }
+  }
+  loadTronColor();
+
+  // ---- State ----
+  const lobbyScreen = document.getElementById('lobbyScreen');
+  const gameScreen = document.getElementById('gameScreen');
+  const resultsScreen = document.getElementById('resultsScreen');
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const countdownEl = document.getElementById('countdown');
+  const dpadEl = document.getElementById('dpad');
+
+  let currentScreen = 'lobby';
+  let roomCode = null;
+  let isHost = false;
+  let myPlayerIndex = -1;
+  let ready = false;
+  let pollTimer = null;
+  let gameState = null;
+  let lastStateTime = 0;
+
+  // Key state
+  const keys = {};
+  document.addEventListener('keydown', (e) => { keys[e.code] = true; });
+  document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+  // Touch / swipe state
+  let swipeDir = null;
+  let touchStartX = 0, touchStartY = 0;
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    swipeDir = null;
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const t = e.touches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const threshold = 20;
+    if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
+      if (Math.abs(dx) > Math.abs(dy)) {
+        swipeDir = dx > 0 ? 'right' : 'left';
+      } else {
+        swipeDir = dy > 0 ? 'down' : 'up';
+      }
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchend', () => { swipeDir = null; });
+  canvas.addEventListener('touchcancel', () => { swipeDir = null; });
+
+  // D-Pad
+  const dpadBtns = dpadEl.querySelectorAll('.dpad-btn');
+  let dpadDir = null;
+  dpadBtns.forEach((btn) => {
+    const handler = (e) => {
+      e.preventDefault();
+      dpadDir = btn.dataset.dir;
+    };
+    btn.addEventListener('touchstart', handler, { passive: false });
+    btn.addEventListener('mousedown', handler);
+  });
+  dpadBtns.forEach((btn) => {
+    const endHandler = (e) => {
+      e.preventDefault();
+      if (dpadDir === btn.dataset.dir) dpadDir = null;
+    };
+    btn.addEventListener('touchend', endHandler, { passive: false });
+    btn.addEventListener('touchcancel', endHandler, { passive: false });
+    btn.addEventListener('mouseup', endHandler);
+  });
+
+  // ---- Screen management ----
+  function showScreen(name) {
+    currentScreen = name;
+    lobbyScreen.classList.toggle('active', name === 'lobby');
+    gameScreen.classList.toggle('active', name === 'game');
+    resultsScreen.classList.toggle('active', name === 'results');
+    dpadEl.classList.toggle('active', name === 'game');
+  }
+
+  // ---- API helpers ----
+  async function apiPost(endpoint, body) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return await res.json();
+    } catch (e) { return null; }
+  }
+  async function apiGet(url) {
+    try {
+      const res = await fetch(url);
+      return await res.json();
+    } catch (e) { return null; }
+  }
+
+  // ---- Lobby: Create ----
+  document.getElementById('createBtn').addEventListener('click', async () => {
+    const status = document.getElementById('lobbyStatus');
+    status.textContent = 'Creating room...';
+    const data = await apiPost('/api/tron/room', { action: 'create', player: playerUsername });
+    if (!data || data.error) {
+      status.textContent = data ? data.error : 'Failed to create room';
+      return;
+    }
+    roomCode = data.code;
+    isHost = true;
+    myPlayerIndex = data.playerIndex;
+    ready = false;
+    document.getElementById('roomInfo').style.display = '';
+    document.getElementById('roomCode').textContent = roomCode;
+    document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+    document.getElementById('playerList').style.display = '';
+    status.textContent = '';
+    startPolling();
+  });
+
+  // ---- Lobby: Join ----
+  document.getElementById('joinBtn').addEventListener('click', async () => {
+    const code = document.getElementById('joinInput').value.trim().toUpperCase();
+    if (!code || code.length < 4) return;
+    const status = document.getElementById('lobbyStatus');
+    status.textContent = 'Joining room...';
+    const data = await apiPost('/api/tron/room', { action: 'join', code, player: playerUsername });
+    if (!data || data.error) {
+      status.textContent = data ? data.error : 'Failed to join room';
+      return;
+    }
+    roomCode = data.code;
+    isHost = false;
+    myPlayerIndex = data.playerIndex;
+    ready = false;
+    document.getElementById('roomInfo').style.display = '';
+    document.getElementById('roomCode').textContent = roomCode;
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('playerList').style.display = '';
+    status.textContent = '';
+    startPolling();
+  });
+
+  // ---- Lobby: Quick Match ----
+  document.getElementById('quickBtn').addEventListener('click', async () => {
+    const status = document.getElementById('lobbyStatus');
+    status.textContent = 'Looking for a match...';
+    const data = await apiPost('/api/tron/room', { action: 'join', player: playerUsername, quick: true });
+    if (!data || data.error) {
+      status.textContent = data ? data.error : 'No rooms available. Creating one...';
+      document.getElementById('createBtn').click();
+      return;
+    }
+    roomCode = data.code;
+    isHost = false;
+    myPlayerIndex = data.playerIndex;
+    ready = false;
+    document.getElementById('roomInfo').style.display = '';
+    document.getElementById('roomCode').textContent = roomCode;
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('playerList').style.display = '';
+    status.textContent = '';
+    startPolling();
+  });
+
+  // ---- Lobby: Ready ----
+  document.getElementById('readyBtn').addEventListener('click', async () => {
+    if (!roomCode) return;
+    ready = !ready;
+    document.getElementById('readyBtn').textContent = ready ? 'Unready' : 'Ready';
+    await apiPost('/api/tron/room', { action: 'ready', code: roomCode, player: playerUsername, ready });
+  });
+
+  // ---- Lobby: Start ----
+  document.getElementById('startBtn').addEventListener('click', async () => {
+    if (!roomCode || !isHost) return;
+    const status = document.getElementById('lobbyStatus');
+    status.textContent = 'Starting game...';
+    const data = await apiPost('/api/tron/room', { action: 'start', code: roomCode, player: playerUsername });
+    if (!data || data.error) {
+      status.textContent = data ? data.error : 'Failed to start';
+    }
+  });
+
+  // ---- Lobby: Leave ----
+  document.getElementById('leaveBtn').addEventListener('click', async () => {
+    if (roomCode) {
+      await apiPost('/api/tron/room', { action: 'leave', code: roomCode, player: playerUsername });
+    }
+    roomCode = null;
+    isHost = false;
+    myPlayerIndex = -1;
+    ready = false;
+    stopPolling();
+    stopRenderLoop();
+    stopInputLoop();
+    document.getElementById('roomInfo').style.display = 'none';
+    document.getElementById('playerList').style.display = 'none';
+    document.getElementById('readyBtn').textContent = 'Ready';
+    document.getElementById('lobbyStatus').textContent = '';
+  });
+
+  // ---- Lobby: Results -> Lobby / Rematch ----
+  document.getElementById('backLobbyBtn').addEventListener('click', async () => {
+    if (roomCode) {
+      await apiPost('/api/tron/room', { action: 'leave', code: roomCode, player: playerUsername });
+    }
+    roomCode = null;
+    isHost = false;
+    myPlayerIndex = -1;
+    ready = false;
+    stopPolling();
+    stopRenderLoop();
+    stopInputLoop();
+    showScreen('lobby');
+    document.getElementById('roomInfo').style.display = 'none';
+    document.getElementById('playerList').style.display = 'none';
+    document.getElementById('readyBtn').textContent = 'Ready';
+    document.getElementById('lobbyStatus').textContent = '';
+  });
+  document.getElementById('rematchBtn').addEventListener('click', async () => {
+    if (roomCode) {
+      ready = false;
+      document.getElementById('readyBtn').textContent = 'Ready';
+      showScreen('lobby');
+      await apiPost('/api/tron/room', { action: 'ready', code: roomCode, player: playerUsername, ready: false });
+      startPolling();
+    }
+  });
+
+  // ---- Polling ----
+  function startPolling() {
+    stopPolling();
+    pollTimer = setInterval(pollState, 100);
+  }
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  async function pollState() {
+    if (!roomCode) return;
+    const data = await apiGet('/api/tron/state?room=' + encodeURIComponent(roomCode));
+    if (!data) return;
+
+    if (data.error || data.destroyed) {
+      stopPolling();
+      roomCode = null;
+      showScreen('lobby');
+      document.getElementById('roomInfo').style.display = 'none';
+      document.getElementById('playerList').style.display = 'none';
+      document.getElementById('lobbyStatus').textContent = data.error || 'Room closed';
+      return;
+    }
+
+    // Lobby update
+    if (data.phase === 'lobby') {
+      updateLobbyPlayers(data);
+      if (data.started) {
+        gameState = data;
+        stopPolling();
+        enterGame(data);
+      }
+    }
+
+    // In-game update
+    if (data.phase === 'playing' || data.phase === 'countdown') {
+      gameState = data;
+      if (currentScreen !== 'game') enterGame(data);
+    }
+
+    // Results
+    if (data.phase === 'results') {
+      gameState = data;
+      if (currentScreen !== 'results') enterResults(data);
+    }
+
+    lastStateTime = Date.now();
+  }
+
+  function updateLobbyPlayers(data) {
+    const container = document.getElementById('plRows');
+    const players = data.players || [];
+    if (!players.length) {
+      container.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:rgba(var(--acc-main),0.45)">Waiting for players...</div>';
+      return;
+    }
+    container.innerHTML = players.map((p) =>
+      '<div class="pl-row' + (p.name === playerUsername ? ' me' : '') + '">' +
+      '<div class="ready-dot' + (p.ready ? ' on' : '') + '"></div>' +
+      '<span class="pn">' + (p.name || 'anon') + '</span>' +
+      '<span class="pr" style="color:' + (p.color || 'rgba(var(--acc-main),0.5)') + '">&#9679;</span>' +
+      '</div>'
+    ).join('');
+
+    // Update start button visibility
+    if (isHost) {
+      const readyCount = players.filter(p => p.ready).length;
+      const enoughPlayers = players.length >= 2 && readyCount >= 2;
+      document.getElementById('startBtn').style.display = enoughPlayers ? '' : 'none';
+    }
+
+    // Re-check host status
+    if (data.host) {
+      isHost = data.host === playerUsername;
+      document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+    }
+  }
+
+  // ---- Enter Game ----
+  function enterGame(data) {
+    showScreen('game');
+    stopPolling();
+    gameState = data;
+    resizeCanvas();
+    if (data.countdown > 0) {
+      showCountdown(data.countdown);
+    } else {
+      countdownEl.classList.remove('show');
+    }
+    startRenderLoop();
+    startInputLoop();
+  }
+
+  // ---- Enter Results ----
+  function enterResults(data) {
+    showScreen('results');
+    stopPolling();
+    stopRenderLoop();
+    stopInputLoop();
+    gameState = data;
+    renderResults(data);
+    startPolling();
+  }
+
+  function renderResults(data) {
+    const winner = data.winner || 'Unknown';
+    document.getElementById('resWinner').textContent = winner + ' Wins!';
+
+    let sub = '';
+    if (data.points != null) sub += 'Points: <b>' + Shop.fmt(data.points) + '</b>';
+    if (data.eloChange != null) {
+      const sign = data.eloChange > 0 ? '+' : '';
+      sub += ' &middot; ELO: <b>' + sign + data.eloChange + '</b>';
+    }
+    if (data.myPlacement != null) {
+      sub += ' &middot; Placement: <b>#' + data.myPlacement + '</b>';
+    }
+    document.getElementById('resSub').innerHTML = sub;
+
+    // Report ELO + score locally
+    if (isLoggedIn && data.points != null) {
+      ScoreBoard.add(playerUsername, data.points);
+      fetch('/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ points: data.points, game: 'tron' })
+      }).catch(() => {});
+    }
+    if (roomCode) {
+      fetch('/api/tron/elo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room: roomCode, player: playerUsername })
+      }).catch(() => {});
+    }
+  }
+
+  // ---- Countdown ----
+  function showCountdown(num) {
+    countdownEl.textContent = num;
+    countdownEl.classList.add('show');
+    let n = num;
+    const iv = setInterval(() => {
+      n--;
+      if (n <= 0) {
+        clearInterval(iv);
+        countdownEl.classList.remove('show');
+      } else {
+        countdownEl.textContent = n;
+      }
+    }, 1000);
+  }
+
+  // ---- Canvas Resize ----
+  function resizeCanvas() {
+    const size = Math.floor(Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9, 600));
+    canvas.width = size;
+    canvas.height = size;
+  }
+
+  // ---- Render Loop ----
+  let renderRunning = false;
+  function startRenderLoop() {
+    if (renderRunning) return;
+    renderRunning = true;
+    requestAnimationFrame(renderFrame);
+  }
+  function stopRenderLoop() { renderRunning = false; }
+
+  function renderFrame() {
+    if (!renderRunning) return;
+    if (!gameState || currentScreen !== 'game') { renderRunning = false; return; }
+    drawGame(gameState);
+    updateGameHud(gameState);
+    requestAnimationFrame(renderFrame);
+  }
+
+  // ---- Draw Game ----
+  function drawGame(state) {
+    const W = canvas.width;
+    const H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid lines
+    const cellSize = 4;
+    ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= W; x += cellSize * 10) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y <= H; y += cellSize * 10) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // Border glow
+    ctx.strokeStyle = 'rgba(var(--acc-main),0.2)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, W - 2, H - 2);
+
+    const players = state.players || [];
+
+    // Draw trails
+    players.forEach((p) => {
+      if (!p.trail || !p.trail.length) return;
+      const color = p.color || 'rgba(0,229,255,0.85)';
+      const isDead = !p.alive;
+
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 4;
+
+      if (!isDead) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+      } else {
+        ctx.globalAlpha = 0.35;
+      }
+
+      ctx.strokeStyle = color;
+      ctx.beginPath();
+      const scale = W / (state.gridSize || 150);
+      const startX = p.trail[0].x * scale + scale / 2;
+      const startY = p.trail[0].y * scale + scale / 2;
+      ctx.moveTo(startX, startY);
+
+      for (let i = 1; i < p.trail.length; i++) {
+        const tx = p.trail[i].x * scale + scale / 2;
+        const ty = p.trail[i].y * scale + scale / 2;
+        ctx.lineTo(tx, ty);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Draw head (current position)
+      if (p.trail.length > 0) {
+        const last = p.trail[p.trail.length - 1];
+        const hx = last.x * scale + scale / 2;
+        const hy = last.y * scale + scale / 2;
+
+        ctx.save();
+        if (!isDead) {
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 12;
+        } else {
+          ctx.globalAlpha = 0.35;
+        }
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(hx, hy, isDead ? 3 : 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Player name above head
+      if (p.trail.length > 0 && !isDead) {
+        const last = p.trail[p.trail.length - 1];
+        const nx = last.x * scale + scale / 2;
+        const ny = last.y * scale + scale / 2;
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.font = '10px "IBM Plex Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.name || '', nx, ny - 10);
+      }
+    });
+
+    // Particles (death effects)
+    if (state.particles) {
+      state.particles.forEach((pt) => {
+        ctx.fillStyle = 'rgba(' + (pt.r || 255) + ',' + (pt.g || 255) + ',' + (pt.b || 255) + ',' + (pt.life || 0.5) + ')';
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.size || 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    // Alive count overlay
+    const aliveCount = players.filter(p => p.alive).length;
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.font = 'bold 14px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(aliveCount + ' remaining', W / 2, 24);
+  }
+
+  function updateGameHud(state) {
+    const players = state.players || [];
+    const hud = document.getElementById('gameHud');
+    const aliveCount = players.filter(p => p.alive).length;
+    let html = '<span class="stat">Room <b>' + (roomCode || '-') + '</b></span>';
+    html += '<span class="stat">Alive <b>' + aliveCount + '/' + players.length + '</b></span>';
+    hud.innerHTML = html;
+  }
+
+  // ---- Input Loop ----
+  let inputRunning = false;
+  function startInputLoop() {
+    if (inputRunning) return;
+    inputRunning = true;
+    sendInput();
+  }
+  function stopInputLoop() { inputRunning = false; }
+
+  function sendInput() {
+    if (!inputRunning || currentScreen !== 'game') { inputRunning = false; return; }
+
+    let dir = null;
+
+    // Keyboard
+    const up = keys['ArrowUp'] || keys['KeyW'];
+    const down = keys['ArrowDown'] || keys['KeyS'];
+    const left = keys['ArrowLeft'] || keys['KeyA'];
+    const right = keys['ArrowRight'] || keys['KeyD'];
+    if (up && !down && !left && !right) dir = 'up';
+    else if (down && !up && !left && !right) dir = 'down';
+    else if (left && !right && !up && !down) dir = 'left';
+    else if (right && !left && !up && !down) dir = 'right';
+
+    // D-Pad override
+    if (dpadDir) dir = dpadDir;
+
+    // Swipe override
+    if (swipeDir) dir = swipeDir;
+
+    if (dir && roomCode) {
+      apiPost('/api/tron/move', { room: roomCode, dir });
+    }
+
+    setTimeout(() => requestAnimationFrame(sendInput), 33);
+  }
+
+  // ---- Resize handler ----
+  window.addEventListener('resize', resizeCanvas);
+
+  // ---- Context menu prevention ----
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // ---- Boot ----
+  showScreen('lobby');
+
+  // Re-check auth on pageshow
+  window.addEventListener('pageshow', () => {
+    loadPlayer();
+    loadTronColor();
+  });
+})();
+</script>
+</body>
+</html>

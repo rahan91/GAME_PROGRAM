@@ -196,7 +196,7 @@
     var balanceEl = document.getElementById('balanceValue');
     var bannerEl = document.getElementById('loginBanner');
     var statusEl = document.getElementById('statusRow');
-    var slots = ['maze', 'cursor', 'target', 'accent', 'nameplate'];
+    var slots = ['maze', 'cursor', 'target', 'accent', 'nameplate', 'pong', 'tron'];
     var activeSlot = (function () {
       try { var s = localStorage.getItem('shopTab'); return slots.indexOf(s) !== -1 ? s : 'maze'; }
       catch (e) { return 'maze'; }

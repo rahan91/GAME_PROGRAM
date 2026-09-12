@@ -1,7 +1,7 @@
 import { json } from '../_lib/auth.js';
 import { attachNameplates } from '../_lib/nameplates.js';
 
-const GAMES = { maze: 'total', target: 'total', button: 'best', cut: 'total', circle: 'total' };
+const GAMES = { maze: 'total', target: 'total', button: 'best', cut: 'total', circle: 'total', pong: 'total', tron: 'total' };
 
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);

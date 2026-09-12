@@ -74,10 +74,28 @@
     { key: 'nameplate:rainbow',      slot: 'nameplate', name: 'Rainbow',      color: null, price: 160000,
       colors: ['#FF2864', '#FFAF00', '#FFFF0A', '#96FF96', '#05C8FF', '#9696FF', '#B428FF'] },
     { key: 'nameplate:fiery-red',    slot: 'nameplate', name: 'Fiery Red',    color: null, price: 200000,
-    colors: ['#FF2864', '#FFAF00', '#FFFF0A'], speed: 1.2 }
+    colors: ['#FF2864', '#FFAF00', '#FFFF0A'], speed: 1.2 },
+
+    { key: 'pong:default', default: true, slot: 'pong', name: 'Default', color: null, price: 0 },
+    { key: 'pong:teal',    slot: 'pong', name: 'Teal',    color: '#14b8a6', price: 3000 },
+    { key: 'pong:blue',    slot: 'pong', name: 'Blue',    color: '#3b82f6', price: 5000 },
+    { key: 'pong:indigo',  slot: 'pong', name: 'Indigo',  color: '#6366f1', price: 7000 },
+    { key: 'pong:violet',  slot: 'pong', name: 'Violet',  color: '#8b5cf6', price: 9000 },
+    { key: 'pong:red',     slot: 'pong', name: 'Red',     color: '#e5484d', price: 11000 },
+    { key: 'pong:orange',  slot: 'pong', name: 'Orange',  color: '#f97316', price: 13000 },
+    { key: 'pong:gold',    slot: 'pong', name: 'Gold',    color: '#eab308', price: 15000 },
+
+    { key: 'tron:default', default: true, slot: 'tron', name: 'Default', color: null, price: 0 },
+    { key: 'tron:teal',    slot: 'tron', name: 'Teal',    color: '#14b8a6', price: 3000 },
+    { key: 'tron:blue',    slot: 'tron', name: 'Blue',    color: '#3b82f6', price: 5000 },
+    { key: 'tron:indigo',  slot: 'tron', name: 'Indigo',  color: '#6366f1', price: 7000 },
+    { key: 'tron:violet',  slot: 'tron', name: 'Violet',  color: '#8b5cf6', price: 9000 },
+    { key: 'tron:red',     slot: 'tron', name: 'Red',     color: '#e5484d', price: 11000 },
+    { key: 'tron:orange',  slot: 'tron', name: 'Orange',  color: '#f97316', price: 13000 },
+    { key: 'tron:gold',    slot: 'tron', name: 'Gold',    color: '#eab308', price: 15000 }
   ];
 
-  var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent', nameplate: 'Nameplate' };
+  var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent', nameplate: 'Nameplate', pong: 'Pong', tron: 'Tron' };
   var BY_KEY = {};
   var BY_SLOT = {};
   ITEMS.forEach(function (i) {
@@ -344,6 +362,8 @@
     TARGET: 'target',
     ACCENT: 'accent',
     NAMEPLATE: 'nameplate',
+    PONG: 'pong',
+    TRON: 'tron',
     fmt: fmtNum,
     hexToRgba: hexToRgba,
     cursorSprites: cursorSprites,

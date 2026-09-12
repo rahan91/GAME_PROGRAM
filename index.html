@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GALLERY</title>
-  <meta name="description" content="GAME PROGRAM is a free browser arcade collection. Play Maze, Target, Button, Cut and Circle, earn points, climb the leaderboard and unlock cursor, target, accent and nameplate cosmetics in the shop.">
+  <meta name="description" content="GAME PROGRAM is a free browser arcade collection. Play Maze, Target, Button, Cut, Circle, Pong and Tron, earn points, climb the leaderboard and unlock cosmetics in the shop.">
   <meta name="keywords" content="arcade, browser games, maze game, reaction game, memory game, leaderboard, free online games">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#1c1c1c">
@@ -12,7 +12,7 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="GAME PROGRAM">
   <meta property="og:title" content="GAME PROGRAM — Free Browser Arcade Games">
-  <meta property="og:description" content="Play Maze, Target, Button, Cut and Circle. Earn points, climb the leaderboard and unlock cosmetics in the shop.">
+  <meta property="og:description" content="Play Maze, Target, Button, Cut, Circle, Pong and Tron. Earn points, climb the leaderboard and unlock cosmetics in the shop.">
   <meta property="og:url" content="https://game-program.pages.dev/">
   <meta property="og:image" content="https://game-program.pages.dev/favicon.png">
   <meta name="twitter:card" content="summary">
@@ -25,7 +25,7 @@
     "@type": "WebSite",
     "name": "GAME PROGRAM",
     "url": "https://game-program.pages.dev/",
-    "description": "Free browser arcade collection with Maze, Target, Button, Cut and Circle games, points, leaderboards and a cosmetics shop.",
+    "description": "Free browser arcade collection with Maze, Target, Button, Cut, Circle, Pong and Tron games, points, leaderboards and a cosmetics shop.",
     "inLanguage": "en"
   }
   </script>
@@ -122,7 +122,6 @@
     .grid-inner {
       display: grid;
       grid-template-columns: repeat(3, 175px);
-      grid-template-rows: repeat(2, 175px);
       gap: 26px;
     }
     .card {
@@ -197,15 +196,41 @@
       color: rgba(var(--acc-main), 0.3);
       margin-top: 4px;
     }
+    .card.online {
+      border-color: rgba(var(--acc-btn), 0.45);
+      box-shadow: 0 0 18px rgba(var(--acc-btn), 0.2), 0 6px 24px rgba(0,0,0,0.25);
+    }
+    .card.online::before {
+      content: "ONLINE";
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(var(--acc-btn), 0.3);
+      color: rgba(var(--acc-texthi), 0.9);
+      border: 1px solid rgba(var(--acc-btn), 0.4);
+      z-index: 2;
+    }
     .card:not(a) {
       border-style: dashed;
       background: rgba(var(--acc-dim), 0.08);
     }
     .card:not(a) .icon { opacity: 0.35; }
     .card:not(a) .label { color: rgba(var(--acc-main), 0.4); }
-    .card:nth-child(1), .card:nth-child(2) { transition-delay: 0s; }
-    .card:nth-child(3), .card:nth-child(4) { transition-delay: 0.15s; }
-    .card:nth-child(5), .card:nth-child(6) { transition-delay: 0.3s; }
+    .card.active {
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .card.active:hover {
+        transition: transform 0.15s ease, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+      }
+    }
     @keyframes float {
       0%, 100% { transform: translateY(0) scale(1); }
       50% { transform: translateY(-30px) scale(1.05); }
@@ -471,7 +496,7 @@
         padding: 12px 16px 8px;
       }
       .grid-inner {
-        width: min(528px, calc(100vw - 32px));
+        width: min(558px, calc(100vw - 32px));
         grid-template-columns: repeat(3, 1fr);
         grid-template-rows: none;
         gap: 14px;
@@ -562,10 +587,14 @@
         <div class="icon"><img src="assets/circle-icon.png" alt="Circle" width="56" height="56"></div>
         <div class="label">Circle</div>
       </a>
-      <div class="card">
-        <div class="icon">&#11206;</div>
-        <div class="label">Coming Soon</div>
-      </div>
+      <a class="card online" href="/pong">
+        <div class="icon"><img src="assets/pong-icon.png" alt="Pong" width="56" height="56"></div>
+        <div class="label">Pong</div>
+      </a>
+      <a class="card online" href="/tron">
+        <div class="icon"><img src="assets/tron-icon.png" alt="Tron" width="56" height="56"></div>
+        <div class="label">Tron</div>
+      </a>
     </div>
   </div>
 
