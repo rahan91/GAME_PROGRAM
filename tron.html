@@ -494,7 +494,6 @@
   // ---- Auth / Player ----
   let isLoggedIn = false;
   let playerUsername = 'anonymous';
-  let myUserId = null;
   async function loadPlayer() {
     try {
       const res = await fetch('/api/me');
@@ -502,7 +501,6 @@
       const user = data.user || null;
       isLoggedIn = !!(user && user.username);
       if (user && user.username) playerUsername = user.username;
-      if (user && user.id) myUserId = user.id;
     } catch { isLoggedIn = false; }
     document.getElementById('loginBanner').style.display = isLoggedIn ? 'none' : '';
   }
@@ -831,7 +829,7 @@
     if (status === 'waiting') {
       updateLobbyPlayers(data);
 
-      isHost = data.room && String(data.room.hostId) === String(myUserId);
+      isHost = myPlayerIndex === 0;
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
       document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
 
