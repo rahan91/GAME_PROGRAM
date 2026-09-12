@@ -99,8 +99,8 @@
   .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
   /* ---- Lobby ---- */
-  #lobby { gap: 20px; padding-top: 70px; }
-  .lobby-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  #lobby { gap: 24px; padding-top: 70px; }
+  .lobby-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
   .lobby-input {
     font-family: inherit; font-size: 14px; letter-spacing: 2px;
     padding: 10px 16px; border-radius: 8px;
@@ -114,7 +114,7 @@
   .lobby-btn {
     font-family: inherit; font-size: 13px; letter-spacing: 2px;
     text-transform: uppercase; cursor: pointer;
-    padding: 10px 20px; border-radius: 8px;
+    padding: 12px 28px; border-radius: 8px;
     background: rgba(var(--acc-btn),0.18);
     color: rgba(var(--acc-texthi),0.95);
     border: 1px solid rgba(var(--acc-btn),0.4);
@@ -128,7 +128,15 @@
   }
   .lobby-btn.primary:hover { background: rgba(var(--acc-btn),0.5); }
 
-  .mode-row { display: flex; gap: 8px; }
+  .lobby-divider {
+    color: rgba(var(--acc-main),0.3);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 6px 0;
+  }
+
+  .mode-row { display: flex; gap: 8px; margin-bottom: 12px; }
   .mode-btn {
     font-family: inherit; font-size: 12px; letter-spacing: 1.5px;
     text-transform: uppercase; cursor: pointer;
@@ -288,10 +296,16 @@
 
   <div class="lobby-row">
     <button class="lobby-btn primary" id="createBtn">Create Room</button>
-    <span style="color:rgba(var(--acc-main),0.4);font-size:12px">or</span>
+  </div>
+
+  <div class="lobby-divider">or</div>
+
+  <div class="lobby-row">
     <input class="lobby-input" id="joinInput" placeholder="Room Code" maxlength="6" autocomplete="off" spellcheck="false">
     <button class="lobby-btn" id="joinBtn">Join</button>
   </div>
+
+  <div class="lobby-divider">or</div>
 
   <div class="lobby-row">
     <button class="lobby-btn" id="quickBtn">Quick Match</button>
@@ -299,7 +313,7 @@
 
   <div id="roomInfo" style="display:none;text-align:center">
     <div class="room-code" id="roomCode"></div>
-    <div style="margin-top:10px">
+    <div class="lobby-row" style="margin-top:14px">
       <button class="lobby-btn" id="readyBtn">Ready</button>
       <button class="lobby-btn primary" id="startBtn" style="display:none">Start</button>
       <button class="lobby-btn" id="leaveBtn">Leave</button>
@@ -311,7 +325,10 @@
     <div class="lb-body" id="plRows"></div>
   </div>
 
-  <div id="lobbyStatus"></div>
+  <div id="lobbyStatus" style="margin-top:8px"></div>
+  <div id="loginBanner" style="display:none;margin-top:12px;padding:10px 18px;border:1px solid rgba(220,180,120,0.3);border-radius:8px;background:rgba(220,180,120,0.08);font-size:13px;color:rgba(230,200,140,0.85);">
+    You need to <a href="/gallery" style="color:rgba(230,200,140,0.9);text-decoration:underline;">log in</a> to play online.
+  </div>
 </div>
 
 <div id="gameScreen" class="screen">
@@ -417,6 +434,7 @@
       isLoggedIn = !!(user && user.username);
       if (user && user.username) playerUsername = user.username;
     } catch { isLoggedIn = false; }
+    document.getElementById('loginBanner').style.display = isLoggedIn ? 'none' : '';
   }
   loadPlayer();
 
@@ -509,6 +527,7 @@
 
   // ---- Lobby: Create ----
   document.getElementById('createBtn').addEventListener('click', async () => {
+    if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
     const status = document.getElementById('lobbyStatus');
     status.textContent = 'Creating room...';
     const data = await apiPost('/api/pong/room', { action: 'create', player: playerUsername, mode: selectedMode });
@@ -530,6 +549,7 @@
 
   // ---- Lobby: Join ----
   document.getElementById('joinBtn').addEventListener('click', async () => {
+    if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
     const code = document.getElementById('joinInput').value.trim().toUpperCase();
     if (!code || code.length < 4) return;
     const status = document.getElementById('lobbyStatus');
@@ -537,6 +557,31 @@
     const data = await apiPost('/api/pong/room', { action: 'join', code, player: playerUsername });
     if (!data || data.error) {
       status.textContent = data ? data.error : 'Failed to join room';
+      return;
+    }
+    roomCode = data.code;
+    isHost = false;
+    myPlayerIndex = data.playerIndex;
+    ready = false;
+    selectedMode = (data.room && data.room.mode) || data.mode || 'ffa';
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
+    document.getElementById('roomInfo').style.display = '';
+    document.getElementById('roomCode').textContent = roomCode;
+    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('playerList').style.display = '';
+    status.textContent = '';
+    startPolling();
+  });
+
+  // ---- Lobby: Quick Match ----
+  document.getElementById('quickBtn').addEventListener('click', async () => {
+    if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
+    const status = document.getElementById('lobbyStatus');
+    status.textContent = 'Looking for a match...';
+    const data = await apiPost('/api/pong/room', { action: 'join', player: playerUsername, quick: true });
+    if (!data || data.error) {
+      status.textContent = 'No rooms available. Creating one...';
+      document.getElementById('createBtn').click();
       return;
     }
     roomCode = data.code;
