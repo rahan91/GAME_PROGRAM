@@ -754,7 +754,8 @@
     // Lobby update
     if (status === 'waiting') {
       updateLobbyPlayers(data);
-      isHost = data.room && data.room.hostId === (window.__user && window.__user.id);
+      const hostP = (data.players || []).find(p => p.userId === (data.room && data.room.hostId));
+      isHost = !!(hostP && hostP.username === playerUsername);
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
     }
 
