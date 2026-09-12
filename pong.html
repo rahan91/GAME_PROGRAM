@@ -988,8 +988,12 @@
     const H = canvas.height;
     ctx.clearRect(0, 0, W, H);
 
-    // Background grid
-    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    // Dark background
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(0, 0, W, H);
+
+    // Subtle grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.02)';
     ctx.lineWidth = 1;
     for (let x = 0; x < W; x += 40) {
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
@@ -999,8 +1003,8 @@
     }
 
     // Center line
-    ctx.setLineDash([8, 8]);
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.setLineDash([6, 10]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(W / 2, 0);
@@ -1008,101 +1012,85 @@
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Paddles
+    // Score (large, behind paddles)
     const players = state.players || [];
-    const pw = 12;
-    const ph = 90;
+    const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
+    const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.font = 'bold 120px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(leftAlive, W * 0.25, H * 0.5);
+    ctx.fillText(rightAlive, W * 0.75, H * 0.5);
+
+    // Side labels
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.font = '11px "IBM Plex Mono", monospace';
+    ctx.textBaseline = 'top';
+    if (state.mode === 'teams') {
+      ctx.fillText('LEFT', W * 0.25, 16);
+      ctx.fillText('RIGHT', W * 0.75, 16);
+    }
+
+    // Paddles
+    const aliveCount = players.filter(p => p.alive).length;
+    const pw = Math.max(6, 12 - aliveCount);
+    const ph = Math.max(50, 100 - aliveCount * 5);
 
     players.forEach((p) => {
       if (!p.alive) return;
-      const color = p.color || 'rgba(140,180,150,0.85)';
-      const glow = p.color || 'rgba(140,180,150,0.5)';
-
-      let px, py;
-      if (p.side === 'left') {
-        px = 12;
-      } else {
-        px = W - pw - 12;
-      }
-      py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2;
+      const color = p.color || '#aaa';
+      let px;
+      if (p.side === 'left') px = 16;
+      else px = W - pw - 16;
+      const py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2;
 
       // Glow
       ctx.save();
-      ctx.shadowColor = glow;
-      ctx.shadowBlur = 16;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 20;
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.roundRect(px, py, pw, ph, 4);
+      ctx.roundRect(px, py, pw, ph, 3);
       ctx.fill();
       ctx.restore();
 
-      // Name above paddle
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.font = '10px "IBM Plex Mono", monospace';
+      // Name
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '9px "IBM Plex Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(p.username || '', px + pw / 2, py - 6);
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(p.username || '', px + pw / 2, py - 4);
     });
 
-    // Dead paddles (faded)
+    // Dead paddles
     players.forEach((p) => {
       if (p.alive) return;
       let px;
-      if (p.side === 'left') px = 12;
-      else px = W - pw - 12;
+      if (p.side === 'left') px = 16;
+      else px = W - pw - 16;
       const py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2;
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillStyle = 'rgba(255,255,255,0.02)';
       ctx.beginPath();
-      ctx.roundRect(px, py, pw, ph, 4);
+      ctx.roundRect(px, py, pw, ph, 3);
       ctx.fill();
     });
 
     // Ball
-    if (state.ball) {
+    if (state.ball && (state.ball.vx !== 0 || state.ball.vy !== 0)) {
       const bx = (state.ball.x || 0.5) * W;
       const by = (state.ball.y || 0.5) * H;
-      const bs = 10;
+      const bs = 8;
 
-      // Trail
-      if (state.ball.trail) {
-        state.ball.trail.forEach((t, i) => {
-          const alpha = 0.15 * (1 - i / state.ball.trail.length);
-          ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
-          ctx.fillRect(t.x - bs / 2, t.y - bs / 2, bs, bs);
-        });
-      }
-
-      // Ball glow
+      // Glow
       ctx.save();
-      ctx.shadowColor = 'rgba(255,255,255,0.8)';
-      ctx.shadowBlur = 12;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(bx - bs / 2, by - bs / 2, bs, bs);
+      ctx.shadowColor = '#fff';
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(bx, by, bs / 2, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
-    }
-
-    // Particles
-    if (state.particles) {
-      state.particles.forEach((pt) => {
-        ctx.fillStyle = 'rgba(255,255,255,' + (pt.life || 0.5) + ')';
-        ctx.fillRect(pt.x - 1.5, pt.y - 1.5, 3, 3);
-      });
-    }
-
-    // Score display on canvas
-    const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
-    const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
-
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.font = 'bold 48px "IBM Plex Mono", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(leftAlive, W / 2 - 60, 56);
-    ctx.fillText(rightAlive, W / 2 + 60, 56);
-
-    if (state.mode !== 'teams') {
-      const alive = players.filter(p => p.alive);
-      ctx.fillStyle = 'rgba(255,255,255,0.1)';
-      ctx.font = '12px "IBM Plex Mono", monospace';
-      ctx.fillText(alive.length + ' remaining', W / 2, 24);
     }
   }
 
