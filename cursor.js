@@ -1,9 +1,6 @@
 (function () {
   var INTERACTIVE = 'a, button, input, select, textarea, label, summary, [role="button"], [contenteditable], .card, .tab, .item';
 
-  // Games ease the drawn cursor toward the pointer at 0.24/frame. Outside the
-  // games (or on non-cursor games) the sluggishness is doubled, so the catch-up
-  // rate is halved.
   var EASE = 0.12;
 
   function init() {
@@ -47,6 +44,17 @@
     var hotX = 1;
     var realX = window.innerWidth / 2, realY = window.innerHeight / 2;
     var curX = realX, curY = realY;
+    var moved = false;
+
+    function fallback() {
+      style.remove();
+      el.remove();
+      trail.forEach(function (t) { t.remove(); });
+    }
+
+    setTimeout(function () {
+      if (!moved) fallback();
+    }, 1500);
 
     function paint() {
       var finger = el.className === 'finger';
@@ -54,13 +62,8 @@
         ? (finger ? sprites.finger : sprites.arrow)
         : 'assets/' + (finger ? 'cursor-finger' : 'cursor-arrow') + '.png';
       var filter = custom ? (sprites.border || '') : '';
-      if (custom) {
-        el.style.backgroundImage = 'url("' + url + '")';
-        el.style.filter = filter;
-      } else {
-        el.style.backgroundImage = 'url("' + url + '")';
-        el.style.filter = '';
-      }
+      el.style.backgroundImage = 'url("' + url + '")';
+      el.style.filter = filter;
       for (var i = 0; i < TRAIL; i++) {
         trail[i].style.backgroundImage = 'url("' + url + '")';
         trail[i].style.filter = custom ? filter : 'brightness(' + (1 - i * 0.1).toFixed(1) + ')';
@@ -104,6 +107,7 @@
       realX = e.clientX;
       realY = e.clientY;
       hotX = over ? 8 : 1;
+      moved = true;
     });
 
     document.addEventListener('mouseover', function (e) {
