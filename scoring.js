@@ -103,7 +103,7 @@
   // score; difficulty adds only a small multiplier on top (how well you traced
   // the shape matters far more than which difficulty you picked); finishing
   // fast adds a small bonus.
-  var CUT_ACC_PERFECT = 30;    // accuracy component at 100% IoU (before mult)
+  var CUT_ACC_PERFECT = 40;    // accuracy component at 100% IoU (before mult)
   var CUT_ACC_POWER = 2.0;      // accuracy is squared: sub-perfect cuts decay fast
   var CUT_TIME_MAX = 1.05;      // fast finish: +5% max, never more
   var CUT_DIFFS = {
