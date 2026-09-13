@@ -5,6 +5,7 @@ const GRID_H = 480;
 const DIR_MAP = { up: { dx: 0, dy: -1 }, down: { dx: 0, dy: 1 }, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } };
 
 export async function onRequestGet(context) {
+  try {
   const url = new URL(context.request.url);
   const code = url.searchParams.get('room');
   if (!code) return json({ error: 'Missing room parameter' }, 400);
@@ -133,4 +134,7 @@ export async function onRequestGet(context) {
     winner,
     winnerName,
   });
+  } catch (e) {
+    return json({ error: 'State error: ' + (e.message || e) }, 500);
+  }
 }

@@ -24,6 +24,7 @@ function findNearestPaddle(players, ballCoord, wallSide) {
 }
 
 export async function onRequestGet(context) {
+  try {
   const url = new URL(context.request.url);
   const code = url.searchParams.get('room');
   if (!code) return json({ error: 'Missing room parameter' }, 400);
@@ -253,4 +254,7 @@ export async function onRequestGet(context) {
     winnerName,
     winnerSide,
   });
+  } catch (e) {
+    return json({ error: 'State error: ' + (e.message || e) }, 500);
+  }
 }
