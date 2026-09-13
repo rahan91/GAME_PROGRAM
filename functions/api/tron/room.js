@@ -1,25 +1,41 @@
 import { json, getUserFromRequest } from '../../_lib/auth.js';
 
 const ROOM_EXPIRY_SECONDS = 30 * 60;
-const MAX_PLAYERS = 8;
+const MAX_PLAYERS = 16;
 const COLORS = [
   '#e74c3c', '#3498db', '#2ecc71', '#f39c12',
   '#9b59b6', '#1abc9c', '#e67e22', '#ecf0f1',
+  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96e6a1',
+  '#dda0dd', '#f0e68c', '#87ceeb', '#ffa07a',
 ];
 
-const GRID_W = 640;
-const GRID_H = 480;
+const BASE_W = 456;
+const BASE_H = 344;
 
-const START_POSITIONS = [
-  { x: 0,        y: 0,        dir: 'right' },
-  { x: GRID_W-1, y: 0,        dir: 'left'  },
-  { x: 0,        y: GRID_H-1, dir: 'right' },
-  { x: GRID_W-1, y: GRID_H-1, dir: 'left'  },
-  { x: Math.floor(GRID_W/2), y: 0,        dir: 'down'  },
-  { x: Math.floor(GRID_W/2), y: GRID_H-1, dir: 'up'    },
-  { x: 0,        y: Math.floor(GRID_H/2), dir: 'right' },
-  { x: GRID_W-1, y: Math.floor(GRID_H/2), dir: 'left'  },
-];
+function computeGridSize(maxPlayers) {
+  const scale = Math.sqrt(maxPlayers / 8);
+  return { w: Math.round(BASE_W * scale), h: Math.round(BASE_H * scale) };
+}
+
+function generateStartPositions(w, h, count) {
+  const positions = [];
+  const perimeter = 2 * (w + h);
+  for (let i = 0; i < count; i++) {
+    const t = (i / count) * perimeter;
+    let x, y, dir;
+    if (t < w) {
+      x = Math.floor(t); y = 0; dir = 'down';
+    } else if (t < w + h) {
+      x = w - 1; y = Math.floor(t - w); dir = 'left';
+    } else if (t < 2 * w + h) {
+      x = w - 1 - Math.floor(t - w - h); y = h - 1; dir = 'up';
+    } else {
+      x = 0; y = h - 1 - Math.floor(t - 2 * w - h); dir = 'right';
+    }
+    positions.push({ x, y, dir });
+  }
+  return positions;
+}
 
 function generateCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -65,22 +81,23 @@ async function handleCreate(db, user, body, now) {
 
   const roomId = crypto.randomUUID();
   const code = generateCode();
-  const maxPlayers = [2, 4, 6, 8].includes(Number(body?.maxPlayers)) ? Number(body.maxPlayers) : 8;
+  const maxPlayers = [2, 4, 6, 8, 10, 12, 14, 16].includes(Number(body?.maxPlayers)) ? Number(body.maxPlayers) : 4;
   const speed = ['slow', 'medium', 'fast'].includes(body?.speed) ? body.speed : 'medium';
   const expiresAt = now + ROOM_EXPIRY_SECONDS;
+  const grid = computeGridSize(maxPlayers);
 
   await db.prepare(
-    `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, created_at, expires_at)
-     VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?)`
-  ).bind(roomId, code, user.id, maxPlayers, speed, now, expiresAt).run();
+    `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
+     VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?, ?, ?)`
+  ).bind(roomId, code, user.id, maxPlayers, speed, grid.w, grid.h, now, expiresAt).run();
 
-  const pos = START_POSITIONS[0];
+  const pos = generateStartPositions(grid.w, grid.h, 1)[0];
   await db.prepare(
     `INSERT INTO tron_players (room_id, user_id, username, rating, x, y, dir, alive, ready, color, trail, joined_at)
      VALUES (?, ?, ?, 1200, ?, ?, ?, 1, 0, ?, '[]', ?)`
   ).bind(roomId, user.id, user.username, pos.x, pos.y, pos.dir, COLORS[0], now).run();
 
-  return json({ code, status: 'waiting', playerIndex: 0 });
+  return json({ code, status: 'waiting', playerIndex: 0, maxPlayers, speed, gridW: grid.w, gridH: grid.h });
 }
 
 async function handleJoin(db, user, body, now) {
@@ -101,18 +118,22 @@ async function handleJoin(db, user, body, now) {
       const roomId = crypto.randomUUID();
       const roomCode = generateCode();
       const expiresAt = now + ROOM_EXPIRY_SECONDS;
+      const grid = computeGridSize(4);
       await db.prepare(
-        `INSERT INTO tron_rooms (id, code, status, host_id, created_at, expires_at)
-         VALUES (?, ?, 'waiting', ?, ?, ?)`
-      ).bind(roomId, roomCode, user.id, now, expiresAt).run();
-      room = { id: roomId, code: roomCode, status: 'waiting', host_id: user.id, max_players: 8, speed: 'medium' };
+        `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
+         VALUES (?, ?, 'waiting', ?, 4, 'medium', ?, ?, ?, ?)`
+      ).bind(roomId, roomCode, user.id, grid.w, grid.h, now, expiresAt).run();
+      room = { id: roomId, code: roomCode, status: 'waiting', host_id: user.id, max_players: 4, speed: 'medium', grid_w: grid.w, grid_h: grid.h };
     }
   }
 
   const playerCount = await getPlayerCount(db, room.id);
   if (playerCount >= (room.max_players || MAX_PLAYERS)) return json({ error: 'Room is full' }, 409);
 
-  const pos = START_POSITIONS[playerCount % START_POSITIONS.length];
+  const gw = room.grid_w || BASE_W;
+  const gh = room.grid_h || BASE_H;
+  const positions = generateStartPositions(gw, gh, playerCount + 1);
+  const pos = positions[playerCount];
   const color = COLORS[playerCount % COLORS.length];
 
   await db.prepare(
@@ -122,7 +143,7 @@ async function handleJoin(db, user, body, now) {
 
   await db.prepare('UPDATE tron_rooms SET expires_at = ? WHERE id = ?').bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
-  return json({ code: room.code, maxPlayers: room.max_players, speed: room.speed, status: room.status, playerIndex: playerCount, hostId: room.host_id });
+  return json({ code: room.code, maxPlayers: room.max_players, speed: room.speed, status: room.status, playerIndex: playerCount, hostId: room.host_id, gridW: gw, gridH: gh });
 }
 
 async function handleLeave(db, user, body) {
@@ -184,13 +205,17 @@ async function handleStart(db, user, body, now) {
   const readyCount = await db.prepare('SELECT COUNT(*) as c FROM tron_players WHERE room_id = ? AND ready = 1').bind(room.id).first();
   if (readyCount.c < 2) return json({ error: 'Need at least 2 ready players' }, 400);
 
+  const gw = room.grid_w || BASE_W;
+  const gh = room.grid_h || BASE_H;
+
   await db.prepare("UPDATE tron_rooms SET status = 'playing', expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
   const allPlayers = await db.prepare('SELECT user_id FROM tron_players WHERE room_id = ?').bind(room.id).all();
+  const positions = generateStartPositions(gw, gh, (allPlayers.results || []).length);
 
   let idx = 0;
   for (const p of (allPlayers.results || [])) {
-    const pos = START_POSITIONS[idx % START_POSITIONS.length];
+    const pos = positions[idx];
     await db.prepare(
       'UPDATE tron_players SET x = ?, y = ?, dir = ?, alive = 1, trail = ? WHERE room_id = ? AND user_id = ?'
     ).bind(pos.x, pos.y, pos.dir, '[]', room.id, p.user_id).run();

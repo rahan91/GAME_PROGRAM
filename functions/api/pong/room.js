@@ -1,10 +1,12 @@
 import { json, getUserFromRequest } from '../../_lib/auth.js';
 
 const ROOM_EXPIRY_SECONDS = 30 * 60;
-const MAX_PLAYERS = 8;
+const MAX_PLAYERS = 16;
 const COLORS = [
   '#e74c3c', '#3498db', '#2ecc71', '#f39c12',
   '#9b59b6', '#1abc9c', '#e67e22', '#ecf0f1',
+  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96e6a1',
+  '#dda0dd', '#f0e68c', '#87ceeb', '#ffa07a',
 ];
 
 function generateCode() {
@@ -23,11 +25,13 @@ async function getPlayerCount(db, roomId) {
   return r ? r.cnt : 0;
 }
 
-async function getPlayerIndex(db, roomId, userId) {
-  const r = await db.prepare(
-    'SELECT COUNT(*) as idx FROM pong_players WHERE room_id = ? AND joined_at < (SELECT joined_at FROM pong_players WHERE room_id = ? AND user_id = ?)'
-  ).bind(roomId, roomId, userId).first();
-  return r ? r.idx : 0;
+const QUAD_SIDES = ['top', 'right', 'bottom', 'left'];
+
+function assignSide(mode, playerCount) {
+  if (mode === 'quads') {
+    return QUAD_SIDES[playerCount % 4];
+  }
+  return playerCount % 2 === 0 ? 'left' : 'right';
 }
 
 export async function onRequestPost(context) {
@@ -58,23 +62,24 @@ async function handleCreate(db, user, body, now) {
 
   const roomId = crypto.randomUUID();
   const code = generateCode();
-  const mode = (body && body.mode === 'teams') ? 'teams' : 'ffa';
-  const maxPlayers = [2, 4, 6, 8].includes(Number(body?.maxPlayers)) ? Number(body.maxPlayers) : 8;
+  const mode = (body && body.mode === 'quads') ? 'quads' : 'teams';
+  const maxPlayers = [2, 4, 6, 8, 10, 12, 14, 16].includes(Number(body?.maxPlayers)) ? Number(body.maxPlayers) : (mode === 'quads' ? 4 : 4);
   const speed = ['slow', 'medium', 'fast'].includes(body?.speed) ? body.speed : 'medium';
+  const roundsTarget = [1, 3, 5, 7, 10].includes(Number(body?.rounds)) ? Number(body.rounds) : 3;
   const expiresAt = now + ROOM_EXPIRY_SECONDS;
 
   await db.prepare(
-    `INSERT INTO pong_rooms (id, code, mode, status, host_id, max_players, speed, created_at, expires_at)
-     VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, ?)`
-  ).bind(roomId, code, mode, user.id, maxPlayers, speed, now, expiresAt).run();
+    `INSERT INTO pong_rooms (id, code, mode, status, host_id, max_players, speed, rounds_target, round_num, created_at, expires_at)
+     VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, 0, ?, ?)`
+  ).bind(roomId, code, mode, user.id, maxPlayers, speed, roundsTarget, now, expiresAt).run();
 
+  const side = assignSide(mode, 0);
   await db.prepare(
     `INSERT INTO pong_players (room_id, user_id, username, rating, side, paddle_y, alive, ready, dir, color, joined_at)
-     VALUES (?, ?, ?, 1200, 'left', 0.5, 1, 0, 0, ?, ?)`
-  ).bind(roomId, user.id, user.username, COLORS[0], now).run();
+     VALUES (?, ?, ?, 1200, ?, 0.5, 1, 0, 0, ?, ?)`
+  ).bind(roomId, user.id, user.username, side, COLORS[0], now).run();
 
-  const playerIndex = 0;
-  return json({ code, mode, maxPlayers, speed, status: 'waiting', playerIndex });
+  return json({ code, mode, maxPlayers, speed, roundsTarget, status: 'waiting', playerIndex: 0 });
 }
 
 async function handleJoin(db, user, body, now) {
@@ -96,20 +101,17 @@ async function handleJoin(db, user, body, now) {
       const roomCode = generateCode();
       const expiresAt = now + ROOM_EXPIRY_SECONDS;
       await db.prepare(
-        `INSERT INTO pong_rooms (id, code, mode, status, host_id, created_at, expires_at)
-         VALUES (?, ?, 'ffa', 'waiting', ?, ?, ?)`
+        `INSERT INTO pong_rooms (id, code, mode, status, host_id, rounds_target, round_num, created_at, expires_at)
+         VALUES (?, ?, 'teams', 'waiting', ?, 3, 0, ?, ?)`
       ).bind(roomId, roomCode, user.id, now, expiresAt).run();
-      room = { id: roomId, code: roomCode, mode: 'ffa', status: 'waiting', host_id: user.id, max_players: 8, speed: 'medium' };
+      room = { id: roomId, code: roomCode, mode: 'teams', status: 'waiting', host_id: user.id, max_players: 8, speed: 'medium', rounds_target: 3 };
     }
   }
 
   const playerCount = await getPlayerCount(db, room.id);
   if (playerCount >= (room.max_players || MAX_PLAYERS)) return json({ error: 'Room is full' }, 409);
 
-  // Assign side: count per side, put on the side with fewer players
-  const leftCount = await db.prepare("SELECT COUNT(*) as c FROM pong_players WHERE room_id = ? AND side = 'left'").bind(room.id).first();
-  const rightCount = await db.prepare("SELECT COUNT(*) as c FROM pong_players WHERE room_id = ? AND side = 'right'").bind(room.id).first();
-  const side = (leftCount.c <= rightCount.c) ? 'left' : 'right';
+  const side = assignSide(room.mode, playerCount);
   const color = COLORS[playerCount % COLORS.length];
 
   await db.prepare(
@@ -119,8 +121,7 @@ async function handleJoin(db, user, body, now) {
 
   await db.prepare('UPDATE pong_rooms SET expires_at = ? WHERE id = ?').bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
-  const playerIndex = playerCount;
-  return json({ code: room.code, mode: room.mode, maxPlayers: room.max_players, speed: room.speed, status: room.status, playerIndex, hostId: room.host_id });
+  return json({ code: room.code, mode: room.mode, maxPlayers: room.max_players, speed: room.speed, roundsTarget: room.rounds_target, status: room.status, playerIndex: playerCount + 1, hostId: room.host_id });
 }
 
 async function handleLeave(db, user, body) {
@@ -183,15 +184,13 @@ async function handleStart(db, user, body, now) {
   const readyCount = await db.prepare('SELECT COUNT(*) as c FROM pong_players WHERE room_id = ? AND ready = 1').bind(room.id).first();
   if (readyCount.c < 2) return json({ error: 'Need at least 2 ready players' }, 400);
 
-  await db.prepare("UPDATE pong_rooms SET status = 'playing', expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
+  if (room.mode === 'teams' && playerCount % 2 !== 0) return json({ error: 'Teams mode needs even number of players' }, 400);
+  if (room.mode === 'quads' && playerCount % 4 !== 0) return json({ error: 'Quads mode needs players divisible by 4' }, 400);
 
-  const leftPlayers = await db.prepare("SELECT user_id FROM pong_players WHERE room_id = ? AND side = 'left'").bind(room.id).all();
-  const rightPlayers = await db.prepare("SELECT user_id FROM pong_players WHERE room_id = ? AND side = 'right'").bind(room.id).all();
+  await db.prepare("UPDATE pong_rooms SET status = 'playing', round_num = 1, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
-  for (const p of (leftPlayers.results || [])) {
-    await db.prepare('UPDATE pong_players SET paddle_y = 0.5, alive = 1 WHERE room_id = ? AND user_id = ?').bind(room.id, p.user_id).run();
-  }
-  for (const p of (rightPlayers.results || [])) {
+  const allPlayers = await db.prepare('SELECT user_id FROM pong_players WHERE room_id = ?').bind(room.id).all();
+  for (const p of (allPlayers.results || [])) {
     await db.prepare('UPDATE pong_players SET paddle_y = 0.5, alive = 1 WHERE room_id = ? AND user_id = ?').bind(room.id, p.user_id).run();
   }
 

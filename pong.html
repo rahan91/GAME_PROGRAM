@@ -5,20 +5,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BOUNCE</title>
-  <meta name="description" content="Multiplayer Pong — 2 to 8 players, free-for-all or teams. Create a room, invite friends, and battle it out in classic Pong.">
-  <meta name="keywords" content="pong, multiplayer pong, retro game, arcade, browser game, leaderboard, pvp">
+  <meta name="description" content="Multiplayer Pong — 2 to 16 players, teams or quads mode. Create a room, invite friends, and battle it out in classic Pong.">
+  <meta name="keywords" content="pong, multiplayer pong, retro game, arcade, browser game, leaderboard, pvp, quads">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#1c1c1c">
   <link rel="canonical" href="https://game-program.pages.dev/pong">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="GAME PROGRAM">
   <meta property="og:title" content="Pong — Multiplayer Pong | GAME PROGRAM">
-  <meta property="og:description" content="Multiplayer Pong for 2-8 players. Free-for-all or teams mode.">
+  <meta property="og:description" content="Multiplayer Pong for 2-16 players. Teams or quads mode.">
   <meta property="og:url" content="https://game-program.pages.dev/pong">
   <meta property="og:image" content="https://game-program.pages.dev/assets/target-icon.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Pong — Multiplayer Pong | GAME PROGRAM">
-  <meta name="twitter:description" content="Multiplayer Pong for 2-8 players. Free-for-all or teams mode.">
+  <meta name="twitter:description" content="Multiplayer Pong for 2-16 players. Teams or quads mode.">
   <meta name="twitter:image" content="https://game-program.pages.dev/assets/target-icon.png">
   <script type="application/ld+json">
   {
@@ -26,7 +26,7 @@
     "@type": "VideoGame",
     "name": "Pong",
     "url": "https://game-program.pages.dev/pong",
-    "description": "Multiplayer Pong for 2-8 players. Free-for-all or teams mode.",
+    "description": "Multiplayer Pong for 2-16 players. Teams or quads mode.",
     "genre": "Arcade",
     "gamePlatform": "Web Browser",
     "operatingSystem": "Any",
@@ -99,7 +99,7 @@
   .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
   /* ---- Lobby ---- */
-  #lobby { gap: 24px; padding-top: 70px; }
+  #lobbyScreen { gap: 16px; padding-top: 70px; justify-content: flex-start; overflow-y: auto; }
   .lobby-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
   .lobby-input {
     font-family: inherit; font-size: 14px; letter-spacing: 2px;
@@ -308,17 +308,21 @@
 
 <div id="lobbyScreen" class="screen active">
   <div class="mode-row">
-    <button class="mode-btn active" data-mode="ffa">FFA</button>
-    <button class="mode-btn" data-mode="teams">Teams</button>
+    <button class="mode-btn active" data-mode="teams">Teams</button>
+    <button class="mode-btn" data-mode="quads">Quads</button>
   </div>
 
   <div class="settings-group">
     <div class="settings-label">Max Players</div>
     <div class="settings-options" id="maxPlayersOpts">
       <button class="settings-opt" data-val="2">2</button>
-      <button class="settings-opt" data-val="4">4</button>
+      <button class="settings-opt active" data-val="4">4</button>
       <button class="settings-opt" data-val="6">6</button>
-      <button class="settings-opt active" data-val="8">8</button>
+      <button class="settings-opt" data-val="8">8</button>
+      <button class="settings-opt" data-val="10">10</button>
+      <button class="settings-opt" data-val="12">12</button>
+      <button class="settings-opt" data-val="14">14</button>
+      <button class="settings-opt" data-val="16">16</button>
     </div>
   </div>
 
@@ -328,6 +332,17 @@
       <button class="settings-opt" data-val="slow">Slow</button>
       <button class="settings-opt active" data-val="medium">Medium</button>
       <button class="settings-opt" data-val="fast">Fast</button>
+    </div>
+  </div>
+
+  <div class="settings-group">
+    <div class="settings-label">Rounds to Win</div>
+    <div class="settings-options" id="roundsOpts">
+      <button class="settings-opt" data-val="1">1</button>
+      <button class="settings-opt active" data-val="3">3</button>
+      <button class="settings-opt" data-val="5">5</button>
+      <button class="settings-opt" data-val="7">7</button>
+      <button class="settings-opt" data-val="10">10</button>
     </div>
   </div>
 
@@ -389,7 +404,7 @@
 
 <div id="cursorfx" class="arrow"></div>
 
-<div class="hint">2-8 players &middot; Create or join a room &middot; W/S or Arrow keys to move</div>
+<div class="hint">2-16 players &middot; Teams or Quads mode &middot; W/S or Arrow keys to move</div>
 
 <script>
 (() => {
@@ -430,7 +445,9 @@
       cursorfx.style.filter = '';
     }
   }
+  let _lastUrl = '', _lastFilt = '';
   function cursorTick() {
+    if (window.matchMedia('(pointer: coarse)').matches) { requestAnimationFrame(cursorTick); return; }
     curX += (realX - curX) * 0.24;
     curY += (realY - curY) * 0.24;
     cursorfx.style.transform = 'translate3d(' + curX + 'px,' + curY + 'px,0)';
@@ -444,9 +461,13 @@
     }
     trailX[0] += (curX - trailX[0]) * 0.4;
     trailY[0] += (curY - trailY[0]) * 0.4;
+    const urlChanged = url !== _lastUrl || filt !== _lastFilt;
+    if (urlChanged) _lastUrl = url, _lastFilt = filt;
     for (let j = 0; j < TRAIL; j++) {
-      trail[j].style.backgroundImage = 'url("' + url + '")';
-      trail[j].style.filter = filt;
+      if (urlChanged) {
+        trail[j].style.backgroundImage = 'url("' + url + '")';
+        trail[j].style.filter = filt;
+      }
       trail[j].style.transform = 'translate3d(' + trailX[j] + 'px,' + trailY[j] + 'px,0)';
     }
     requestAnimationFrame(cursorTick);
@@ -502,7 +523,7 @@
   let roomCode = null;
   let isHost = false;
   let myPlayerIndex = -1;
-  let selectedMode = 'ffa';
+  let selectedMode = 'teams';
   let ready = false;
   let pollTimer = null;
   let gameState = null;
@@ -564,8 +585,9 @@
   });
 
   // ---- Settings buttons ----
-  let selectedMaxPlayers = 8;
+  let selectedMaxPlayers = 4;
   let selectedSpeed = 'medium';
+  let selectedRounds = 3;
   document.querySelectorAll('#maxPlayersOpts .settings-opt').forEach((btn) => {
     btn.addEventListener('click', () => {
       selectedMaxPlayers = Number(btn.dataset.val);
@@ -576,6 +598,12 @@
     btn.addEventListener('click', () => {
       selectedSpeed = btn.dataset.val;
       document.querySelectorAll('#speedOpts .settings-opt').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+  document.querySelectorAll('#roundsOpts .settings-opt').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedRounds = Number(btn.dataset.val);
+      document.querySelectorAll('#roundsOpts .settings-opt').forEach(b => b.classList.toggle('active', b === btn));
     });
   });
 
@@ -597,8 +625,10 @@
     } catch (e) { return null; }
   }
 
-  function showRoomSettings(mode, maxPlayers, speed) {
-    const label = `${mode.toUpperCase()} &middot; ${maxPlayers} players &middot; ${speed}`;
+  function showRoomSettings(mode, maxPlayers, speed, rounds) {
+    const modeLabel = mode === 'quads' ? 'Quads' : 'Teams';
+    const roundsLabel = rounds ? ' &middot; ' + rounds + ' rounds' : '';
+    const label = `${modeLabel} &middot; ${maxPlayers} players &middot; ${speed}${roundsLabel}`;
     document.getElementById('roomSettings').innerHTML = label;
   }
 
@@ -607,7 +637,7 @@
     if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
     const status = document.getElementById('lobbyStatus');
     status.textContent = 'Creating room...';
-    const data = await apiPost('/api/pong/room', { action: 'create', player: playerUsername, mode: selectedMode, maxPlayers: selectedMaxPlayers, speed: selectedSpeed });
+    const data = await apiPost('/api/pong/room', { action: 'create', player: playerUsername, mode: selectedMode, maxPlayers: selectedMaxPlayers, speed: selectedSpeed, rounds: selectedRounds });
     if (!data || data.error) {
       status.textContent = data ? data.error : 'Failed to create room';
       return;
@@ -620,7 +650,7 @@
     await apiPost('/api/pong/room', { action: 'ready', code: roomCode, player: playerUsername, ready: true });
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
-    showRoomSettings(data.mode, data.maxPlayers, data.speed);
+    showRoomSettings(data.mode, data.maxPlayers, data.speed, data.roundsTarget);
     document.getElementById('startBtn').style.display = 'none';
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
@@ -643,11 +673,11 @@
     isHost = String(data.hostId) === String(window.__user.id);
     myPlayerIndex = data.playerIndex;
     ready = false;
-    selectedMode = data.mode || 'ffa';
+    selectedMode = data.mode || 'teams';
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
-    showRoomSettings(data.mode, data.maxPlayers, data.speed);
+    showRoomSettings(data.mode, data.maxPlayers, data.speed, data.roundsTarget);
     document.getElementById('startBtn').style.display = 'none';
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
@@ -665,11 +695,11 @@
       isHost = String(data.hostId) === String(window.__user.id);
       myPlayerIndex = data.playerIndex;
       ready = false;
-      selectedMode = data.mode || 'ffa';
+      selectedMode = data.mode || 'teams';
       document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
       document.getElementById('roomInfo').style.display = '';
       document.getElementById('roomCode').textContent = roomCode;
-      showRoomSettings(data.mode, data.maxPlayers, data.speed);
+      showRoomSettings(data.mode, data.maxPlayers, data.speed, data.roundsTarget);
       document.getElementById('startBtn').style.display = 'none';
       document.getElementById('playerList').style.display = '';
       status.textContent = '';
@@ -759,7 +789,7 @@
   // ---- Polling ----
   function startPolling() {
     stopPolling();
-    pollTimer = setInterval(pollState, 50);
+    pollTimer = setInterval(pollState, 300);
   }
   function stopPolling() {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -815,17 +845,19 @@
   function updateLobbyPlayers(data) {
     const container = document.getElementById('plRows');
     const players = data.players || [];
+    const mode = data.room ? data.room.mode : 'teams';
     if (!players.length) {
       container.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:rgba(var(--acc-main),0.45)">Waiting for players...</div>';
       return;
     }
-    container.innerHTML = players.map((p, i) =>
-      '<div class="pl-row' + (p.username === playerUsername ? ' me' : '') + '">' +
+    container.innerHTML = players.map((p, i) => {
+      let sideLabel = p.side === 'left' ? 'L' : p.side === 'right' ? 'R' : p.side === 'top' ? 'T' : p.side === 'bottom' ? 'B' : '?';
+      return '<div class="pl-row' + (p.username === playerUsername ? ' me' : '') + '">' +
       '<div class="ready-dot' + (p.ready ? ' on' : '') + '"></div>' +
       '<span class="pn">' + (p.username || 'anon') + '</span>' +
-      '<span class="pr">' + (p.side === 'left' ? 'L' : 'R') + '#' + (i + 1) + '</span>' +
-      '</div>'
-    ).join('');
+      '<span class="pr">' + sideLabel + '#' + (i + 1) + '</span>' +
+      '</div>';
+    }).join('');
   }
 
   // ---- Enter Game ----
@@ -858,7 +890,7 @@
         stopGamePoll();
         if (data.room.status === 'finished') enterResults(data);
       }
-    }, 50);
+    }, 100);
   }
   function stopGamePoll() { if (gamePollTimer) { clearInterval(gamePollTimer); gamePollTimer = null; } }
 
@@ -876,9 +908,12 @@
 
   function renderResults(data) {
     const winner = data.winnerName || data.winner || 'Unknown';
-    const isTeamWin = data.room && data.room.mode === 'teams';
+    const mode = data.room ? data.room.mode : 'teams';
     let html = '';
-    if (isTeamWin && data.winnerSide) {
+    if (mode === 'quads' && data.winnerSide) {
+      const sideLabel = data.winnerSide.charAt(0).toUpperCase() + data.winnerSide.slice(1);
+      html = sideLabel + ' Team Wins! (' + winner + ')';
+    } else if (mode === 'teams' && data.winnerSide) {
       html = (data.winnerSide === 'left' ? 'Left Team' : 'Right Team') + ' Wins! (' + winner + ')';
     } else {
       html = winner + ' Wins!';
@@ -955,8 +990,9 @@
   function resizeCanvas() {
     if (!gameState) return;
     const pc = (gameState.players || []).length || 2;
-    const w = 640 + (pc - 2) * 80;
-    const h = 480;
+    const isQuads = gameState.room && gameState.room.mode === 'quads';
+    const w = isQuads ? 700 : Math.min(700, 640 + (pc - 2) * 80);
+    const h = isQuads ? 700 : 480;
     canvas.width = w;
     canvas.height = h;
     canvas.style.aspectRatio = w + '/' + h;
@@ -989,17 +1025,17 @@
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, W, H);
 
-    // Subtle grid
+    // Subtle grid (batched)
     ctx.strokeStyle = 'rgba(255,255,255,0.02)';
     ctx.lineWidth = 1;
-    for (let x = 0; x < W; x += 40) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-    }
-    for (let y = 0; y < H; y += 40) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    }
+    ctx.beginPath();
+    for (let x = 0; x < W; x += 40) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+    for (let y = 0; y < H; y += 40) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+    ctx.stroke();
 
-    // Center line
+    const isQuads = state.room && state.room.mode === 'quads';
+
+    // Center lines
     ctx.setLineDash([6, 10]);
     ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 2;
@@ -1007,24 +1043,58 @@
     ctx.moveTo(W / 2, 0);
     ctx.lineTo(W / 2, H);
     ctx.stroke();
+    if (isQuads) {
+      ctx.beginPath();
+      ctx.moveTo(0, H / 2);
+      ctx.lineTo(W, H / 2);
+      ctx.stroke();
+    }
     ctx.setLineDash([]);
 
-    // Score (large, behind paddles)
+    // Score display
     const players = state.players || [];
-    const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
-    const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
     ctx.fillStyle = 'rgba(255,255,255,0.20)';
     ctx.font = 'bold 120px "IBM Plex Mono", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(leftAlive, W * 0.25, H * 0.5);
-    ctx.fillText(rightAlive, W * 0.75, H * 0.5);
+
+    if (isQuads) {
+      // Show round scores per side
+      const leftCount = players.filter(p => p.side === 'left' && p.alive).length;
+      const rightCount = players.filter(p => p.side === 'right' && p.alive).length;
+      const topCount = players.filter(p => p.side === 'top' && p.alive).length;
+      const bottomCount = players.filter(p => p.side === 'bottom' && p.alive).length;
+      ctx.font = 'bold 80px "IBM Plex Mono", monospace';
+      ctx.fillText(topCount, W * 0.5, H * 0.2);
+      ctx.fillText(bottomCount, W * 0.5, H * 0.8);
+      ctx.fillText(leftCount, W * 0.2, H * 0.5);
+      ctx.fillText(rightCount, W * 0.8, H * 0.5);
+      // Round scores
+      ctx.font = 'bold 28px "IBM Plex Mono", monospace';
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      const rn = state.room.roundNum || 0;
+      if (rn > 0) ctx.fillText('+' + rn, W * 0.25, 24);
+      if (rn < 0) ctx.fillText('+' + Math.abs(rn), W * 0.75, 24);
+    } else {
+      const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
+      const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
+      ctx.fillText(leftAlive, W * 0.25, H * 0.5);
+      ctx.fillText(rightAlive, W * 0.75, H * 0.5);
+    }
 
     // Side labels
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
     ctx.font = '11px "IBM Plex Mono", monospace';
     ctx.textBaseline = 'top';
-    if (state.room && state.room.mode === 'teams') {
+    if (isQuads) {
+      ctx.textAlign = 'center';
+      ctx.fillText('TOP', W * 0.5, 8);
+      ctx.fillText('BOTTOM', W * 0.5, H - 18);
+      ctx.textAlign = 'left';
+      ctx.fillText('LEFT', 8, H * 0.5);
+      ctx.textAlign = 'right';
+      ctx.fillText('RIGHT', W - 8, H * 0.5);
+    } else if (state.room && state.room.mode === 'teams') {
       ctx.fillText('LEFT', W * 0.25, 16);
       ctx.fillText('RIGHT', W * 0.75, 16);
     }
@@ -1034,69 +1104,60 @@
     const pw = Math.max(6, 12 - aliveCount);
     const ph = Math.max(50, 100 - aliveCount * 5);
     const isTeams = state.room && state.room.mode === 'teams';
-    const TEAM_COLORS = { left: '#3b82f6', right: '#ef4444' };
+    const SIDE_COLORS = { left: '#3b82f6', right: '#ef4444', top: '#2ecc71', bottom: '#f39c12' };
 
     players.forEach((p) => {
       if (!p.alive) return;
       const color = p.color || '#aaa';
-      let px;
-      if (p.side === 'left') px = 16;
-      else px = W - pw - 16;
-      const py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2;
+      let px, py;
 
-      if (isTeams) {
-        // Team color bar (full opacity, slightly inset)
-        const tw = Math.max(3, Math.floor(pw / 2));
-        const tx = p.side === 'left' ? px : px + pw - tw;
-        ctx.save();
-        ctx.shadowColor = TEAM_COLORS[p.side];
-        ctx.shadowBlur = 16;
-        ctx.fillStyle = TEAM_COLORS[p.side];
-        ctx.beginPath();
-        ctx.roundRect(tx, py, tw, ph, 2);
-        ctx.fill();
-        ctx.restore();
+      if (p.side === 'left') { px = 16; py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2; }
+      else if (p.side === 'right') { px = W - pw - 16; py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2; }
+      else if (p.side === 'top') { py = 16; px = (p.paddleY != null ? p.paddleY : 0.5) * W - ph / 2; }
+      else if (p.side === 'bottom') { py = H - pw - 16; px = (p.paddleY != null ? p.paddleY : 0.5) * W - ph / 2; }
 
-        // Player color (50% opaque, full size)
-        ctx.save();
-        ctx.globalAlpha = 0.5;
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 12;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.roundRect(px, py, pw, ph, 3);
-        ctx.fill();
-        ctx.restore();
-      } else {
-        // FFA: player color only
-        ctx.save();
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.roundRect(px, py, pw, ph, 3);
-        ctx.fill();
-        ctx.restore();
-      }
+      const isHorizontal = p.side === 'top' || p.side === 'bottom';
+      const paddleW = isHorizontal ? ph : pw;
+      const paddleH = isHorizontal ? pw : ph;
+
+      // Team color bar
+      ctx.fillStyle = SIDE_COLORS[p.side];
+      ctx.beginPath();
+      ctx.roundRect(px, py, paddleW, paddleH, 3);
+      ctx.fill();
+
+      // Player color (50% opaque)
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(px, py, paddleW, paddleH, 3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
 
       // Name
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.font = '9px "IBM Plex Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(p.username || '', px + pw / 2, py - 4);
+      ctx.textBaseline = p.side === 'top' ? 'bottom' : p.side === 'bottom' ? 'top' : 'bottom';
+      const nameX = p.side === 'left' ? px + paddleW / 2 : p.side === 'right' ? px + paddleW / 2 : px + paddleW / 2;
+      const nameY = p.side === 'top' ? py - 4 : p.side === 'bottom' ? py + paddleH + 12 : py - 4;
+      ctx.fillText(p.username || '', nameX, nameY);
     });
 
     // Dead paddles
     players.forEach((p) => {
       if (p.alive) return;
-      let px;
-      if (p.side === 'left') px = 16;
-      else px = W - pw - 16;
-      const py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2;
+      let px, py;
+      if (p.side === 'left') { px = 16; py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2; }
+      else if (p.side === 'right') { px = W - pw - 16; py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2; }
+      else if (p.side === 'top') { py = 16; px = (p.paddleY != null ? p.paddleY : 0.5) * W - ph / 2; }
+      else if (p.side === 'bottom') { py = H - pw - 16; px = (p.paddleY != null ? p.paddleY : 0.5) * W - ph / 2; }
+      const isHorizontal = p.side === 'top' || p.side === 'bottom';
+      const paddleW = isHorizontal ? ph : pw;
+      const paddleH = isHorizontal ? pw : ph;
       ctx.fillStyle = 'rgba(255,255,255,0.02)';
       ctx.beginPath();
-      ctx.roundRect(px, py, pw, ph, 3);
+      ctx.roundRect(px, py, paddleW, paddleH, 3);
       ctx.fill();
     });
 
@@ -1106,10 +1167,9 @@
       const by = (state.ball.y || 0.5) * H;
       const bs = 8;
 
-      // Glow
       ctx.save();
       ctx.shadowColor = '#fff';
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = 8;
       ctx.fillStyle = '#fff';
       ctx.beginPath();
       ctx.arc(bx, by, bs / 2, 0, Math.PI * 2);
@@ -1124,7 +1184,11 @@
     const aliveCount = players.filter(p => p.alive).length;
     let html = '<span class="stat">Room <b>' + (roomCode || '-') + '</b></span>';
     html += '<span class="stat">Players <b>' + aliveCount + '/' + players.length + '</b></span>';
-    html += '<span class="stat">' + (state.room && state.room.mode === 'teams' ? 'Teams' : 'FFA') + '</span>';
+    const mode = state.room && state.room.mode;
+    html += '<span class="stat">' + (mode === 'quads' ? 'Quads' : 'Teams') + '</span>';
+    if (state.room && state.room.roundsTarget) {
+      html += '<span class="stat">Round <b>' + (state.room.roundNum || 0) + '</b> / ' + state.room.roundsTarget + '</span>';
+    }
     hud.innerHTML = html;
   }
 

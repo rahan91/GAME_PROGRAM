@@ -543,8 +543,36 @@
 
   <a href="/admin" id="adminLink" style="position:fixed;top:20px;left:20px;z-index:10;display:none;font-size:14px;letter-spacing:2px;color:rgba(230,200,140,0.9);text-decoration:none;">ADMIN</a>
 
-  <div id="authBtnWrap" style="position:fixed;top:20px;right:20px;z-index:10;">
+  <div id="authBtnWrap" style="position:fixed;top:20px;right:20px;z-index:10;display:flex;gap:8px;align-items:center;">
+    <button class="auth-btn" id="settingsBtn" style="display:none;padding:8px 10px;" title="Settings">&#9881;</button>
     <button class="auth-btn" id="authBtn">Login</button>
+  </div>
+
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal" style="position:relative;">
+      <button class="close" id="closeSettings">&times;</button>
+      <h2>Settings</h2>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);display:block;margin-bottom:6px;">Cursor Style</label>
+        <select id="settingCursor" style="width:100%;padding:8px;border:1px solid rgba(var(--acc-main),0.2);border-radius:6px;background:rgba(var(--acc-dim),0.15);color:#e0e0e0;font-size:14px;">
+          <option value="default">Default</option>
+          <option value="arrow">Arrow</option>
+          <option value="finger">Finger</option>
+        </select>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="settingLeftHanded"> Left-handed mode
+        </label>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="settingAutoReady"> Auto-ready in lobbies
+        </label>
+      </div>
+      <button class="submit" id="saveSettings">Save</button>
+      <div id="settingsStatus" style="margin-top:8px;font-size:12px;min-height:18px;"></div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="authModal">
@@ -666,10 +694,12 @@
     function renderAuthState(user) {
       if (user) {
         authBtn.textContent = 'Logout (' + user.username + ')';
+        document.getElementById('settingsBtn').style.display = '';
         document.getElementById('adminLink').style.display =
           user.username.toLowerCase() === 'ruruskaado' ? '' : 'none';
       } else {
         authBtn.textContent = 'Login';
+        document.getElementById('settingsBtn').style.display = 'none';
         document.getElementById('adminLink').style.display = 'none';
       }
     }
@@ -758,6 +788,48 @@
       refreshPoints();
     }
     initAuth();
+
+    // ---- Settings ----
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettingsBtn = document.getElementById('closeSettings');
+    const saveSettingsBtn = document.getElementById('saveSettings');
+
+    settingsBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        document.getElementById('settingLeftHanded').checked = !!data.leftHanded;
+        document.getElementById('settingAutoReady').checked = !!data.autoReady;
+        document.getElementById('settingCursor').value = data.cursorStyle || 'default';
+      } catch {}
+      settingsModal.classList.add('open');
+    });
+    closeSettingsBtn.addEventListener('click', () => settingsModal.classList.remove('open'));
+    settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.remove('open'); });
+
+    saveSettingsBtn.addEventListener('click', async () => {
+      const status = document.getElementById('settingsStatus');
+      status.textContent = 'Saving...';
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            leftHanded: document.getElementById('settingLeftHanded').checked,
+            autoReady: document.getElementById('settingAutoReady').checked,
+            cursorStyle: document.getElementById('settingCursor').value,
+          })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          status.textContent = 'Saved!';
+          settingsModal.classList.remove('open');
+        } else {
+          status.textContent = data.error || 'Error';
+        }
+      } catch { status.textContent = 'Network error'; }
+    });
 
     // ---- Universal leaderboard ----
     async function loadLeaderboard() {

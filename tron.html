@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BLOCK</title>
-  <meta name="description" content="Multiplayer Tron Light Cycles — 2 to 8 players, leave glowing trails and be the last one standing.">
+  <meta name="description" content="Multiplayer Tron Light Cycles — 2 to 16 players, leave glowing trails and be the last one standing.">
   <meta name="keywords" content="tron, light cycles, multiplayer, arcade, browser game, leaderboard, pvp">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#1c1c1c">
@@ -13,12 +13,12 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="GAME PROGRAM">
   <meta property="og:title" content="Tron — Multiplayer Light Cycles | GAME PROGRAM">
-  <meta property="og:description" content="Multiplayer Tron for 2-8 players. Leave glowing trails and be the last one standing.">
+  <meta property="og:description" content="Multiplayer Tron for 2-16 players. Leave glowing trails and be the last one standing.">
   <meta property="og:url" content="https://game-program.pages.dev/tron">
   <meta property="og:image" content="https://game-program.pages.dev/assets/target-icon.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Tron — Multiplayer Light Cycles | GAME PROGRAM">
-  <meta name="twitter:description" content="Multiplayer Tron for 2-8 players. Leave glowing trails and be the last one standing.">
+  <meta name="twitter:description" content="Multiplayer Tron for 2-16 players. Leave glowing trails and be the last one standing.">
   <meta name="twitter:image" content="https://game-program.pages.dev/assets/target-icon.png">
   <script type="application/ld+json">
   {
@@ -26,7 +26,7 @@
     "@type": "VideoGame",
     "name": "Tron",
     "url": "https://game-program.pages.dev/tron",
-    "description": "Multiplayer Tron Light Cycles for 2-8 players. Be the last one standing.",
+    "description": "Multiplayer Tron Light Cycles for 2-16 players. Be the last one standing.",
     "genre": "Arcade",
     "gamePlatform": "Web Browser",
     "operatingSystem": "Any",
@@ -99,7 +99,7 @@
   .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
   /* ---- Lobby ---- */
-  #lobby { gap: 24px; padding-top: 70px; }
+  #lobbyScreen { gap: 16px; padding-top: 70px; justify-content: flex-start; overflow-y: auto; }
   .lobby-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
   .lobby-input {
     font-family: inherit; font-size: 14px; letter-spacing: 2px;
@@ -325,9 +325,13 @@
     <div class="settings-label">Max Players</div>
     <div class="settings-options" id="maxPlayersOpts">
       <button class="settings-opt" data-val="2">2</button>
-      <button class="settings-opt" data-val="4">4</button>
+      <button class="settings-opt active" data-val="4">4</button>
       <button class="settings-opt" data-val="6">6</button>
-      <button class="settings-opt active" data-val="8">8</button>
+      <button class="settings-opt" data-val="8">8</button>
+      <button class="settings-opt" data-val="10">10</button>
+      <button class="settings-opt" data-val="12">12</button>
+      <button class="settings-opt" data-val="14">14</button>
+      <button class="settings-opt" data-val="16">16</button>
     </div>
   </div>
 
@@ -412,7 +416,7 @@
 
 <div id="cursorfx" class="arrow"></div>
 
-<div class="hint">2-8 players &middot; Create or join a room &middot; Arrow keys or WASD to move</div>
+<div class="hint">2-16 players &middot; Leave glowing trails &middot; Arrow keys or WASD to move</div>
 
 <script>
 (() => {
@@ -453,7 +457,9 @@
       cursorfx.style.filter = '';
     }
   }
+  let _lastUrl = '', _lastFilt = '';
   function cursorTick() {
+    if (window.matchMedia('(pointer: coarse)').matches) { requestAnimationFrame(cursorTick); return; }
     curX += (realX - curX) * 0.24;
     curY += (realY - curY) * 0.24;
     cursorfx.style.transform = 'translate3d(' + curX + 'px,' + curY + 'px,0)';
@@ -467,9 +473,13 @@
     }
     trailX[0] += (curX - trailX[0]) * 0.4;
     trailY[0] += (curY - trailY[0]) * 0.4;
+    const urlChanged = url !== _lastUrl || filt !== _lastFilt;
+    if (urlChanged) _lastUrl = url, _lastFilt = filt;
     for (let j = 0; j < TRAIL; j++) {
-      trail[j].style.backgroundImage = 'url("' + url + '")';
-      trail[j].style.filter = filt;
+      if (urlChanged) {
+        trail[j].style.backgroundImage = 'url("' + url + '")';
+        trail[j].style.filter = filt;
+      }
       trail[j].style.transform = 'translate3d(' + trailX[j] + 'px,' + trailY[j] + 'px,0)';
     }
     requestAnimationFrame(cursorTick);
@@ -612,7 +622,7 @@
   }
 
   // ---- Settings buttons ----
-  let selectedMaxPlayers = 8;
+  let selectedMaxPlayers = 4;
   let selectedSpeed = 'medium';
   document.querySelectorAll('#maxPlayersOpts .settings-opt').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -947,9 +957,17 @@
 
   // ---- Canvas Resize ----
   function resizeCanvas() {
-    const size = Math.floor(Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9, 600));
-    canvas.width = size;
-    canvas.height = size;
+    if (gameState && gameState.gridSize) {
+      const gw = gameState.gridSize.w;
+      const gh = gameState.gridSize.h;
+      const scale = Math.min(window.innerWidth * 0.9 / gw, window.innerHeight * 0.9 / gh, 1);
+      canvas.width = Math.floor(gw * scale);
+      canvas.height = Math.floor(gh * scale);
+    } else {
+      const size = Math.floor(Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9, 600));
+      canvas.width = size;
+      canvas.height = size;
+    }
   }
 
   // ---- Render Loop ----
@@ -979,16 +997,14 @@
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.fillRect(0, 0, W, H);
 
-    // Grid lines
+    // Grid lines (batched)
     const cellSize = 4;
     ctx.strokeStyle = 'rgba(255,255,255,0.02)';
     ctx.lineWidth = 1;
-    for (let x = 0; x <= W; x += cellSize * 10) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-    }
-    for (let y = 0; y <= H; y += cellSize * 10) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-    }
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += cellSize * 10) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+    for (let y = 0; y <= H; y += cellSize * 10) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+    ctx.stroke();
 
     // Border glow
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
@@ -1014,7 +1030,7 @@
 
       if (!isDead) {
         ctx.shadowColor = color;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 4;
       } else {
         ctx.globalAlpha = 0.35;
       }
@@ -1040,7 +1056,7 @@
       ctx.save();
       if (!isDead) {
         ctx.shadowColor = color;
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 6;
       } else {
         ctx.globalAlpha = 0.35;
       }
