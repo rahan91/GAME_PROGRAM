@@ -800,21 +800,19 @@
   async function pollState() {
     if (!roomCode) return;
     const data = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
-    if (!data) return;
-
-    if (data.error || data.destroyed) return;
+    if (!data || data.error || data.destroyed) return;
 
     const status = data.room ? data.room.status : null;
 
-    // Lobby update
     if (status === 'waiting') {
       updateLobbyPlayers(data);
 
-      // Update myPlayerIndex from current players list
-      const me = (data.players || []).findIndex(p => String(p.userId) === String(window.__user.id));
-      if (me >= 0) myPlayerIndex = me;
+      const meIdx = (data.players || []).findIndex(p => String(p.userId) === String(window.__user.id));
+      if (meIdx >= 0) myPlayerIndex = meIdx;
 
-      isHost = String(data.room.hostId) === String(window.__user.id);
+      if (data.room.hostId) {
+        isHost = String(data.room.hostId) === String(window.__user.id);
+      }
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
       document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
 
