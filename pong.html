@@ -798,15 +798,11 @@
   async function pollState() {
     if (!roomCode) return;
     const data = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
-    if (!data) return;
+    if (!data) { document.getElementById('lobbyStatus').textContent = 'No response from server'; return; }
 
     if (data.error || data.destroyed) {
-      stopPolling();
-      roomCode = null;
-      showScreen('lobby');
-      document.getElementById('roomInfo').style.display = 'none';
-      document.getElementById('playerList').style.display = 'none';
-      document.getElementById('lobbyStatus').textContent = data.error || 'Room closed';
+      console.error('pollState error:', data.error || 'destroyed');
+      document.getElementById('lobbyStatus').textContent = 'Poll error: ' + (data.error || 'Room closed');
       return;
     }
 
