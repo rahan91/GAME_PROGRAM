@@ -651,8 +651,10 @@
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
     showRoomSettings(data.mode, data.maxPlayers, data.speed, data.roundsTarget);
-    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('startBtn').style.display = '';
+    document.getElementById('hostBadge').textContent = 'YOU ARE HOST';
     document.getElementById('playerList').style.display = '';
+    document.getElementById('plRows').innerHTML = '<div class="pl-row me"><div class="ready-dot on"></div><span class="pn">' + playerUsername + '</span><span class="pr">L#1</span></div>';
     status.textContent = '';
     startPolling();
   });
@@ -798,23 +800,23 @@
   async function pollState() {
     if (!roomCode) return;
     const data = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
-    const dbg = document.getElementById('lobbyStatus');
-    if (!data) { dbg.textContent = 'DEBUG: apiGet returned null'; return; }
+    if (!data) return;
 
-    if (data.error || data.destroyed) {
-      dbg.textContent = 'DEBUG server error: ' + (data.error || 'destroyed');
-      return;
-    }
+    if (data.error || data.destroyed) return;
 
     const status = data.room ? data.room.status : null;
-    const playerCount = (data.players || []).length;
-    const myId = window.__user ? window.__user.id : 'UNDEF';
-    const hostId = data.room ? data.room.hostId : 'UNDEF';
-    dbg.textContent = 'DEBUG: status=' + status + ' players=' + playerCount + ' myId=' + myId + ' hostId=' + hostId;
 
     // Lobby update
     if (status === 'waiting') {
       updateLobbyPlayers(data);
+
+      // Update myPlayerIndex from current players list
+      const me = (data.players || []).findIndex(p => String(p.userId) === String(window.__user.id));
+      if (me >= 0) myPlayerIndex = me;
+
+      isHost = String(data.room.hostId) === String(window.__user.id);
+      document.getElementById('startBtn').style.display = isHost ? '' : 'none';
+      document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
 
       // Update myPlayerIndex from current players list
       const me = (data.players || []).findIndex(p => String(p.userId) === String(window.__user.id));

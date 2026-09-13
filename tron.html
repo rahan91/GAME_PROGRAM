@@ -661,8 +661,10 @@
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
     showRoomSettings(data.maxPlayers, data.speed);
-    document.getElementById('startBtn').style.display = 'none';
+    document.getElementById('startBtn').style.display = '';
+    document.getElementById('hostBadge').textContent = 'YOU ARE HOST';
     document.getElementById('playerList').style.display = '';
+    document.getElementById('plRows').innerHTML = '<div class="pl-row me"><div class="ready-dot on"></div><span class="pn">' + playerUsername + '</span><span class="pr">#1</span></div>';
     status.textContent = '';
     startPolling();
   });
@@ -806,15 +808,7 @@
     const data = await apiGet('/api/tron/state?room=' + encodeURIComponent(roomCode));
     if (!data) return;
 
-    if (data.error || data.destroyed) {
-      stopPolling();
-      roomCode = null;
-      showScreen('lobby');
-      document.getElementById('roomInfo').style.display = 'none';
-      document.getElementById('playerList').style.display = 'none';
-      document.getElementById('lobbyStatus').textContent = data.error || 'Room closed';
-      return;
-    }
+    if (data.error || data.destroyed) return;
 
     const status = data.room ? data.room.status : null;
 
