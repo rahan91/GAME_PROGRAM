@@ -466,7 +466,7 @@ function render() {
     ovMsg.textContent = messageFor(accuracy);
     ovBeat.textContent = isLoggedIn ? '' : 'You beat ' + heuristicBeat(accuracy) + '% of players';
     ovCov.textContent = Math.round(lastCov * 100) + '% of the circle drawn';
-    ovPts.textContent = lastPoints > 0 ? ('+' + Shop.fmt(lastPoints) + ' pts &middot; ' + elapsed.toFixed(1) + 's') : 'draw again to keep improving';
+    ovPts.textContent = lastPoints > 0 ? ('+' + Shop.fmt(lastPoints) + ' pts \u00b7 ' + elapsed.toFixed(1) + 's') : 'draw again to keep improving';
     overlay.classList.add('show');
     render();
     // show the fitted circle over the stroke
