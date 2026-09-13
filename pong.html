@@ -1018,6 +1018,8 @@
     const aliveCount = players.filter(p => p.alive).length;
     const pw = Math.max(6, 12 - aliveCount);
     const ph = Math.max(50, 100 - aliveCount * 5);
+    const isTeams = state.room && state.room.mode === 'teams';
+    const TEAM_COLORS = { left: '#3b82f6', right: '#ef4444' };
 
     players.forEach((p) => {
       if (!p.alive) return;
@@ -1027,15 +1029,40 @@
       else px = W - pw - 16;
       const py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2;
 
-      // Glow
-      ctx.save();
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 20;
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.roundRect(px, py, pw, ph, 3);
-      ctx.fill();
-      ctx.restore();
+      if (isTeams) {
+        // Team color bar (full opacity, slightly inset)
+        const tw = Math.max(3, Math.floor(pw / 2));
+        const tx = p.side === 'left' ? px : px + pw - tw;
+        ctx.save();
+        ctx.shadowColor = TEAM_COLORS[p.side];
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = TEAM_COLORS[p.side];
+        ctx.beginPath();
+        ctx.roundRect(tx, py, tw, ph, 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Player color (50% opaque, full size)
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(px, py, pw, ph, 3);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        // FFA: player color only
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(px, py, pw, ph, 3);
+        ctx.fill();
+        ctx.restore();
+      }
 
       // Name
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
