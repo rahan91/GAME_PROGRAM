@@ -35,23 +35,27 @@ function assignSide(mode, playerCount) {
 }
 
 export async function onRequestPost(context) {
-  const user = await getUserFromRequest(context.env, context.request);
-  if (!user) return json({ error: 'Not logged in' }, 401);
+  try {
+    const user = await getUserFromRequest(context.env, context.request);
+    if (!user) return json({ error: 'Not logged in' }, 401);
 
-  let body;
-  try { body = await context.request.json(); } catch { return json({ error: 'Invalid body' }, 400); }
+    let body;
+    try { body = await context.request.json(); } catch { return json({ error: 'Invalid body' }, 400); }
 
-  const action = String((body && body.action) || '').toLowerCase();
-  const db = context.env.DATABASE;
-  const now = Math.floor(Date.now() / 1000);
+    const action = String((body && body.action) || '').toLowerCase();
+    const db = context.env.DATABASE;
+    const now = Math.floor(Date.now() / 1000);
 
-  if (action === 'create') return handleCreate(db, user, body, now);
-  if (action === 'join') return handleJoin(db, user, body, now);
-  if (action === 'leave') return handleLeave(db, user, body);
-  if (action === 'ready') return handleReady(db, user, body);
-  if (action === 'start') return handleStart(db, user, body, now);
-  if (action === 'end') return handleEnd(db, user, body);
-  return json({ error: 'Unknown action' }, 400);
+    if (action === 'create') return handleCreate(db, user, body, now);
+    if (action === 'join') return handleJoin(db, user, body, now);
+    if (action === 'leave') return handleLeave(db, user, body);
+    if (action === 'ready') return handleReady(db, user, body);
+    if (action === 'start') return handleStart(db, user, body, now);
+    if (action === 'end') return handleEnd(db, user, body);
+    return json({ error: 'Unknown action' }, 400);
+  } catch (e) {
+    return json({ error: 'Server error: ' + (e.message || e) }, 500);
+  }
 }
 
 async function handleCreate(db, user, body, now) {
@@ -68,10 +72,17 @@ async function handleCreate(db, user, body, now) {
   const roundsTarget = [1, 3, 5, 7, 10].includes(Number(body?.rounds)) ? Number(body.rounds) : 3;
   const expiresAt = now + ROOM_EXPIRY_SECONDS;
 
-  await db.prepare(
-    `INSERT INTO pong_rooms (id, code, mode, status, host_id, max_players, speed, rounds_target, round_num, created_at, expires_at)
-     VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, 0, ?, ?)`
-  ).bind(roomId, code, mode, user.id, maxPlayers, speed, roundsTarget, now, expiresAt).run();
+  try {
+    await db.prepare(
+      `INSERT INTO pong_rooms (id, code, mode, status, host_id, max_players, speed, rounds_target, round_num, created_at, expires_at)
+       VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, 0, ?, ?)`
+    ).bind(roomId, code, mode, user.id, maxPlayers, speed, roundsTarget, now, expiresAt).run();
+  } catch (e) {
+    await db.prepare(
+      `INSERT INTO pong_rooms (id, code, mode, status, host_id, max_players, speed, created_at, expires_at)
+       VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, ?)`
+    ).bind(roomId, code, mode, user.id, maxPlayers, speed, now, expiresAt).run();
+  }
 
   const side = assignSide(mode, 0);
   await db.prepare(
@@ -100,10 +111,17 @@ async function handleJoin(db, user, body, now) {
       const roomId = crypto.randomUUID();
       const roomCode = generateCode();
       const expiresAt = now + ROOM_EXPIRY_SECONDS;
-      await db.prepare(
-        `INSERT INTO pong_rooms (id, code, mode, status, host_id, rounds_target, round_num, created_at, expires_at)
-         VALUES (?, ?, 'teams', 'waiting', ?, 3, 0, ?, ?)`
-      ).bind(roomId, roomCode, user.id, now, expiresAt).run();
+      try {
+        await db.prepare(
+          `INSERT INTO pong_rooms (id, code, mode, status, host_id, rounds_target, round_num, created_at, expires_at)
+           VALUES (?, ?, 'teams', 'waiting', ?, 3, 0, ?, ?)`
+        ).bind(roomId, roomCode, user.id, now, expiresAt).run();
+      } catch (e) {
+        await db.prepare(
+          `INSERT INTO pong_rooms (id, code, mode, status, host_id, created_at, expires_at)
+           VALUES (?, ?, 'teams', 'waiting', ?, ?, ?)`
+        ).bind(roomId, roomCode, user.id, now, expiresAt).run();
+      }
       room = { id: roomId, code: roomCode, mode: 'teams', status: 'waiting', host_id: user.id, max_players: 8, speed: 'medium', rounds_target: 3 };
     }
   }
@@ -187,7 +205,11 @@ async function handleStart(db, user, body, now) {
   if (room.mode === 'teams' && playerCount % 2 !== 0) return json({ error: 'Teams mode needs even number of players' }, 400);
   if (room.mode === 'quads' && playerCount % 4 !== 0) return json({ error: 'Quads mode needs players divisible by 4' }, 400);
 
-  await db.prepare("UPDATE pong_rooms SET status = 'playing', round_num = 1, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
+  try {
+    await db.prepare("UPDATE pong_rooms SET status = 'playing', round_num = 1, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
+  } catch (e) {
+    await db.prepare("UPDATE pong_rooms SET status = 'playing', expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
+  }
 
   const allPlayers = await db.prepare('SELECT user_id FROM pong_players WHERE room_id = ?').bind(room.id).all();
   for (const p of (allPlayers.results || [])) {

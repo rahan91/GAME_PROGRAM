@@ -30,9 +30,17 @@ export async function onRequestGet(context) {
 
   const db = context.env.DATABASE;
 
-  const room = await db.prepare(
-    'SELECT id, code, mode, status, host_id, max_players, speed, rounds_target, round_num FROM pong_rooms WHERE code = ?'
-  ).bind(code.toUpperCase()).first();
+  let room;
+  try {
+    room = await db.prepare(
+      'SELECT id, code, mode, status, host_id, max_players, speed, rounds_target, round_num FROM pong_rooms WHERE code = ?'
+    ).bind(code.toUpperCase()).first();
+  } catch (e) {
+    room = await db.prepare(
+      'SELECT id, code, mode, status, host_id, max_players, speed FROM pong_rooms WHERE code = ?'
+    ).bind(code.toUpperCase()).first();
+    if (room) { room.rounds_target = 3; room.round_num = 0; }
+  }
   if (!room) return json({ error: 'Room not found' }, 404);
 
   const playerRows = await db.prepare(
@@ -168,15 +176,16 @@ export async function onRequestGet(context) {
           const survivingSide = aliveSidesAfter.size === 1 ? [...aliveSidesAfter][0] : null;
 
           if (survivingSide === 'left' || survivingSide === 'top') {
-            await db.prepare('UPDATE pong_rooms SET round_num = round_num + 1 WHERE id = ?').bind(room.id).run();
+            try { await db.prepare('UPDATE pong_rooms SET round_num = round_num + 1 WHERE id = ?').bind(room.id).run(); } catch {}
           } else if (survivingSide === 'right' || survivingSide === 'bottom') {
-            await db.prepare('UPDATE pong_rooms SET round_num = round_num - 1 WHERE id = ?').bind(room.id).run();
+            try { await db.prepare('UPDATE pong_rooms SET round_num = round_num - 1 WHERE id = ?').bind(room.id).run(); } catch {}
           }
 
-          const updatedRoom = await db.prepare('SELECT round_num, rounds_target FROM pong_rooms WHERE id = ?').bind(room.id).first();
-          const absScore = Math.abs(updatedRoom.round_num);
+          let updatedRoom = { round_num: 0, rounds_target: 3 };
+          try { updatedRoom = await db.prepare('SELECT round_num, rounds_target FROM pong_rooms WHERE id = ?').bind(room.id).first() || updatedRoom; } catch {}
+          const absScore = Math.abs(updatedRoom.round_num || 0);
 
-          if (absScore >= updatedRoom.rounds_target) {
+          if (absScore >= (updatedRoom.rounds_target || 3)) {
             // Game over
             await db.prepare("UPDATE pong_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(survivingSide, room.id).run();
             room.status = 'finished';
@@ -221,11 +230,11 @@ export async function onRequestGet(context) {
     }
   }
 
-  const leftScore = room.round_num > 0 ? room.round_num : 0;
-  const rightScore = room.round_num < 0 ? Math.abs(room.round_num) : 0;
+  const leftScore = (room.round_num || 0) > 0 ? room.round_num : 0;
+  const rightScore = (room.round_num || 0) < 0 ? Math.abs(room.round_num) : 0;
 
   return json({
-    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, maxPlayers: room.max_players, speed: room.speed, roundsTarget: room.rounds_target, roundNum: room.round_num, leftScore, rightScore },
+    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, maxPlayers: room.max_players, speed: room.speed, roundsTarget: room.rounds_target || 3, roundNum: room.round_num || 0, leftScore, rightScore },
     players: (finalPlayers.results || []).map((p) => ({
       id: p.id,
       userId: p.user_id,

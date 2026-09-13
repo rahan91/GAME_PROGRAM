@@ -54,23 +54,27 @@ async function getPlayerCount(db, roomId) {
 }
 
 export async function onRequestPost(context) {
-  const user = await getUserFromRequest(context.env, context.request);
-  if (!user) return json({ error: 'Not logged in' }, 401);
+  try {
+    const user = await getUserFromRequest(context.env, context.request);
+    if (!user) return json({ error: 'Not logged in' }, 401);
 
-  let body;
-  try { body = await context.request.json(); } catch { return json({ error: 'Invalid body' }, 400); }
+    let body;
+    try { body = await context.request.json(); } catch { return json({ error: 'Invalid body' }, 400); }
 
-  const action = String((body && body.action) || '').toLowerCase();
-  const db = context.env.DATABASE;
-  const now = Math.floor(Date.now() / 1000);
+    const action = String((body && body.action) || '').toLowerCase();
+    const db = context.env.DATABASE;
+    const now = Math.floor(Date.now() / 1000);
 
-  if (action === 'create') return handleCreate(db, user, body, now);
-  if (action === 'join') return handleJoin(db, user, body, now);
-  if (action === 'leave') return handleLeave(db, user, body);
-  if (action === 'ready') return handleReady(db, user, body);
-  if (action === 'start') return handleStart(db, user, body, now);
-  if (action === 'end') return handleEnd(db, user, body);
-  return json({ error: 'Unknown action' }, 400);
+    if (action === 'create') return handleCreate(db, user, body, now);
+    if (action === 'join') return handleJoin(db, user, body, now);
+    if (action === 'leave') return handleLeave(db, user, body);
+    if (action === 'ready') return handleReady(db, user, body);
+    if (action === 'start') return handleStart(db, user, body, now);
+    if (action === 'end') return handleEnd(db, user, body);
+    return json({ error: 'Unknown action' }, 400);
+  } catch (e) {
+    return json({ error: 'Server error: ' + (e.message || e) }, 500);
+  }
 }
 
 async function handleCreate(db, user, body, now) {
@@ -86,10 +90,17 @@ async function handleCreate(db, user, body, now) {
   const expiresAt = now + ROOM_EXPIRY_SECONDS;
   const grid = computeGridSize(maxPlayers);
 
-  await db.prepare(
-    `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
-     VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(roomId, code, user.id, maxPlayers, speed, grid.w, grid.h, now, expiresAt).run();
+  try {
+    await db.prepare(
+      `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
+       VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(roomId, code, user.id, maxPlayers, speed, grid.w, grid.h, now, expiresAt).run();
+  } catch (e) {
+    await db.prepare(
+      `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, created_at, expires_at)
+       VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?)`
+    ).bind(roomId, code, user.id, maxPlayers, speed, now, expiresAt).run();
+  }
 
   const pos = generateStartPositions(grid.w, grid.h, 1)[0];
   await db.prepare(
@@ -119,10 +130,17 @@ async function handleJoin(db, user, body, now) {
       const roomCode = generateCode();
       const expiresAt = now + ROOM_EXPIRY_SECONDS;
       const grid = computeGridSize(4);
-      await db.prepare(
-        `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
-         VALUES (?, ?, 'waiting', ?, 4, 'medium', ?, ?, ?, ?)`
-      ).bind(roomId, roomCode, user.id, grid.w, grid.h, now, expiresAt).run();
+      try {
+        await db.prepare(
+          `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
+           VALUES (?, ?, 'waiting', ?, 4, 'medium', ?, ?, ?, ?)`
+        ).bind(roomId, roomCode, user.id, grid.w, grid.h, now, expiresAt).run();
+      } catch (e) {
+        await db.prepare(
+          `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, created_at, expires_at)
+           VALUES (?, ?, 'waiting', ?, 4, 'medium', ?, ?)`
+        ).bind(roomId, roomCode, user.id, now, expiresAt).run();
+      }
       room = { id: roomId, code: roomCode, status: 'waiting', host_id: user.id, max_players: 4, speed: 'medium', grid_w: grid.w, grid_h: grid.h };
     }
   }
