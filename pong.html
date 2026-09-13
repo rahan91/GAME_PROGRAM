@@ -818,14 +818,6 @@
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
       document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
 
-      // Update myPlayerIndex from current players list
-      const me = (data.players || []).findIndex(p => String(p.userId) === String(window.__user.id));
-      if (me >= 0) myPlayerIndex = me;
-
-      isHost = String(data.room.hostId) === String(window.__user.id);
-      document.getElementById('startBtn').style.display = isHost ? '' : 'none';
-      document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
-
       // Auto-start removed — host clicks Start manually
     }
 
