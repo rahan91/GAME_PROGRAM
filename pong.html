@@ -532,6 +532,21 @@
   canvas.addEventListener('touchend', () => { touchDir = 0; });
   canvas.addEventListener('touchcancel', () => { touchDir = 0; });
 
+  // Mouse control
+  let mouseY = -1;
+  let mouseActive = false;
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseY = (e.clientY - rect.top) / rect.height;
+    mouseActive = true;
+  });
+  canvas.addEventListener('mouseleave', () => { mouseActive = false; mouseY = -1; });
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mouseY = (e.clientY - rect.top) / rect.height;
+    mouseActive = true;
+  });
+
   // ---- Screen management ----
   function showScreen(name) {
     currentScreen = name;
@@ -1135,6 +1150,16 @@
 
     // Touch override
     if (touchDir !== 0) dir = touchDir;
+
+    // Mouse override — follow cursor Y position relative to paddle
+    if (mouseActive && mouseY >= 0 && gameState) {
+      const me = (gameState.players || []).find(p => p.userId === window.__user.id);
+      if (me) {
+        const paddleCenter = me.paddleY != null ? me.paddleY : 0.5;
+        const diff = mouseY - paddleCenter;
+        if (Math.abs(diff) > 0.03) dir = diff > 0 ? 1 : -1;
+      }
+    }
 
     if (roomCode && dir !== lastSentDir) {
       lastSentDir = dir;

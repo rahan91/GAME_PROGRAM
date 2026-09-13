@@ -93,7 +93,8 @@
     { key: 'tron:violet',  slot: 'tron', name: 'Violet',  color: '#8b5cf6', price: 2000 },
     { key: 'tron:red',     slot: 'tron', name: 'Red',     color: '#e5484d', price: 3000 },
     { key: 'tron:orange',  slot: 'tron', name: 'Orange',  color: '#f97316', price: 4000 },
-    { key: 'tron:gold',    slot: 'tron', name: 'Gold',    color: '#bf9b30', price: 7000 }
+    { key: 'tron:yellow',  slot: 'tron', name: 'Yellow', color: '#FFD700', price: 5000 },
+    { key: 'tron:gold',    slot: 'tron', name: 'Gold',    color: '#bf9b30', price: 8000 }
   ];
 
   var SLOT_NAMES = { maze: 'Maze', cursor: 'Cursor', target: 'Target', accent: 'Accent', nameplate: 'Nameplate', pong: 'Pong', tron: 'Tron' };
