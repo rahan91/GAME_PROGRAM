@@ -817,10 +817,10 @@
       updateLobbyPlayers(data);
 
       // Update myPlayerIndex from current players list
-      const me = (data.players || []).findIndex(p => p.userId === window.__user.id);
+      const me = (data.players || []).findIndex(p => String(p.userId) === String(window.__user.id));
       if (me >= 0) myPlayerIndex = me;
 
-      isHost = myPlayerIndex === 0;
+      isHost = String(data.room.hostId) === String(window.__user.id);
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
       document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
 
@@ -1217,7 +1217,7 @@
 
     // Mouse override — follow cursor Y position relative to paddle
     if (mouseActive && mouseY >= 0 && gameState) {
-      const me = (gameState.players || []).find(p => p.userId === window.__user.id);
+      const me = (gameState.players || []).find(p => String(p.userId) === String(window.__user.id));
       if (me) {
         const paddleCenter = me.paddleY != null ? me.paddleY : 0.5;
         const diff = mouseY - paddleCenter;
