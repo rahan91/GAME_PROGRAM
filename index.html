@@ -543,8 +543,8 @@
 
   <a href="/admin" id="adminLink" style="position:fixed;top:20px;left:20px;z-index:10;display:none;font-size:14px;letter-spacing:2px;color:rgba(230,200,140,0.9);text-decoration:none;">ADMIN</a>
 
-  <button class="auth-btn" id="settingsBtn" style="position:fixed;top:20px;right:20px;z-index:10;padding:8px 10px;" title="Settings">&#9881;</button>
-  <div id="authBtnWrap" style="position:fixed;top:20px;right:56px;z-index:10;display:flex;gap:8px;align-items:center;">
+  <div id="authBtnWrap" style="position:fixed;top:20px;right:20px;z-index:10;display:flex;gap:8px;align-items:center;">
+    <button class="auth-btn" id="settingsBtn" style="display:none;padding:8px 10px;" title="Settings">&#9881;</button>
     <button class="auth-btn" id="authBtn">Login</button>
   </div>
 
@@ -694,10 +694,12 @@
     function renderAuthState(user) {
       if (user) {
         authBtn.textContent = 'Logout (' + user.username + ')';
+        document.getElementById('settingsBtn').style.display = '';
         document.getElementById('adminLink').style.display =
           user.username.toLowerCase() === 'ruruskaado' ? '' : 'none';
       } else {
         authBtn.textContent = 'Login';
+        document.getElementById('settingsBtn').style.display = 'none';
         document.getElementById('adminLink').style.display = 'none';
       }
     }
@@ -809,7 +811,6 @@
     saveSettingsBtn.addEventListener('click', async () => {
       const status = document.getElementById('settingsStatus');
       status.textContent = 'Saving...';
-      if (!window.__user) { status.textContent = 'Log in first'; return; }
       try {
         const res = await fetch('/api/settings', {
           method: 'POST',
