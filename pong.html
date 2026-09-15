@@ -1021,23 +1021,28 @@
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
+    const room = state.room || {};
+    const leftScore = room.leftScore || 0;
+    const rightScore = room.rightScore || 0;
+    const roundsTarget = room.roundsTarget || 3;
+
     if (isQuads) {
-      // Show round scores per side
-      const leftCount = players.filter(p => p.side === 'left' && p.alive).length;
-      const rightCount = players.filter(p => p.side === 'right' && p.alive).length;
       const topCount = players.filter(p => p.side === 'top' && p.alive).length;
       const bottomCount = players.filter(p => p.side === 'bottom' && p.alive).length;
       ctx.font = 'bold 80px "IBM Plex Mono", monospace';
       ctx.fillText(topCount, W * 0.5, H * 0.2);
       ctx.fillText(bottomCount, W * 0.5, H * 0.8);
-      ctx.fillText(leftCount, W * 0.2, H * 0.5);
-      ctx.fillText(rightCount, W * 0.8, H * 0.5);
+      ctx.fillText(leftScore, W * 0.2, H * 0.5);
+      ctx.fillText(rightScore, W * 0.8, H * 0.5);
     } else {
-      const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
-      const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
-      ctx.fillText(leftAlive, W * 0.25, H * 0.5);
-      ctx.fillText(rightAlive, W * 0.75, H * 0.5);
+      ctx.fillText(leftScore, W * 0.25, H * 0.5);
+      ctx.fillText(rightScore, W * 0.75, H * 0.5);
     }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.font = '14px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('First to ' + roundsTarget, W / 2, H * 0.5);
 
     // Side labels
     ctx.fillStyle = 'rgba(255,255,255,0.08)';
@@ -1147,9 +1152,14 @@
     const hud = document.getElementById('gameHud');
     const aliveCount = players.filter(p => p.alive).length;
     const mode = state.room && state.room.mode;
+    const room = state.room || {};
     let html = '<span class="stat">Room <b>' + (roomCode || '-') + '</b></span>';
     html += '<span class="stat">Players <b>' + aliveCount + '/' + players.length + '</b></span>';
     html += '<span class="stat">' + (mode === 'quads' ? 'Quads' : 'Teams') + '</span>';
+    if (room.leftScore != null && room.rightScore != null) {
+      html += '<span class="stat">Score <b>' + room.leftScore + ' - ' + room.rightScore + '</b></span>';
+      html += '<span class="stat">to <b>' + (room.roundsTarget || 3) + '</b></span>';
+    }
     if (html !== _lastHudHtml) { _lastHudHtml = html; hud.innerHTML = html; }
   }
 
