@@ -782,14 +782,6 @@
 
     if (status === 'waiting') {
       updateLobbyPlayers(data);
-
-      if (!createdRoom && myUserId && data.room.hostId) {
-        isHost = String(data.room.hostId) === myUserId;
-      }
-      document.getElementById('startBtn').style.display = isHost ? '' : 'none';
-      document.getElementById('hostBadge').textContent = isHost ? 'YOU ARE HOST' : 'Waiting for host...';
-
-      // Auto-start removed — host clicks Start manually
     }
 
     // In-game update
