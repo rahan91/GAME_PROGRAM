@@ -1,4 +1,4 @@
-import { json } from '../../_lib/auth.js';
+import { json, getUserFromRequest } from '../../_lib/auth.js';
 
 const GRID_W = 640;
 const GRID_H = 480;
@@ -26,18 +26,15 @@ export async function onRequestGet(context) {
     trail: p.trail ? JSON.parse(p.trail) : [],
   }));
 
-  // Game tick: advance one step if playing
+  const writes = [];
+
   if (room.status === 'playing') {
     const alivePlayers = players.filter(p => p.alive);
     if (alivePlayers.length < 2) {
-      // Game over — last alive wins (or no one)
       const winner = alivePlayers[0] || null;
-      await db.prepare(
-        "UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?"
-      ).bind(winner ? winner.user_id : null, room.id).run();
+      writes.push(db.prepare("UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(winner ? winner.user_id : null, room.id));
       room.status = 'finished';
     } else {
-      // Build collision grid from all trails
       const occupied = new Set();
       for (const p of players) {
         for (const pt of p.trail) {
@@ -53,59 +50,47 @@ export async function onRequestGet(context) {
           const nx = p.x + d.dx;
           const ny = p.y + d.dy;
 
-          // Wall collision
           if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) {
             toKill.push(p);
             continue;
           }
 
-          // Trail collision (other players' trails — but not your own current head position)
           const key = nx + ',' + ny;
           if (occupied.has(key)) {
             toKill.push(p);
             continue;
           }
 
-          // Move: add old head to trail, update position
           p.trail.push({ x: p.x, y: p.y });
           p.x = nx;
           p.y = ny;
-          // Update occupied set so subsequent players in same tick detect this new position
           occupied.add(nx + ',' + ny);
         }
       }
 
-      // Kill players who crashed
       for (const p of toKill) {
         p.alive = 0;
-        await db.prepare(
-          'UPDATE tron_players SET alive = 0 WHERE id = ?'
-        ).bind(p.id).run();
+        writes.push(db.prepare('UPDATE tron_players SET alive = 0 WHERE id = ?').bind(p.id));
       }
 
-      // Save moved players
       for (const p of alivePlayers) {
         if (!toKill.includes(p)) {
-          await db.prepare(
-            'UPDATE tron_players SET x = ?, y = ?, trail = ? WHERE id = ?'
-          ).bind(p.x, p.y, JSON.stringify(p.trail), p.id).run();
+          writes.push(db.prepare('UPDATE tron_players SET x = ?, y = ?, trail = ? WHERE id = ?').bind(p.x, p.y, JSON.stringify(p.trail), p.id));
         }
       }
 
-      // Check if game should end
       const stillAlive = players.filter(p => p.alive);
       if (stillAlive.length <= 1) {
         const winner = stillAlive[0] || null;
-        await db.prepare(
-          "UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?"
-        ).bind(winner ? winner.user_id : null, room.id).run();
+        writes.push(db.prepare("UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(winner ? winner.user_id : null, room.id));
         room.status = 'finished';
       }
     }
   }
 
-  let winner = null;
-  let winnerName = null;
+  if (writes.length) { try { await db.batch(writes); } catch {} }
+
+  let winner = null, winnerName = null;
   if (room.status === 'finished') {
     const finished = await db.prepare('SELECT winner_id FROM tron_rooms WHERE id = ?').bind(room.id).first();
     winner = finished ? finished.winner_id : null;
@@ -117,24 +102,26 @@ export async function onRequestGet(context) {
 
   const hostPlayer = players.find(p => String(p.user_id) === String(room.host_id));
 
+  const me = await getUserFromRequest(context.env, context.request);
+  const myUserId = me ? String(me.id) : null;
+  const isHost = myUserId ? await db.prepare('SELECT 1 FROM tron_rooms WHERE id = ? AND host_id = ?').bind(room.id, me.id).first() : false;
+  const myIdx = myUserId ? players.findIndex(p => String(p.user_id) === myUserId) : -1;
+
+  let points = null;
+  if (room.status === 'finished' && me) {
+    const isWinner = winner && String(winner) === myUserId;
+    points = isWinner ? 50 : 10;
+  }
+
   return json({
-    room: { id: room.id, code: room.code, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed },
+    room: { id: room.id, code: room.code, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed, isHost: !!isHost },
+    myIndex: myIdx,
     gridSize: { w: GRID_W, h: GRID_H },
     players: players.map((p) => ({
-      id: p.id,
-      userId: p.user_id,
-      username: p.username,
-      rating: p.rating,
-      x: p.x,
-      y: p.y,
-      dir: p.dir,
-      alive: !!p.alive,
-      ready: !!p.ready,
-      color: p.color,
-      trail: p.trail,
+      id: p.id, userId: p.user_id, username: p.username, rating: p.rating,
+      x: p.x, y: p.y, dir: p.dir, alive: !!p.alive, ready: !!p.ready, color: p.color, trail: p.trail,
     })),
-    winner,
-    winnerName,
+    winner, winnerName, points,
   });
   } catch (e) {
     return json({ error: 'State error: ' + (e.message || e) }, 500);

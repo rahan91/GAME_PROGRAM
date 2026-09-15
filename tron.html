@@ -659,12 +659,11 @@
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
     showRoomSettings(data.maxPlayers, data.speed);
-    document.getElementById('startBtn').style.display = '';
-    document.getElementById('hostBadge').textContent = 'YOU ARE HOST';
     document.getElementById('playerList').style.display = '';
     document.getElementById('plRows').innerHTML = '<div class="pl-row me"><div class="ready-dot on"></div><span class="pn">' + playerUsername + '</span><span class="pr">#1</span></div>';
     status.textContent = '';
     startPolling();
+    applyHostUI(true);
   });
 
   // ---- Lobby: Join ----
@@ -680,13 +679,12 @@
       return;
     }
     roomCode = data.code;
-    isHost = (myUserId && data.hostId && String(data.hostId) === myUserId) || (data.hostUsername && data.hostUsername === playerUsername);
+    isHost = false;
     myPlayerIndex = data.playerIndex;
     ready = false;
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
     showRoomSettings(data.maxPlayers, data.speed);
-    document.getElementById('startBtn').style.display = 'none';
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
     startPolling();
@@ -781,12 +779,19 @@
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
   }
 
+  function applyHostUI(hosting) {
+    isHost = hosting;
+    document.getElementById('startBtn').style.display = hosting ? '' : 'none';
+    document.getElementById('hostBadge').textContent = hosting ? 'YOU ARE HOST' : '';
+  }
+
   async function pollState() {
     if (!roomCode) return;
     const data = await apiGet('/api/tron/state?room=' + encodeURIComponent(roomCode));
-    if (!data) return;
+    if (!data || data.error || data.destroyed) return;
 
-    if (data.error || data.destroyed) return;
+    if (data.room && data.room.isHost !== undefined) applyHostUI(data.room.isHost);
+    if (data.myIndex >= 0) myPlayerIndex = data.myIndex;
 
     const status = data.room ? data.room.status : null;
 
