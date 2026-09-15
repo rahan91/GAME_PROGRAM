@@ -13,7 +13,7 @@ export async function onRequestGet(context) {
   const db = context.env.DATABASE;
 
   const room = await db.prepare(
-    'SELECT id, code, status, host_id, max_players, speed FROM tron_rooms WHERE code = ?'
+    'SELECT id, code, status, host_id, max_players, speed, winner_id FROM tron_rooms WHERE code = ?'
   ).bind(code.toUpperCase()).first();
   if (!room) return json({ error: 'Room not found' }, 404);
 
@@ -32,8 +32,10 @@ export async function onRequestGet(context) {
     const alivePlayers = players.filter(p => p.alive);
     if (alivePlayers.length < 2) {
       const winner = alivePlayers[0] || null;
-      writes.push(db.prepare("UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(winner ? winner.user_id : null, room.id));
+      const winnerUserId = winner ? winner.user_id : null;
+      writes.push(db.prepare("UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(winnerUserId, room.id));
       room.status = 'finished';
+      room.winner_id = winnerUserId;
     } else {
       const occupied = new Set();
       for (const p of players) {
@@ -50,16 +52,9 @@ export async function onRequestGet(context) {
           const nx = p.x + d.dx;
           const ny = p.y + d.dy;
 
-          if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) {
-            toKill.push(p);
-            continue;
-          }
-
+          if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) { toKill.push(p); continue; }
           const key = nx + ',' + ny;
-          if (occupied.has(key)) {
-            toKill.push(p);
-            continue;
-          }
+          if (occupied.has(key)) { toKill.push(p); continue; }
 
           p.trail.push({ x: p.x, y: p.y });
           p.x = nx;
@@ -82,8 +77,10 @@ export async function onRequestGet(context) {
       const stillAlive = players.filter(p => p.alive);
       if (stillAlive.length <= 1) {
         const winner = stillAlive[0] || null;
-        writes.push(db.prepare("UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(winner ? winner.user_id : null, room.id));
+        const winnerUserId = winner ? winner.user_id : null;
+        writes.push(db.prepare("UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(winnerUserId, room.id));
         room.status = 'finished';
+        room.winner_id = winnerUserId;
       }
     }
   }
@@ -91,13 +88,10 @@ export async function onRequestGet(context) {
   if (writes.length) { try { await db.batch(writes); } catch {} }
 
   let winner = null, winnerName = null;
-  if (room.status === 'finished') {
-    const finished = await db.prepare('SELECT winner_id FROM tron_rooms WHERE id = ?').bind(room.id).first();
-    winner = finished ? finished.winner_id : null;
-    if (winner) {
-      const wp = await db.prepare('SELECT username FROM tron_players WHERE room_id = ? AND user_id = ?').bind(room.id, winner).first();
-      winnerName = wp ? wp.username : null;
-    }
+  if (room.status === 'finished' && room.winner_id) {
+    winner = room.winner_id;
+    const wp = players.find(p => String(Number(p.user_id)) === String(Number(winner)) || String(p.user_id) === String(winner));
+    winnerName = wp ? wp.username : null;
   }
 
   const hostPlayer = players.find(p => String(p.user_id) === String(room.host_id));
