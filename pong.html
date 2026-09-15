@@ -779,9 +779,10 @@
   async function pollState() {
     if (!roomCode) return;
     const data = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
-    if (!data || data.error || data.destroyed) return;
+    if (!data || data.error || data.destroyed) { console.log('[PONG] pollState: early return', data); return; }
 
     const status = data.room ? data.room.status : null;
+    console.log('[PONG] pollState status:', status, 'currentScreen:', currentScreen);
 
     if (status === 'waiting') {
       updateLobbyPlayers(data);
