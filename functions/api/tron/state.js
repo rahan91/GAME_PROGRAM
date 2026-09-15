@@ -105,7 +105,7 @@ export async function onRequestGet(context) {
   const me = await getUserFromRequest(context.env, context.request);
   const myUserId = me ? String(me.id) : null;
   const isHost = myUserId ? await db.prepare('SELECT 1 FROM tron_rooms WHERE id = ? AND host_id = ?').bind(room.id, me.id).first() : false;
-  const myIdx = myUserId ? players.findIndex(p => String(p.user_id) === myUserId) : -1;
+  const myIdx = myUserId ? players.findIndex(p => String(Number(p.user_id)) === myUserId || String(p.user_id) === myUserId) : -1;
 
   let points = null;
   if (room.status === 'finished' && me) {
