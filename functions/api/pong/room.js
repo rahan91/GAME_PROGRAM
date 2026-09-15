@@ -194,7 +194,8 @@ async function handleStart(db, user, body, now) {
 
   const room = await findRoomByCode(db, code);
   if (!room) return json({ error: 'Room not found' }, 404);
-  if (String(room.host_id) !== String(user.id)) return json({ error: 'Not host' }, 403);
+  const hostCheck = await db.prepare('SELECT 1 FROM pong_rooms WHERE id = ? AND host_id = ?').bind(room.id, user.id).first();
+  if (!hostCheck) return json({ error: 'Not host' }, 403);
   if (room.status !== 'waiting') return json({ error: 'Game already started' }, 409);
 
   const playerCount = await getPlayerCount(db, room.id);
@@ -230,7 +231,8 @@ async function handleEnd(db, user, body) {
 
   const room = await findRoomByCode(db, code);
   if (!room) return json({ error: 'Room not found' }, 404);
-  if (String(room.host_id) !== String(user.id)) return json({ error: 'Not host' }, 403);
+  const hostCheck = await db.prepare('SELECT 1 FROM pong_rooms WHERE id = ? AND host_id = ?').bind(room.id, user.id).first();
+  if (!hostCheck) return json({ error: 'Not host' }, 403);
   if (room.status !== 'playing') return json({ error: 'Game not in progress' }, 409);
 
   let winnerId = null;
