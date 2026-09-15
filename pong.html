@@ -572,6 +572,10 @@
     lobbyScreen.classList.toggle('active', name === 'lobby');
     gameScreen.classList.toggle('active', name === 'game');
     resultsScreen.classList.toggle('active', name === 'results');
+    if (name !== 'game') {
+      document.getElementById('cursorfx').style.display = '';
+      trail.forEach(t => t.style.display = '');
+    }
   }
 
   // ---- Mode buttons ----
@@ -833,6 +837,8 @@
     gameState = data;
     resizeCanvas();
     document.getElementById('endGameBtn').style.display = isHost ? '' : 'none';
+    document.getElementById('cursorfx').style.display = 'none';
+    trail.forEach(t => t.style.display = 'none');
     if (data.countdown > 0) {
       showCountdown(data.countdown);
     } else {
@@ -1143,29 +1149,26 @@
       const by = (state.ball.y || 0.5) * H;
       const bs = 8;
 
-      ctx.save();
-      ctx.shadowColor = '#fff';
-      ctx.shadowBlur = 8;
       ctx.fillStyle = '#fff';
       ctx.beginPath();
       ctx.arc(bx, by, bs / 2, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
   }
 
+  let _lastHudHtml = '';
   function updateGameHud(state) {
     const players = state.players || [];
     const hud = document.getElementById('gameHud');
     const aliveCount = players.filter(p => p.alive).length;
+    const mode = state.room && state.room.mode;
     let html = '<span class="stat">Room <b>' + (roomCode || '-') + '</b></span>';
     html += '<span class="stat">Players <b>' + aliveCount + '/' + players.length + '</b></span>';
-    const mode = state.room && state.room.mode;
     html += '<span class="stat">' + (mode === 'quads' ? 'Quads' : 'Teams') + '</span>';
     if (state.room && state.room.roundsTarget) {
       html += '<span class="stat">Round <b>' + (state.room.roundNum || 0) + '</b> / ' + state.room.roundsTarget + '</span>';
     }
-    hud.innerHTML = html;
+    if (html !== _lastHudHtml) { _lastHudHtml = html; hud.innerHTML = html; }
   }
 
   // ---- Input Loop ----

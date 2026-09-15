@@ -599,6 +599,10 @@
     gameScreen.classList.toggle('active', name === 'game');
     resultsScreen.classList.toggle('active', name === 'results');
     dpadEl.classList.toggle('active', name === 'game');
+    if (name !== 'game') {
+      document.getElementById('cursorfx').style.display = '';
+      trail.forEach(t => t.style.display = '');
+    }
   }
 
   // ---- API helpers ----
@@ -839,6 +843,8 @@
     gameState = data;
     resizeCanvas();
     document.getElementById('endGameBtn').style.display = isHost ? '' : 'none';
+    document.getElementById('cursorfx').style.display = 'none';
+    trail.forEach(t => t.style.display = 'none');
     if (data.countdown > 0) {
       showCountdown(data.countdown);
     } else {
@@ -1001,10 +1007,7 @@
       ctx.lineJoin = 'round';
       ctx.lineWidth = 4;
 
-      if (!isDead) {
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 4;
-      } else {
+      if (isDead) {
         ctx.globalAlpha = 0.35;
       }
 
@@ -1027,10 +1030,7 @@
       const hy = p.y * scaleY + scaleY / 2;
 
       ctx.save();
-      if (!isDead) {
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 6;
-      } else {
+      if (isDead) {
         ctx.globalAlpha = 0.35;
       }
       ctx.fillStyle = color;
@@ -1068,13 +1068,14 @@
     ctx.fillText(aliveCount + ' remaining', W / 2, 24);
   }
 
+  let _lastHudHtml = '';
   function updateGameHud(state) {
     const players = state.players || [];
     const hud = document.getElementById('gameHud');
     const aliveCount = players.filter(p => p.alive).length;
     let html = '<span class="stat">Room <b>' + (roomCode || '-') + '</b></span>';
     html += '<span class="stat">Alive <b>' + aliveCount + '/' + players.length + '</b></span>';
-    hud.innerHTML = html;
+    if (html !== _lastHudHtml) { _lastHudHtml = html; hud.innerHTML = html; }
   }
 
   // ---- Input Loop ----
