@@ -158,7 +158,7 @@ export async function onRequestGet(context) {
     }
   }
 
-  if (writes.length) { try { await db.batch(writes); } catch {} }
+  if (writes.length) { try { await db.batch(writes); } catch (e) { return json({ error: 'Batch failed: ' + (e.message || e), writeCount: writes.length }, 500); } }
 
   const finalPlayers = await db.prepare(
     `SELECT id, username, rating, side, paddle_y, alive, ready, color, user_id
