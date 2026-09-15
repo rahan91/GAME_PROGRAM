@@ -794,13 +794,18 @@
       updateLobbyPlayers(data);
     }
 
-    if ((status === 'playing' || status === 'countdown') && currentScreen === 'game') {
-      gameState = data;
+    if (status === 'playing' || status === 'countdown') {
+      if (currentScreen === 'lobby') {
+        enterGame(data);
+      } else if (currentScreen === 'game') {
+        gameState = data;
+      }
     }
 
-    if (status === 'finished' && currentScreen === 'game') {
-      gameState = data;
-      enterResults(data);
+    if (status === 'finished') {
+      if (currentScreen === 'game' || currentScreen === 'lobby') {
+        enterResults(data);
+      }
     }
 
     lastStateTime = Date.now();
