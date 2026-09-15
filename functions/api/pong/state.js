@@ -128,27 +128,10 @@ export async function onRequestGet(context) {
         const aliveSidesAfter = new Set(aliveAfter.map(p => p.side));
         if (aliveSidesAfter.size <= 1) {
           const survivingSide = aliveSidesAfter.size === 1 ? [...aliveSidesAfter][0] : null;
-          if (survivingSide === 'left' || survivingSide === 'top') {
-            writes.push(db.prepare('UPDATE pong_rooms SET round_num = round_num + 1 WHERE id = ?').bind(room.id));
-          } else if (survivingSide === 'right' || survivingSide === 'bottom') {
-            writes.push(db.prepare('UPDATE pong_rooms SET round_num = round_num - 1 WHERE id = ?').bind(room.id));
-          }
-
-          let updatedRoom = { round_num: 0, rounds_target: 3 };
-          try { updatedRoom = await db.prepare('SELECT round_num, rounds_target FROM pong_rooms WHERE id = ?').bind(room.id).first() || updatedRoom; } catch {}
-          const absScore = Math.abs(updatedRoom.round_num || 0);
-
-          if (absScore >= (updatedRoom.rounds_target || 3)) {
-            writes.push(db.prepare("UPDATE pong_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(survivingSide, room.id));
-            writes.push(db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id));
-            room.status = 'finished';
-          } else {
-            for (const p of players) {
-              writes.push(db.prepare('UPDATE pong_players SET paddle_y = 0.5, alive = 1 WHERE id = ?').bind(p.id));
-              p.alive = 1;
-              p.paddle_y = 0.5;
-            }
-          }
+          const winnerUserId = survivingSide ? (aliveAfter.find(p => p.side === survivingSide) || {}).user_id : null;
+          writes.push(db.prepare("UPDATE pong_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(winnerUserId, room.id));
+          writes.push(db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id));
+          room.status = 'finished';
         }
       }
 
@@ -158,7 +141,7 @@ export async function onRequestGet(context) {
     }
   }
 
-  if (writes.length) { try { await db.batch(writes); } catch (e) { return json({ error: 'Batch failed: ' + (e.message || e), writeCount: writes.length }, 500); } }
+  if (writes.length) { try { await db.batch(writes); } catch {} }
 
   const finalPlayers = await db.prepare(
     `SELECT id, username, rating, side, paddle_y, alive, ready, color, user_id
@@ -173,16 +156,12 @@ export async function onRequestGet(context) {
 
   let winner = null, winnerName = null, winnerSide = null;
   if (room.status === 'finished') {
-    winnerSide = room.winner_id;
-    if (winnerSide) {
-      const wp = await db.prepare('SELECT username, user_id FROM pong_players WHERE room_id = ? AND side = ? AND alive = 1 LIMIT 1').bind(room.id, winnerSide).first();
+    winner = room.winner_id;
+    if (winner) {
+      const wp = await db.prepare('SELECT username FROM pong_players WHERE room_id = ? AND user_id = ?').bind(room.id, winner).first();
       winnerName = wp ? wp.username : null;
-      winner = wp ? wp.user_id : null;
     }
   }
-
-  const leftScore = (room.round_num || 0) > 0 ? room.round_num : 0;
-  const rightScore = (room.round_num || 0) < 0 ? Math.abs(room.round_num) : 0;
 
   const me = await getUserFromRequest(context.env, context.request);
   const myUserId = me ? String(me.id) : null;
@@ -196,14 +175,14 @@ export async function onRequestGet(context) {
   }
 
   return json({
-    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed, roundsTarget: room.rounds_target || 3, roundNum: room.round_num || 0, leftScore, rightScore, isHost: !!isHost },
+    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed, isHost: !!isHost },
     myIndex: myIdx,
     players: (finalPlayers.results || []).map((p) => ({
       id: p.id, userId: p.user_id, username: p.username, rating: p.rating,
       side: p.side, paddleY: p.paddle_y, alive: !!p.alive, ready: !!p.ready, color: p.color,
     })),
     ball: finalBall ? { x: finalBall.x, y: finalBall.y, vx: finalBall.vx, vy: finalBall.vy } : { x: 0.5, y: 0.5, vx: 0, vy: 0 },
-    winner, winnerName, winnerSide, points,
+    winner, winnerName, points,
   });
   } catch (e) {
     return json({ error: 'State error: ' + (e.message || e) }, 500);

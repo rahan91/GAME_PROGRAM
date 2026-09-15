@@ -652,7 +652,7 @@
     await apiPost('/api/pong/room', { action: 'ready', code: roomCode, player: playerUsername, ready: true });
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
-    showRoomSettings(data.mode, data.maxPlayers, data.speed, data.roundsTarget);
+    showRoomSettings(data.mode, data.maxPlayers, data.speed);
     document.getElementById('playerList').style.display = '';
     document.getElementById('plRows').innerHTML = '<div class="pl-row me"><div class="ready-dot on"></div><span class="pn">' + playerUsername + '</span><span class="pr">L#1</span></div>';
     status.textContent = '';
@@ -680,7 +680,7 @@
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
-    showRoomSettings(data.mode, data.maxPlayers, data.speed, data.roundsTarget);
+    showRoomSettings(data.mode, data.maxPlayers, data.speed);
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
     startPolling();
@@ -880,16 +880,7 @@
 
   function renderResults(data) {
     const winner = data.winnerName || data.winner || 'Unknown';
-    const mode = data.room ? data.room.mode : 'teams';
-    let html = '';
-    if (mode === 'quads' && data.winnerSide) {
-      const sideLabel = data.winnerSide.charAt(0).toUpperCase() + data.winnerSide.slice(1);
-      html = sideLabel + ' Team Wins! (' + winner + ')';
-    } else if (mode === 'teams' && data.winnerSide) {
-      html = (data.winnerSide === 'left' ? 'Left Team' : 'Right Team') + ' Wins! (' + winner + ')';
-    } else {
-      html = winner + ' Wins!';
-    }
+    let html = winner + ' Wins!';
     document.getElementById('resWinner').textContent = html;
 
     let sub = '';
@@ -1041,12 +1032,6 @@
       ctx.fillText(bottomCount, W * 0.5, H * 0.8);
       ctx.fillText(leftCount, W * 0.2, H * 0.5);
       ctx.fillText(rightCount, W * 0.8, H * 0.5);
-      // Round scores
-      ctx.font = 'bold 28px "IBM Plex Mono", monospace';
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      const rn = state.room.roundNum || 0;
-      if (rn > 0) ctx.fillText('+' + rn, W * 0.25, 24);
-      if (rn < 0) ctx.fillText('+' + Math.abs(rn), W * 0.75, 24);
     } else {
       const leftAlive = players.filter(p => p.side === 'left' && p.alive).length;
       const rightAlive = players.filter(p => p.side === 'right' && p.alive).length;
@@ -1165,9 +1150,6 @@
     let html = '<span class="stat">Room <b>' + (roomCode || '-') + '</b></span>';
     html += '<span class="stat">Players <b>' + aliveCount + '/' + players.length + '</b></span>';
     html += '<span class="stat">' + (mode === 'quads' ? 'Quads' : 'Teams') + '</span>';
-    if (state.room && state.room.roundsTarget) {
-      html += '<span class="stat">Round <b>' + (state.room.roundNum || 0) + '</b> / ' + state.room.roundsTarget + '</span>';
-    }
     if (html !== _lastHudHtml) { _lastHudHtml = html; hud.innerHTML = html; }
   }
 
