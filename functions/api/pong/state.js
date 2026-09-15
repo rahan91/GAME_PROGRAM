@@ -169,7 +169,7 @@ export async function onRequestGet(context) {
 
   let points = null;
   if (room.status === 'finished' && me) {
-    const isWinner = winner && String(winner) === myUserId;
+    const isWinner = winner && (String(Number(winner)) === myUserId || String(winner) === myUserId);
     points = isWinner ? 50 : 10;
   }
 
