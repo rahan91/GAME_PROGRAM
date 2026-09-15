@@ -26,13 +26,12 @@ export async function onRequestGet(context) {
   let room;
   try {
     room = await db.prepare(
-      'SELECT id, code, mode, status, host_id, max_players, speed, rounds_target, round_num FROM pong_rooms WHERE code = ?'
+      'SELECT id, code, mode, status, host_id, max_players, speed, winner_id FROM pong_rooms WHERE code = ?'
     ).bind(code.toUpperCase()).first();
   } catch (e) {
     room = await db.prepare(
-      'SELECT id, code, mode, status, host_id, max_players, speed FROM pong_rooms WHERE code = ?'
+      'SELECT id, code, mode, status, host_id, max_players, speed, winner_id FROM pong_rooms WHERE code = ?'
     ).bind(code.toUpperCase()).first();
-    if (room) { room.rounds_target = 3; room.round_num = 0; }
   }
   if (!room) return json({ error: 'Room not found' }, 404);
 
