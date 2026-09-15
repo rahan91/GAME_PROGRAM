@@ -537,6 +537,7 @@
   let currentScreen = 'lobby';
   let roomCode = null;
   let isHost = false;
+  let createdRoom = false;
   let myPlayerIndex = -1;
   let ready = false;
   let pollTimer = null;
@@ -656,6 +657,7 @@
     }
     roomCode = data.code;
     isHost = true;
+    createdRoom = true;
     myPlayerIndex = data.playerIndex;
     ready = true;
     document.getElementById('readyBtn').textContent = 'Unready';
@@ -685,6 +687,7 @@
     }
     roomCode = data.code;
     isHost = String(data.hostId) === String(window.__user.id);
+    createdRoom = false;
     myPlayerIndex = data.playerIndex;
     ready = false;
     document.getElementById('roomInfo').style.display = '';
@@ -705,6 +708,7 @@
     if (data && !data.error) {
       roomCode = data.code;
       isHost = String(data.hostId) === String(window.__user.id);
+      createdRoom = false;
       myPlayerIndex = data.playerIndex;
       ready = false;
       document.getElementById('roomInfo').style.display = '';
@@ -745,6 +749,7 @@
     }
     roomCode = null;
     isHost = false;
+    createdRoom = false;
     myPlayerIndex = -1;
     ready = false;
     stopPolling();
@@ -764,6 +769,7 @@
     }
     roomCode = null;
     isHost = false;
+    createdRoom = false;
     myPlayerIndex = -1;
     ready = false;
     stopPolling();
@@ -817,7 +823,7 @@
     if (status === 'waiting') {
       updateLobbyPlayers(data);
 
-      if (myUserId && data.room.hostId) {
+      if (!createdRoom && myUserId && data.room.hostId) {
         isHost = String(data.room.hostId) === myUserId;
       }
       document.getElementById('startBtn').style.display = isHost ? '' : 'none';
