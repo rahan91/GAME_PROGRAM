@@ -294,10 +294,10 @@
 </style>
   <link rel="stylesheet" href="crt.css">
   <link rel="stylesheet" href="ui.css">
-  <script defer src="crt.js"></script>
-  <script src="score.js"></script>
-  <script src="scoring.js"></script>
-  <script src="shop.js"></script>
+  <script defer src="crt.js?v=2"></script>
+  <script src="score.js?v=2"></script>
+  <script src="scoring.js?v=2"></script>
+  <script src="shop.js?v=2"></script>
 </head>
 <body>
 
@@ -520,7 +520,6 @@
   let currentScreen = 'lobby';
   let roomCode = null;
   let isHost = false;
-  let createdRoom = false;
   let myPlayerIndex = -1;
   let selectedMode = 'teams';
   let ready = false;
@@ -643,7 +642,6 @@
     }
     roomCode = data.code;
     isHost = true;
-    createdRoom = true;
     myPlayerIndex = data.playerIndex;
     ready = true;
     document.getElementById('readyBtn').textContent = 'Unready';
@@ -656,7 +654,6 @@
     document.getElementById('playerList').style.display = '';
     document.getElementById('plRows').innerHTML = '<div class="pl-row me"><div class="ready-dot on"></div><span class="pn">' + playerUsername + '</span><span class="pr">L#1</span></div>';
     status.textContent = '';
-    console.log('[PONG] Room created:', roomCode, 'isHost:', isHost, 'myUserId:', myUserId);
     startPolling();
   });
 
@@ -673,8 +670,7 @@
       return;
     }
     roomCode = data.code;
-    isHost = myUserId && data.hostId ? String(data.hostId) === myUserId : false;
-    createdRoom = false;
+    isHost = (myUserId && data.hostId && String(data.hostId) === myUserId) || (data.hostUsername && data.hostUsername === playerUsername);
     myPlayerIndex = data.playerIndex;
     ready = false;
     selectedMode = data.mode || 'teams';
@@ -717,7 +713,6 @@
     }
     roomCode = null;
     isHost = false;
-    createdRoom = false;
     myPlayerIndex = -1;
     ready = false;
     stopPolling();
@@ -737,7 +732,6 @@
     }
     roomCode = null;
     isHost = false;
-    createdRoom = false;
     myPlayerIndex = -1;
     ready = false;
     stopPolling();
@@ -782,10 +776,9 @@
   async function pollState() {
     if (!roomCode) return;
     const data = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
-    if (!data || data.error || data.destroyed) { console.log('[PONG] pollState: early return', data); return; }
+    if (!data || data.error || data.destroyed) { return; }
 
     const status = data.room ? data.room.status : null;
-    console.log('[PONG] pollState status:', status, 'currentScreen:', currentScreen);
 
     if (status === 'waiting' && currentScreen === 'lobby') {
       updateLobbyPlayers(data);

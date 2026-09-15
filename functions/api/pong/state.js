@@ -215,6 +215,8 @@ export async function onRequestGet(context) {
      FROM pong_players WHERE room_id = ? ORDER BY joined_at ASC`
   ).bind(room.id).all();
 
+  const hostPlayer = (finalPlayers.results || []).find(p => String(p.user_id) === String(room.host_id));
+
   const finalBall = await db.prepare(
     'SELECT x, y, vx, vy FROM pong_ball WHERE room_id = ?'
   ).bind(room.id).first();
@@ -235,7 +237,7 @@ export async function onRequestGet(context) {
   const rightScore = (room.round_num || 0) < 0 ? Math.abs(room.round_num) : 0;
 
   return json({
-    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, maxPlayers: room.max_players, speed: room.speed, roundsTarget: room.rounds_target || 3, roundNum: room.round_num || 0, leftScore, rightScore },
+    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed, roundsTarget: room.rounds_target || 3, roundNum: room.round_num || 0, leftScore, rightScore },
     players: (finalPlayers.results || []).map((p) => ({
       id: p.id,
       userId: p.user_id,

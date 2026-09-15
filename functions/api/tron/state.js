@@ -115,8 +115,10 @@ export async function onRequestGet(context) {
     }
   }
 
+  const hostPlayer = players.find(p => String(p.user_id) === String(room.host_id));
+
   return json({
-    room: { id: room.id, code: room.code, status: room.status, hostId: room.host_id, maxPlayers: room.max_players, speed: room.speed },
+    room: { id: room.id, code: room.code, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed },
     gridSize: { w: GRID_W, h: GRID_H },
     players: players.map((p) => ({
       id: p.id,

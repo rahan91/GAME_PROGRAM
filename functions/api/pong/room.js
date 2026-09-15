@@ -139,7 +139,8 @@ async function handleJoin(db, user, body, now) {
 
   await db.prepare('UPDATE pong_rooms SET expires_at = ? WHERE id = ?').bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
 
-  return json({ code: room.code, mode: room.mode, maxPlayers: room.max_players, speed: room.speed, roundsTarget: room.rounds_target, status: room.status, playerIndex: playerCount + 1, hostId: room.host_id });
+  const hostUser = await db.prepare('SELECT username FROM pong_players WHERE room_id = ? AND user_id = ?').bind(room.id, room.host_id).first();
+  return json({ code: room.code, mode: room.mode, maxPlayers: room.max_players, speed: room.speed, roundsTarget: room.rounds_target, status: room.status, playerIndex: playerCount + 1, hostId: room.host_id, hostUsername: hostUser ? hostUser.username : null });
 }
 
 async function handleLeave(db, user, body) {
