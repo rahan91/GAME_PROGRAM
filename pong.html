@@ -837,6 +837,7 @@
     showScreen('game');
     stopPolling();
     gameState = data;
+    lastSentDir = 0;
     resizeCanvas();
     document.getElementById('endGameBtn').style.display = isHost ? '' : 'none';
     document.getElementById('cursorfx').style.display = 'none';

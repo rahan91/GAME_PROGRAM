@@ -47,23 +47,30 @@ export async function onRequestGet(context) {
       }
 
       const toKill = [];
+      const moves = [];
+      const targetCounts = {};
 
       for (const p of alivePlayers) {
         if (p.dir && DIR_MAP[p.dir]) {
           const d = DIR_MAP[p.dir];
           const nx = p.x + d.dx;
           const ny = p.y + d.dy;
-
-          if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) { toKill.push(p); continue; }
+          moves.push({ player: p, nx, ny });
           const key = nx + ',' + ny;
-          if (occupied.has(key)) { toKill.push(p); continue; }
-
-          occupied.delete(p.x + ',' + p.y);
-          p.trail.push({ x: p.x, y: p.y });
-          p.x = nx;
-          p.y = ny;
-          occupied.add(nx + ',' + ny);
+          targetCounts[key] = (targetCounts[key] || 0) + 1;
         }
+      }
+
+      for (const m of moves) {
+        const { player: p, nx, ny } = m;
+        if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) { toKill.push(p); continue; }
+        const key = nx + ',' + ny;
+        if (occupied.has(key)) { toKill.push(p); continue; }
+        if (targetCounts[key] > 1) { toKill.push(p); continue; }
+
+        p.trail.push({ x: p.x, y: p.y });
+        p.x = nx;
+        p.y = ny;
       }
 
       for (const p of toKill) {
