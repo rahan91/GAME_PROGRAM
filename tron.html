@@ -709,7 +709,10 @@
     const data = await apiPost('/api/tron/room', { action: 'start', code: roomCode, player: playerUsername });
     if (!data || data.error) {
       status.textContent = data ? data.error : 'Failed to start';
+      return;
     }
+    const stateData = await apiGet('/api/tron/state?room=' + encodeURIComponent(roomCode));
+    if (stateData && !stateData.error) enterGame(stateData);
   });
 
   // ---- Lobby: Leave ----
@@ -790,18 +793,17 @@
 
     const status = data.room ? data.room.status : null;
 
-    if (status === 'waiting') {
+    if (status === 'waiting' && currentScreen === 'lobby') {
       updateLobbyPlayers(data);
     }
 
-    if (status === 'playing' || status === 'countdown') {
+    if ((status === 'playing' || status === 'countdown') && currentScreen === 'game') {
       gameState = data;
-      if (currentScreen !== 'game') enterGame(data);
     }
 
-    if (status === 'finished') {
+    if (status === 'finished' && currentScreen === 'game') {
       gameState = data;
-      if (currentScreen !== 'results') enterResults(data);
+      enterResults(data);
     }
 
     lastStateTime = Date.now();

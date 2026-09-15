@@ -704,7 +704,10 @@
     const data = await apiPost('/api/pong/room', { action: 'start', code: roomCode, player: playerUsername });
     if (!data || data.error) {
       status.textContent = data ? data.error : 'Failed to start';
+      return;
     }
+    const stateData = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
+    if (stateData && !stateData.error) enterGame(stateData);
   });
 
   // ---- Lobby: Leave ----
@@ -784,20 +787,19 @@
     const status = data.room ? data.room.status : null;
     console.log('[PONG] pollState status:', status, 'currentScreen:', currentScreen);
 
-    if (status === 'waiting') {
+    if (status === 'waiting' && currentScreen === 'lobby') {
       updateLobbyPlayers(data);
     }
 
-    // In-game update
-    if (status === 'playing' || status === 'countdown') {
+    // In-game update — only sync if already in game screen
+    if ((status === 'playing' || status === 'countdown') && currentScreen === 'game') {
       gameState = data;
-      if (currentScreen !== 'game') enterGame(data);
     }
 
-    // Results
-    if (status === 'finished') {
+    // Results — only transition if already in game
+    if (status === 'finished' && currentScreen === 'game') {
       gameState = data;
-      if (currentScreen !== 'results') enterResults(data);
+      enterResults(data);
     }
 
     lastStateTime = Date.now();
