@@ -4,6 +4,7 @@ const VALID_DIRS = new Set(['up', 'down', 'left', 'right']);
 const OPPOSITE = { up: 'down', down: 'up', left: 'right', right: 'left' };
 
 export async function onRequestPost(context) {
+  try {
   const user = await getUserFromRequest(context.env, context.request);
   if (!user) return json({ error: 'Not logged in' }, 401);
 
@@ -30,4 +31,7 @@ export async function onRequestPost(context) {
   ).bind(dir, code, user.id).run();
 
   return json({ ok: true, dir });
+  } catch (e) {
+    return json({ error: 'Move error' }, 500);
+  }
 }

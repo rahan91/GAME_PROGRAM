@@ -52,6 +52,7 @@ export async function onRequestPost(context) {
     if (action === 'ready') return handleReady(db, user, body);
     if (action === 'start') return handleStart(db, user, body, now);
     if (action === 'end') return handleEnd(db, user, body);
+    if (action === 'rematch') return handleRematch(db, user, body, now);
     return json({ error: 'Unknown action' }, 400);
   } catch (e) {
     return json({ error: 'Server error: ' + (e.message || e) }, 500);
@@ -208,19 +209,23 @@ async function handleStart(db, user, body, now) {
   if (room.mode === 'quads' && playerCount % 4 !== 0) return json({ error: 'Quads mode needs players divisible by 4' }, 400);
 
   try {
-    await db.prepare("UPDATE pong_rooms SET status = 'playing', round_num = 1, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
+    await db.prepare("UPDATE pong_rooms SET status = 'playing', round_num = 0, winner_id = NULL, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
   } catch (e) {
     await db.prepare("UPDATE pong_rooms SET status = 'playing', expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
   }
 
-  const allPlayers = await db.prepare('SELECT user_id FROM pong_players WHERE room_id = ?').bind(room.id).all();
+  const allPlayers = await db.prepare('SELECT user_id, ready FROM pong_players WHERE room_id = ?').bind(room.id).all();
   for (const p of (allPlayers.results || [])) {
-    await db.prepare('UPDATE pong_players SET paddle_y = 0.5, alive = 1 WHERE room_id = ? AND user_id = ?').bind(room.id, p.user_id).run();
+    await db.prepare('UPDATE pong_players SET paddle_y = 0.5, alive = 1, dir = 0 WHERE room_id = ? AND user_id = ?').bind(room.id, p.user_id).run();
   }
 
+  await db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id).run();
   const spd = room.speed === 'fast' ? 8 : room.speed === 'slow' ? 3 : 5;
   const vx = room.speed === 'fast' ? 0.045 : room.speed === 'slow' ? 0.02 : 0.03;
-  await db.prepare(`INSERT INTO pong_ball (room_id, x, y, vx, vy, speed) VALUES (?, 0.5, 0.5, ?, 0.01, ?)`).bind(room.id, vx, spd).run();
+  const angle = Math.random() * Math.PI * 2;
+  const bvx = Math.cos(angle) * vx;
+  const bvy = Math.sin(angle) * vx;
+  await db.prepare('INSERT INTO pong_ball (room_id, x, y, vx, vy, speed) VALUES (?, 0.5, 0.5, ?, ?, ?)').bind(room.id, bvx, bvy, spd).run();
 
   return json({ ok: true, status: 'playing' });
 }
@@ -246,6 +251,21 @@ async function handleEnd(db, user, body) {
   await db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id).run();
 
   return json({ ok: true, status: 'finished' });
+}
+
+async function handleRematch(db, user, body, now) {
+  const code = body && body.code ? String(body.code).toUpperCase() : null;
+  if (!code) return json({ error: 'Missing code' }, 400);
+
+  const room = await findRoomByCode(db, code);
+  if (!room) return json({ error: 'Room not found' }, 404);
+  if (room.status !== 'finished') return json({ error: 'Game not finished' }, 409);
+
+  await db.prepare("UPDATE pong_rooms SET status = 'waiting', round_num = 0, winner_id = NULL, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
+  await db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id).run();
+  await db.prepare('UPDATE pong_players SET alive = 0, ready = 0, paddle_y = 0.5, dir = 0 WHERE room_id = ?').bind(room.id).run();
+
+  return json({ ok: true, status: 'waiting' });
 }
 
 async function findMatch(db, now) {

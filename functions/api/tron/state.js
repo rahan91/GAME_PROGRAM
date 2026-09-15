@@ -1,7 +1,5 @@
 import { json, getUserFromRequest } from '../../_lib/auth.js';
 
-const GRID_W = 640;
-const GRID_H = 480;
 const DIR_MAP = { up: { dx: 0, dy: -1 }, down: { dx: 0, dy: 1 }, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } };
 
 export async function onRequestGet(context) {
@@ -13,9 +11,12 @@ export async function onRequestGet(context) {
   const db = context.env.DATABASE;
 
   const room = await db.prepare(
-    'SELECT id, code, status, host_id, max_players, speed, winner_id FROM tron_rooms WHERE code = ?'
+    'SELECT id, code, status, host_id, max_players, speed, winner_id, grid_w, grid_h FROM tron_rooms WHERE code = ?'
   ).bind(code.toUpperCase()).first();
   if (!room) return json({ error: 'Room not found' }, 404);
+
+  const GRID_W = room.grid_w || 640;
+  const GRID_H = room.grid_h || 480;
 
   const playerRows = await db.prepare(
     `SELECT id, user_id, username, rating, x, y, dir, alive, ready, color, trail
@@ -42,6 +43,7 @@ export async function onRequestGet(context) {
         for (const pt of p.trail) {
           occupied.add(pt.x + ',' + pt.y);
         }
+        occupied.add(p.x + ',' + p.y);
       }
 
       const toKill = [];
@@ -56,6 +58,7 @@ export async function onRequestGet(context) {
           const key = nx + ',' + ny;
           if (occupied.has(key)) { toKill.push(p); continue; }
 
+          occupied.delete(p.x + ',' + p.y);
           p.trail.push({ x: p.x, y: p.y });
           p.x = nx;
           p.y = ny;

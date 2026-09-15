@@ -652,7 +652,7 @@
     await apiPost('/api/pong/room', { action: 'ready', code: roomCode, player: playerUsername, ready: true });
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
-    showRoomSettings(data.mode, data.maxPlayers, data.speed);
+    showRoomSettings(data.mode, data.maxPlayers, data.speed, selectedRounds);
     document.getElementById('playerList').style.display = '';
     document.getElementById('plRows').innerHTML = '<div class="pl-row me"><div class="ready-dot on"></div><span class="pn">' + playerUsername + '</span><span class="pr">L#1</span></div>';
     status.textContent = '';
@@ -680,7 +680,7 @@
     document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
     document.getElementById('roomInfo').style.display = '';
     document.getElementById('roomCode').textContent = roomCode;
-    showRoomSettings(data.mode, data.maxPlayers, data.speed);
+    showRoomSettings(data.mode, data.maxPlayers, data.speed, data.roundsTarget);
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
     startPolling();
@@ -748,11 +748,13 @@
   });
   document.getElementById('rematchBtn').addEventListener('click', async () => {
     if (roomCode) {
-      ready = false;
-      document.getElementById('readyBtn').textContent = 'Ready';
-      showScreen('lobby');
-      await apiPost('/api/pong/room', { action: 'ready', code: roomCode, player: playerUsername, ready: false });
-      startPolling();
+      const data = await apiPost('/api/pong/room', { action: 'rematch', code: roomCode });
+      if (data && data.ok) {
+        ready = false;
+        document.getElementById('readyBtn').textContent = 'Ready';
+        showScreen('lobby');
+        startPolling();
+      }
     }
   });
 
@@ -804,7 +806,7 @@
     }
 
     if (status === 'finished') {
-      if (currentScreen === 'game' || currentScreen === 'lobby') {
+      if (currentScreen === 'game') {
         enterResults(data);
       }
     }
@@ -894,7 +896,6 @@
     }
     document.getElementById('resSub').innerHTML = sub;
 
-    // Report ELO + score locally
     if (isLoggedIn && data.points != null) {
       ScoreBoard.add(playerUsername, data.points);
       fetch('/api/score', {
@@ -909,6 +910,18 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ room: roomCode, winner_id: data.winner, players: playerIds })
+      }).then(async (res) => {
+        try {
+          const elo = await res.json();
+          if (elo && elo.ratingChanges && myUserId) {
+            const myChange = elo.ratingChanges[myUserId];
+            if (myChange && myChange.new != null && myChange.old != null) {
+              const diff = myChange.new - myChange.old;
+              const sign = diff > 0 ? '+' : '';
+              document.getElementById('resSub').innerHTML += ' &middot; ELO: <b>' + sign + diff + '</b>';
+            }
+          }
+        } catch {}
       }).catch(() => {});
     }
   }

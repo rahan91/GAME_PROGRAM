@@ -71,6 +71,7 @@ export async function onRequestPost(context) {
     if (action === 'ready') return handleReady(db, user, body);
     if (action === 'start') return handleStart(db, user, body, now);
     if (action === 'end') return handleEnd(db, user, body);
+    if (action === 'rematch') return handleRematch(db, user, body, now);
     return json({ error: 'Unknown action' }, 400);
   } catch (e) {
     return json({ error: 'Server error: ' + (e.message || e) }, 500);
@@ -265,6 +266,30 @@ async function handleEnd(db, user, body) {
   ).bind(winnerId, room.id).run();
 
   return json({ ok: true, status: 'finished' });
+}
+
+async function handleRematch(db, user, body, now) {
+  const code = body && body.code ? String(body.code).toUpperCase() : null;
+  if (!code) return json({ error: 'Missing code' }, 400);
+
+  const room = await findRoomByCode(db, code);
+  if (!room) return json({ error: 'Room not found' }, 404);
+  if (room.status !== 'finished') return json({ error: 'Game not finished' }, 409);
+
+  await db.prepare("UPDATE tron_rooms SET status = 'waiting', winner_id = NULL, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
+
+  const gw = room.grid_w || BASE_W;
+  const gh = room.grid_h || BASE_H;
+  const allPlayers = await db.prepare('SELECT user_id FROM tron_players WHERE room_id = ?').bind(room.id).all();
+  const positions = generateStartPositions(gw, gh, (allPlayers.results || []).length);
+  let idx = 0;
+  for (const p of (allPlayers.results || [])) {
+    const pos = positions[idx] || { x: 0, y: 0, dir: 'down' };
+    await db.prepare('UPDATE tron_players SET x = ?, y = ?, dir = ?, alive = 0, ready = 0, trail = \'[]\' WHERE room_id = ? AND user_id = ?').bind(pos.x, pos.y, pos.dir, room.id, p.user_id).run();
+    idx++;
+  }
+
+  return json({ ok: true, status: 'waiting' });
 }
 
 async function findMatch(db, now) {
