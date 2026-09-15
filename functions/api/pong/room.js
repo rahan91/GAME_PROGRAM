@@ -90,7 +90,7 @@ async function handleCreate(db, user, body, now) {
      VALUES (?, ?, ?, 1200, ?, 0.5, 1, 0, 0, ?, ?)`
   ).bind(roomId, user.id, user.username, side, COLORS[0], now).run();
 
-  return json({ code, mode, maxPlayers, speed, roundsTarget, status: 'waiting', playerIndex: 0 });
+  return json({ code, mode, maxPlayers, speed, roundsTarget, status: 'waiting', playerIndex: 0, hostId: user.id });
 }
 
 async function handleJoin(db, user, body, now) {

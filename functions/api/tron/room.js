@@ -108,7 +108,7 @@ async function handleCreate(db, user, body, now) {
      VALUES (?, ?, ?, 1200, ?, ?, ?, 1, 0, ?, '[]', ?)`
   ).bind(roomId, user.id, user.username, pos.x, pos.y, pos.dir, COLORS[0], now).run();
 
-  return json({ code, status: 'waiting', playerIndex: 0, maxPlayers, speed, gridW: grid.w, gridH: grid.h });
+  return json({ code, status: 'waiting', playerIndex: 0, hostId: user.id, maxPlayers, speed, gridW: grid.w, gridH: grid.h });
 }
 
 async function handleJoin(db, user, body, now) {

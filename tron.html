@@ -355,12 +355,6 @@
     <button class="lobby-btn" id="joinBtn">Join</button>
   </div>
 
-  <div class="lobby-divider">or</div>
-
-  <div class="lobby-row">
-    <button class="lobby-btn" id="quickBtn">Quick Match</button>
-  </div>
-
   <div id="roomInfo" style="display:none;text-align:center">
     <div class="room-code" id="roomCode"></div>
     <div id="roomSettings" style="margin-top:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);"></div>
@@ -686,7 +680,7 @@
       return;
     }
     roomCode = data.code;
-    isHost = String(data.hostId) === String(window.__user.id);
+    isHost = myUserId && data.hostId ? String(data.hostId) === myUserId : false;
     createdRoom = false;
     myPlayerIndex = data.playerIndex;
     ready = false;
@@ -697,30 +691,6 @@
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
     startPolling();
-  });
-
-  // ---- Lobby: Quick Match ----
-  document.getElementById('quickBtn').addEventListener('click', async () => {
-    if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
-    const status = document.getElementById('lobbyStatus');
-    status.textContent = 'Looking for a match...';
-    const data = await apiPost('/api/tron/room', { action: 'join', player: playerUsername });
-    if (data && !data.error) {
-      roomCode = data.code;
-      isHost = String(data.hostId) === String(window.__user.id);
-      createdRoom = false;
-      myPlayerIndex = data.playerIndex;
-      ready = false;
-      document.getElementById('roomInfo').style.display = '';
-      document.getElementById('roomCode').textContent = roomCode;
-      showRoomSettings(data.maxPlayers, data.speed);
-      document.getElementById('startBtn').style.display = 'none';
-      document.getElementById('playerList').style.display = '';
-      status.textContent = '';
-      startPolling();
-    } else {
-      document.getElementById('createBtn').click();
-    }
   });
 
   // ---- Lobby: Ready ----

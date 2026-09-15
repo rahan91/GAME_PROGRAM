@@ -357,12 +357,6 @@
     <button class="lobby-btn" id="joinBtn">Join</button>
   </div>
 
-  <div class="lobby-divider">or</div>
-
-  <div class="lobby-row">
-    <button class="lobby-btn" id="quickBtn">Quick Match</button>
-  </div>
-
   <div id="roomInfo" style="display:none;text-align:center">
     <div class="room-code" id="roomCode"></div>
     <div id="roomSettings" style="margin-top:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);"></div>
@@ -676,7 +670,7 @@
       return;
     }
     roomCode = data.code;
-    isHost = String(data.hostId) === String(window.__user.id);
+    isHost = myUserId && data.hostId ? String(data.hostId) === myUserId : false;
     createdRoom = false;
     myPlayerIndex = data.playerIndex;
     ready = false;
@@ -689,32 +683,6 @@
     document.getElementById('playerList').style.display = '';
     status.textContent = '';
     startPolling();
-  });
-
-  // ---- Lobby: Quick Match ----
-  document.getElementById('quickBtn').addEventListener('click', async () => {
-    if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
-    const status = document.getElementById('lobbyStatus');
-    status.textContent = 'Looking for a match...';
-    const data = await apiPost('/api/pong/room', { action: 'join', player: playerUsername });
-    if (data && !data.error) {
-      roomCode = data.code;
-      isHost = String(data.hostId) === String(window.__user.id);
-      createdRoom = false;
-      myPlayerIndex = data.playerIndex;
-      ready = false;
-      selectedMode = data.mode || 'teams';
-      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === selectedMode));
-      document.getElementById('roomInfo').style.display = '';
-      document.getElementById('roomCode').textContent = roomCode;
-      showRoomSettings(data.mode, data.maxPlayers, data.speed, data.roundsTarget);
-      document.getElementById('startBtn').style.display = 'none';
-      document.getElementById('playerList').style.display = '';
-      status.textContent = '';
-      startPolling();
-    } else {
-      document.getElementById('createBtn').click();
-    }
   });
 
   // ---- Lobby: Ready ----
@@ -1101,11 +1069,18 @@
     const pw = Math.max(6, 12 - aliveCount);
     const ph = Math.max(50, 100 - aliveCount * 5);
     const isTeams = state.room && state.room.mode === 'teams';
-    const SIDE_COLORS = { left: '#3b82f6', right: '#ef4444', top: '#2ecc71', bottom: '#f39c12' };
+    const TEAM_RED = '#ef4444';
+    const TEAM_BLUE = '#3b82f6';
+
+    function getTeam(side) {
+      if (side === 'left' || side === 'top') return TEAM_RED;
+      return TEAM_BLUE;
+    }
 
     players.forEach((p) => {
       if (!p.alive) return;
       const color = p.color || '#aaa';
+      const teamColor = getTeam(p.side);
       let px, py;
 
       if (p.side === 'left') { px = 16; py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2; }
@@ -1117,26 +1092,29 @@
       const paddleW = isHorizontal ? ph : pw;
       const paddleH = isHorizontal ? pw : ph;
 
-      // Team color bar
-      ctx.fillStyle = SIDE_COLORS[p.side];
-      ctx.beginPath();
-      ctx.roundRect(px, py, paddleW, paddleH, 3);
-      ctx.fill();
-
-      // Player color (50% opaque)
-      ctx.globalAlpha = 0.5;
+      // Paddle body — player's custom color
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.roundRect(px, py, paddleW, paddleH, 3);
       ctx.fill();
-      ctx.globalAlpha = 1;
+
+      // Team accent — small bar on inner edge
+      const accentW = isHorizontal ? paddleW : 3;
+      const accentH = isHorizontal ? 3 : paddleH;
+      let ax = px, ay = py;
+      if (p.side === 'left') ax = px + paddleW - 3;
+      else if (p.side === 'top') ay = py + paddleH - 3;
+      ctx.fillStyle = teamColor;
+      ctx.beginPath();
+      ctx.roundRect(ax, ay, accentW, accentH, 1);
+      ctx.fill();
 
       // Name
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.font = '9px "IBM Plex Mono", monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = p.side === 'top' ? 'bottom' : p.side === 'bottom' ? 'top' : 'bottom';
-      const nameX = p.side === 'left' ? px + paddleW / 2 : p.side === 'right' ? px + paddleW / 2 : px + paddleW / 2;
+      const nameX = px + paddleW / 2;
       const nameY = p.side === 'top' ? py - 4 : p.side === 'bottom' ? py + paddleH + 12 : py - 4;
       ctx.fillText(p.username || '', nameX, nameY);
     });
@@ -1214,7 +1192,7 @@
 
     // Mouse override — follow cursor Y position relative to paddle
     if (mouseActive && mouseY >= 0 && gameState) {
-      const me = (gameState.players || []).find(p => String(p.userId) === String(window.__user.id));
+      const me = (gameState.players || []).find(p => myUserId && String(p.userId) === myUserId);
       if (me) {
         const paddleCenter = me.paddleY != null ? me.paddleY : 0.5;
         const diff = mouseY - paddleCenter;
