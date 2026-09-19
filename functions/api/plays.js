@@ -1,8 +1,29 @@
 import { json } from '../_lib/auth.js';
 
+const RESET_INTERVAL = 3600;
+
 export async function onRequestGet(context) {
   try {
     const db = context.env.DATABASE;
+
+    let meta;
+    try {
+      meta = await db.prepare('SELECT value FROM site_meta WHERE key = ?').bind('plays_reset_at').first();
+    } catch { meta = null; }
+
+    const now = Math.floor(Date.now() / 1000);
+    const lastReset = meta ? Number(meta.value) : 0;
+
+    if (now - lastReset >= RESET_INTERVAL) {
+      try {
+        await db.prepare('UPDATE game_plays SET plays = 0').run();
+      } catch {}
+      try {
+        await db.prepare('INSERT INTO site_meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+          .bind('plays_reset_at', String(now)).run();
+      } catch {}
+    }
+
     let rows;
     try {
       rows = await db.prepare('SELECT game, plays FROM game_plays ORDER BY plays DESC').all();
@@ -34,6 +55,6 @@ export async function onRequestPost(context) {
 
     return json({ ok: true });
   } catch (e) {
-    return json({ error: 'Track error' }, 500);
+    return json({ track_error: 'Track error' }, 500);
   }
 }

@@ -1,21 +1,21 @@
 import { json, getUserFromRequest } from '../../_lib/auth.js';
 
-const PADDLE_SPEED = 0.045;
 const PADDLE_HALF = 0.12;
-const BALL_BASE_SPEED = 0.012;
+const BALL_SPEED = 0.018;
+const PADDLE_SPEED = 0.035;
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-function findNearestPaddle(players, ballCoord, wallSide) {
+function findNearestPaddle(players, coord, wallSide) {
   const candidates = players.filter(p => p.side === wallSide && p.alive);
   if (!candidates.length) return null;
   return candidates.reduce((best, p) => {
-    const dist = Math.abs(p.paddle_y - ballCoord);
+    const dist = Math.abs(p.paddle_y - coord);
     return dist < best.dist ? { paddle: p, dist } : best;
   }, { paddle: candidates[0], dist: Infinity }).paddle;
 }
 
-async function handleState(context, code, user) {
+export async function handleState(context, code, user) {
   const db = context.env.DATABASE;
 
   let room;
@@ -38,10 +38,12 @@ async function handleState(context, code, user) {
   const players = playerRows.results || [];
 
   let ballData = null;
+
   if (room.status === 'playing') {
     const now = Date.now();
     const lastTick = Number(room.last_tick_at) || 0;
-    const canTick = (now - lastTick) >= 40;
+    const elapsed = now - lastTick;
+    const TICK_MS = 40;
 
     const ballRow = await db.prepare(
       'SELECT x, y, vx, vy, speed FROM pong_ball WHERE room_id = ?'
@@ -49,62 +51,95 @@ async function handleState(context, code, user) {
 
     const writes = [];
 
-    if (ballRow && canTick) {
+    // Always update paddle positions on every poll
+    for (const p of players) {
+      if (!p.alive) continue;
+      const d = p.dir || 0;
+      let newY = p.paddle_y + d * PADDLE_SPEED;
+      newY = clamp(newY, PADDLE_HALF, 1 - PADDLE_HALF);
+      if (newY !== p.paddle_y) {
+        writes.push(db.prepare('UPDATE pong_players SET paddle_y = ? WHERE id = ?').bind(newY, p.id));
+        p.paddle_y = newY;
+      }
+    }
+
+    // Ball physics — multiple sub-steps if enough time elapsed
+    if (ballRow) {
       const alivePlayers = players.filter(p => p.alive);
       const aliveSides = new Set(alivePlayers.map(p => p.side));
 
       if (aliveSides.size >= 2) {
         const speedMul = room.speed === 'fast' ? 1.5 : room.speed === 'slow' ? 0.7 : 1;
+        const subSteps = Math.min(Math.ceil(elapsed / TICK_MS), 4);
 
-        for (const p of players) {
-          if (!p.alive) continue;
-          const d = p.dir || 0;
-          let newY = p.paddle_y + d * PADDLE_SPEED;
-          newY = clamp(newY, PADDLE_HALF, 1 - PADDLE_HALF);
-          if (newY !== p.paddle_y) {
-            writes.push(db.prepare('UPDATE pong_players SET paddle_y = ? WHERE id = ?').bind(newY, p.id));
-            p.paddle_y = newY;
-          }
-        }
-
-        let bx = Number(ballRow.x) + Number(ballRow.vx) * speedMul;
-        let by = Number(ballRow.y) + Number(ballRow.vy) * speedMul;
+        let bx = Number(ballRow.x);
+        let by = Number(ballRow.y);
         let bvx = Number(ballRow.vx);
         let bvy = Number(ballRow.vy);
+        const baseSpd = Math.sqrt(bvx * bvx + bvy * bvy);
+        const stepVx = bvx * speedMul;
+        const stepVy = bvy * speedMul;
 
-        if (!aliveSides.has('top') && by <= 0.02) { by = 0.02; bvy = Math.abs(bvy); }
-        if (!aliveSides.has('bottom') && by >= 0.98) { by = 0.98; bvy = -Math.abs(bvy); }
-        if (!aliveSides.has('left') && bx <= 0.02) { bx = 0.02; bvx = Math.abs(bvx); }
-        if (!aliveSides.has('right') && bx >= 0.98) { bx = 0.98; bvx = -Math.abs(bvx); }
+        for (let step = 0; step < subSteps; step++) {
+          bx += stepVx;
+          by += stepVy;
 
-        let hitSides = new Set();
-        for (const p of alivePlayers) {
-          if (hitSides.has(p.side)) continue;
-          if (p.side === 'top') {
-            const pL = p.paddle_y - PADDLE_HALF, pR = p.paddle_y + PADDLE_HALF;
-            if (bx >= pL && bx <= pR && by <= 0.06 && bvy < 0) { by = 0.06; bvy = Math.abs(bvy) * 1.03; bvx += ((bx - p.paddle_y) / PADDLE_HALF) * 0.005; hitSides.add('top'); }
-          } else if (p.side === 'bottom') {
-            const pL = p.paddle_y - PADDLE_HALF, pR = p.paddle_y + PADDLE_HALF;
-            if (bx >= pL && bx <= pR && by >= 0.94 && bvy > 0) { by = 0.94; bvy = -Math.abs(bvy) * 1.03; bvx += ((bx - p.paddle_y) / PADDLE_HALF) * 0.005; hitSides.add('bottom'); }
-          } else if (p.side === 'left') {
-            const pT = p.paddle_y - PADDLE_HALF, pB = p.paddle_y + PADDLE_HALF;
-            if (by >= pT && by <= pB && bx <= 0.06 && bvx < 0) { bx = 0.06; bvx = Math.abs(bvx) * 1.03; bvy += ((by - p.paddle_y) / PADDLE_HALF) * 0.005; hitSides.add('left'); }
-          } else if (p.side === 'right') {
-            const pT = p.paddle_y - PADDLE_HALF, pB = p.paddle_y + PADDLE_HALF;
-            if (by >= pT && by <= pB && bx >= 0.94 && bvx > 0) { bx = 0.94; bvx = -Math.abs(bvx) * 1.03; bvy += ((by - p.paddle_y) / PADDLE_HALF) * 0.005; hitSides.add('right'); }
+          // Bounce off walls with no alive players
+          if (!aliveSides.has('top') && by < PADDLE_HALF * 0.3) { by = PADDLE_HALF * 0.3; bvy = Math.abs(bvy); }
+          if (!aliveSides.has('bottom') && by > 1 - PADDLE_HALF * 0.3) { by = 1 - PADDLE_HALF * 0.3; bvy = -Math.abs(bvy); }
+          if (!aliveSides.has('left') && bx < PADDLE_HALF * 0.3) { bx = PADDLE_HALF * 0.3; bvx = Math.abs(bvx); }
+          if (!aliveSides.has('right') && bx > 1 - PADDLE_HALF * 0.3) { bx = 1 - PADDLE_HALF * 0.3; bvx = -Math.abs(bvx); }
+
+          // Paddle collisions
+          const hitSides = new Set();
+          for (const p of alivePlayers) {
+            if (hitSides.has(p.side)) continue;
+            const half = PADDLE_HALF;
+
+            if (p.side === 'top') {
+              const pL = p.paddle_y - half, pR = p.paddle_y + half;
+              if (bx >= pL && bx <= pR && by <= 0.06 && stepVy < 0) {
+                by = 0.06;
+                bvy = Math.abs(bvy) * 1.02;
+                bvx += ((bx - p.paddle_y) / half) * 0.004;
+                hitSides.add('top');
+              }
+            } else if (p.side === 'bottom') {
+              const pL = p.paddle_y - half, pR = p.paddle_y + half;
+              if (bx >= pL && bx <= pR && by >= 0.94 && stepVy > 0) {
+                by = 0.94;
+                bvy = -Math.abs(bvy) * 1.02;
+                bvx += ((bx - p.paddle_y) / half) * 0.004;
+                hitSides.add('bottom');
+              }
+            } else if (p.side === 'left') {
+              const pT = p.paddle_y - half, pB = p.paddle_y + half;
+              if (by >= pT && by <= pB && bx <= 0.06 && stepVx < 0) {
+                bx = 0.06;
+                bvx = Math.abs(bvx) * 1.02;
+                bvy += ((by - p.paddle_y) / half) * 0.004;
+                hitSides.add('left');
+              }
+            } else if (p.side === 'right') {
+              const pT = p.paddle_y - half, pB = p.paddle_y + half;
+              if (by >= pT && by <= pB && bx >= 0.94 && stepVx > 0) {
+                bx = 0.94;
+                bvx = -Math.abs(bvx) * 1.02;
+                bvy += ((by - p.paddle_y) / half) * 0.004;
+                hitSides.add('right');
+              }
+            }
           }
         }
 
-        const baseSpd = Number(ballRow.speed) || BALL_BASE_SPEED;
+        // Speed normalization
         const curSpd = Math.sqrt(bvx * bvx + bvy * bvy);
-        if (curSpd > 0) {
-          const target = baseSpd * speedMul * 1.15;
-          bvx = (bvx / curSpd) * Math.min(curSpd, target);
-          bvy = (bvy / curSpd) * Math.min(curSpd, target);
+        if (curSpd > 0 && baseSpd > 0) {
+          bvx = (bvx / curSpd) * baseSpd;
+          bvy = (bvy / curSpd) * baseSpd;
         }
-        bvx = clamp(bvx, -0.04, 0.04);
-        bvy = clamp(bvy, -0.04, 0.04);
 
+        // Check scoring
         let scoredSide = null;
         if (by < -0.02) scoredSide = 'top';
         else if (by > 1.02) scoredSide = 'bottom';
@@ -120,8 +155,8 @@ async function handleState(context, code, user) {
 
           bx = 0.5; by = 0.5;
           const angle = Math.random() * Math.PI * 2;
-          bvx = Math.cos(angle) * baseSpd * speedMul;
-          bvy = Math.sin(angle) * baseSpd * speedMul;
+          bvx = Math.cos(angle) * baseSpd;
+          bvy = Math.sin(angle) * baseSpd;
 
           const sides = ['top', 'bottom', 'left', 'right'];
           for (const s of sides) {
@@ -163,8 +198,11 @@ async function handleState(context, code, user) {
         }
 
         ballData = { x: bx, y: by, vx: bvx, vy: bvy };
-        writes.push(db.prepare('UPDATE pong_rooms SET last_tick_at = ? WHERE id = ?').bind(now, room.id));
+      } else {
+        ballData = { x: Number(ballRow.x), y: Number(ballRow.y), vx: Number(ballRow.vx), vy: Number(ballRow.vy) };
       }
+
+      writes.push(db.prepare('UPDATE pong_rooms SET last_tick_at = ? WHERE id = ?').bind(now, room.id));
     }
 
     if (writes.length) { try { await db.batch(writes); } catch {} }
@@ -194,13 +232,8 @@ async function handleState(context, code, user) {
     points = isWinner ? 50 : 10;
   }
 
-  const leftScore = (room.score_left || 0);
-  const rightScore = (room.score_right || 0);
-  const topScore = (room.score_top || 0);
-  const bottomScore = (room.score_bottom || 0);
-
   return json({
-    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed, isHost: !!isHost, roundsTarget: room.rounds_target || 3, leftScore, rightScore, topScore, bottomScore },
+    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed, isHost: !!isHost, roundsTarget: room.rounds_target || 3, leftScore: room.score_left || 0, rightScore: room.score_right || 0, topScore: room.score_top || 0, bottomScore: room.score_bottom || 0 },
     myIndex: myIdx,
     players: players.map((p) => ({
       id: p.id, userId: p.user_id, username: p.username, rating: p.rating,
