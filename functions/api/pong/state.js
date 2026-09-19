@@ -1,7 +1,7 @@
 import { json, getUserFromRequest } from '../../_lib/auth.js';
 
 const PADDLE_SPEED = 0.045;
-const PADDLE_HALF = 0.06;
+const PADDLE_HALF = 0.12;
 const BALL_BASE_SPEED = 0.012;
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
