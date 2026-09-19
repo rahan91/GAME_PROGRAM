@@ -872,7 +872,7 @@
         stopGamePoll();
         if (data.room.status === 'finished') enterResults(data);
       }
-    }, 80);
+    }, 100);
   }
   function stopGamePoll() { if (gamePollTimer) { clearInterval(gamePollTimer); gamePollTimer = null; } }
 

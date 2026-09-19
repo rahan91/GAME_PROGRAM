@@ -44,13 +44,17 @@ export async function onRequestGet(context) {
 
   let ballData = null;
   if (room.status === 'playing') {
+    const now = Date.now();
+    const lastTick = Number(room.last_tick_at) || 0;
+    const canTick = (now - lastTick) >= 40;
+
     const ballRow = await db.prepare(
       'SELECT x, y, vx, vy, speed FROM pong_ball WHERE room_id = ?'
     ).bind(room.id).first();
 
     const writes = [];
 
-    if (ballRow) {
+    if (ballRow && canTick) {
       const alivePlayers = players.filter(p => p.alive);
       const aliveSides = new Set(alivePlayers.map(p => p.side));
 
@@ -162,6 +166,7 @@ export async function onRequestGet(context) {
         }
 
         ballData = { x: bx, y: by, vx: bvx, vy: bvy };
+        writes.push(db.prepare('UPDATE pong_rooms SET last_tick_at = ? WHERE id = ?').bind(now, room.id));
       }
     }
 

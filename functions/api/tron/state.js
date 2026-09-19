@@ -30,6 +30,11 @@ export async function onRequestGet(context) {
   const writes = [];
 
   if (room.status === 'playing') {
+    const now = Date.now();
+    const lastTick = Number(room.last_tick_at) || 0;
+    const tickMs = room.speed === 'fast' ? 50 : room.speed === 'slow' ? 120 : 80;
+    const canTick = (now - lastTick) >= tickMs;
+
     const alivePlayers = players.filter(p => p.alive);
     if (alivePlayers.length < 2) {
       const winner = alivePlayers[0] || null;
@@ -37,7 +42,7 @@ export async function onRequestGet(context) {
       writes.push(db.prepare("UPDATE tron_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(winnerUserId, room.id));
       room.status = 'finished';
       room.winner_id = winnerUserId;
-    } else {
+    } else if (canTick) {
       const occupied = new Set();
       for (const p of players) {
         for (const pt of p.trail) {
@@ -92,6 +97,7 @@ export async function onRequestGet(context) {
         room.status = 'finished';
         room.winner_id = winnerUserId;
       }
+      writes.push(db.prepare('UPDATE tron_rooms SET last_tick_at = ? WHERE id = ?').bind(now, room.id));
     }
   }
 
