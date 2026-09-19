@@ -662,9 +662,20 @@
     if (!isLoggedIn) { document.getElementById('loginBanner').style.display = ''; return; }
     const status = document.getElementById('lobbyStatus');
     status.textContent = 'Creating room...';
-    const data = await apiPost('/api/pong/room', { action: 'create', player: playerUsername, mode: selectedMode, maxPlayers: selectedMaxPlayers, speed: selectedSpeed, rounds: selectedRounds });
+    let data;
+    try {
+      const res = await fetch('/api/pong/room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', player: playerUsername, mode: selectedMode, maxPlayers: selectedMaxPlayers, speed: selectedSpeed, rounds: selectedRounds })
+      });
+      data = await res.json();
+    } catch (e) {
+      status.textContent = 'Fetch error: ' + e.message;
+      return;
+    }
     if (!data || data.error) {
-      status.textContent = data ? data.error : 'Failed to create room';
+      status.textContent = data ? (data.error || 'Failed (status ' + (data ? 'unknown' : 'null') + ')') : 'No response from server';
       return;
     }
     roomCode = data.code;
