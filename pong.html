@@ -1162,7 +1162,7 @@
 
     // Ball
     if (state.ball && (state.ball.vx !== 0 || state.ball.vy !== 0)) {
-      const bpos = getInterpolatedBall();
+      const bpos = getLerpedBall();
       const bx = bpos.x * W;
       const by = bpos.y * H;
       const bs = 8;
@@ -1219,22 +1219,30 @@
 
   // ---- Game State Polling (POST with dir) ----
   let gamePollTimer = null;
-  let serverBall = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
-  let lastServerTime = 0;
+  let prevBall = { x: 0.5, y: 0.5 };
+  let curBall = { x: 0.5, y: 0.5 };
+  let prevBallTime = 0;
+  let curBallTime = 0;
+  let pollInterval = 33;
 
   function startGamePoll() {
     stopGamePoll();
+    pollInterval = 33;
+    prevBallTime = Date.now();
+    curBallTime = Date.now();
+    prevBall = { x: 0.5, y: 0.5 };
+    curBall = { x: 0.5, y: 0.5 };
     gamePollTimer = setInterval(async () => {
       if (!roomCode || currentScreen !== 'game') { stopGamePoll(); return; }
       const dir = getCurrentDir();
-      const t0 = Date.now();
       const data = await apiPost('/api/pong/state', { room: roomCode, dir });
       if (!data || data.error) return;
-      const t1 = Date.now();
-      const latency = (t1 - t0) / 1000;
-      lastServerTime = t1;
+      prevBall = { x: curBall.x, y: curBall.y };
+      prevBallTime = curBallTime;
+      curBallTime = Date.now();
+      pollInterval = Math.max(33, curBallTime - prevBallTime);
       if (data.ball) {
-        serverBall = { x: data.ball.x || 0.5, y: data.ball.y || 0.5, vx: data.ball.vx || 0, vy: data.ball.vy || 0 };
+        curBall = { x: data.ball.x || 0.5, y: data.ball.y || 0.5 };
       }
       gameState = data;
       if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
@@ -1245,19 +1253,15 @@
   }
   function stopGamePoll() { if (gamePollTimer) { clearInterval(gamePollTimer); gamePollTimer = null; } }
 
-  function getInterpolatedBall() {
-    if (!gameState || !gameState.ball) return { x: 0.5, y: 0.5 };
+  function getLerpedBall() {
     const now = Date.now();
-    const elapsed = (now - lastServerTime) / 1000;
-    if (elapsed <= 0 || serverBall.vx === 0 && serverBall.vy === 0) {
-      return { x: serverBall.x, y: serverBall.y };
-    }
-    const speedMul = gameState.room && gameState.room.speed === 'fast' ? 1.5 : gameState.room && gameState.room.speed === 'slow' ? 0.7 : 1;
-    let ix = serverBall.x + serverBall.vx * speedMul * elapsed;
-    let iy = serverBall.y + serverBall.vy * speedMul * elapsed;
-    ix = Math.max(-0.05, Math.min(1.05, ix));
-    iy = Math.max(-0.05, Math.min(1.05, iy));
-    return { x: ix, y: iy };
+    if (pollInterval <= 0) return curBall;
+    let t = (now - curBallTime) / pollInterval;
+    t = Math.min(t, 1);
+    return {
+      x: prevBall.x + (curBall.x - prevBall.x) * t,
+      y: prevBall.y + (curBall.y - prevBall.y) * t
+    };
   }
 
   // ---- Resize handler ----
