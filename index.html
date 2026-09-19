@@ -297,22 +297,6 @@
       margin: 0 auto 10px;
       text-shadow: 0 0 30px rgba(var(--acc-btn), 0.3);
     }
-    .lb-tabs { display: flex; gap: 4px; margin-bottom: 10px; justify-content: center; }
-    .lb-tab {
-      background: rgba(var(--acc-main), 0.12);
-      color: rgba(var(--acc-texthi), 0.6);
-      border: 1px solid rgba(var(--acc-main), 0.15);
-      border-radius: 6px;
-      padding: 4px 14px;
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .lb-tab:hover { background: rgba(var(--acc-main), 0.22); color: rgba(var(--acc-texthi), 0.9); }
-    .lb-tab.active { background: rgba(var(--acc-btn), 0.25); color: rgba(var(--acc-bright), 1); border-color: rgba(var(--acc-btn), 0.5); }
     .lb-board {
       width: 100%;
       max-height: 55vh;
@@ -680,13 +664,8 @@
 
   <div class="lb">
     <div class="lb-title">Leaderboard</div>
-    <div class="lb-tabs" id="lbTabs">
-      <button class="lb-tab active" data-lb="all">All</button>
-      <button class="lb-tab" data-lb="pong">Pong</button>
-      <button class="lb-tab" data-lb="tron">Tron</button>
-    </div>
     <div class="lb-board">
-      <div class="lb-head" id="lbHead">
+      <div class="lb-head">
         <div class="rk">#</div>
         <div>Player</div>
         <div class="pl">ID</div>
@@ -889,43 +868,14 @@
     });
 
     // ---- Leaderboard ----
-    let currentLbGame = 'all';
-    const lbHeadAll = '<div class="rk">#</div><div>Player</div><div class="pl">ID</div><div class="pt">Pts</div>';
-    const lbHeadElo = '<div class="rk">#</div><div>Player</div><div class="pl">GP</div><div class="pt">ELO</div>';
-
-    async function loadLeaderboard(game) {
+    async function loadLeaderboard() {
       const container = document.getElementById('lbRows');
-      const head = document.getElementById('lbHead');
       let me = null;
       try {
         const mr = await fetch('/api/me');
         const md = await mr.json();
         me = (md.user && md.user.username) ? md.user.username : null;
       } catch {}
-
-      if (game === 'pong' || game === 'tron') {
-        head.innerHTML = lbHeadElo;
-        let rows;
-        try {
-          const res = await fetch('/api/leaderboard?limit=100&game=' + game);
-          const data = await res.json();
-          rows = data.leaderboard || null;
-        } catch { rows = null; }
-        if (!rows) { container.innerHTML = '<div class="lb-status">Could not load the leaderboard.</div>'; return; }
-        if (!rows.length) { container.innerHTML = '<div class="lb-status">No ratings yet. Play a game first.</div>'; return; }
-        const meUser = me;
-        container.innerHTML = rows.map((row, i) =>
-          '<div class="lb-row' + (row.username === meUser ? ' me' : '') + '">' +
-          '<div class="rk' + (i < 3 ? ' top rk' + (i + 1) : '') + '">' + (i + 1) + '</div>' +
-          window.Shop.npHTML(row) +
-          '<div class="pl">' + (row.gp || 0) + '</div>' +
-          '<div class="pt">' + (row.value || 0) + '</div>' +
-          '</div>'
-        ).join('');
-        return;
-      }
-
-      head.innerHTML = lbHeadAll;
       let rows;
       try {
         const res = await fetch('/api/leaderboard?limit=100');
@@ -944,19 +894,9 @@
         '</div>'
       ).join('');
     }
-
-    document.getElementById('lbTabs').addEventListener('click', (e) => {
-      const btn = e.target.closest('.lb-tab');
-      if (!btn) return;
-      document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
-      btn.classList.add('active');
-      currentLbGame = btn.dataset.lb;
-      loadLeaderboard(currentLbGame);
-    });
-
-    loadLeaderboard('all');
-    window.addEventListener('pageshow', () => { initAuth(); loadLeaderboard(currentLbGame); });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden) { initAuth(); loadLeaderboard(currentLbGame); } });
+    loadLeaderboard();
+    window.addEventListener('pageshow', () => { initAuth(); loadLeaderboard(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { initAuth(); loadLeaderboard(); } });
 
     // ---- Top Game Tag ----
     (async function() {
