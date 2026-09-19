@@ -1020,17 +1020,15 @@
   let localBall = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
   let localPaddles = {};
   let scoreCooldown = 0;
+  let baseBallSpeed = 0.03;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
   function syncFromServer(data) {
     if (!data) return;
     const serverBall = data.ball || {};
-    const dx = Math.abs(localBall.x - serverBall.x);
-    const dy = Math.abs(localBall.y - serverBall.y);
-    if (dx > 0.05 || dy > 0.05 || localBall.vx === 0) {
-      localBall = { x: serverBall.x || 0.5, y: serverBall.y || 0.5, vx: serverBall.vx || 0, vy: serverBall.vy || 0 };
-    }
+    localBall = { x: serverBall.x || 0.5, y: serverBall.y || 0.5, vx: serverBall.vx || 0, vy: serverBall.vy || 0 };
+    baseBallSpeed = Math.sqrt(localBall.vx * localBall.vx + localBall.vy * localBall.vy) || 0.03;
     const players = data.players || [];
     for (const p of players) {
       if (!localPaddles[p.side]) localPaddles[p.side] = { y: 0.5, alive: true };
@@ -1040,7 +1038,7 @@
 
   function runPhysics(dt) {
     if (!gameState || gameState.room.status !== 'playing') return;
-    if (dt > 0.1) dt = 0.016;
+    dt = Math.min(dt, 0.05);
 
     const speedMul = gameState.room.speed === 'fast' ? 1.5 : gameState.room.speed === 'slow' ? 0.7 : 1;
     const players = gameState.players || [];
@@ -1096,8 +1094,14 @@
     }
 
     const spd = Math.sqrt(localBall.vx * localBall.vx + localBall.vy * localBall.vy);
-    const baseSpd = Math.sqrt((gameState.ball.vx || 0) ** 2 + (gameState.ball.vy || 0) ** 2) || 0.03;
-    if (spd > 0 && baseSpd > 0) { localBall.vx = (localBall.vx / spd) * baseSpd; localBall.vy = (localBall.vy / spd) * baseSpd; }
+    if (spd > baseBallSpeed * 2) {
+      localBall.vx = (localBall.vx / spd) * baseBallSpeed * 2;
+      localBall.vy = (localBall.vy / spd) * baseBallSpeed * 2;
+    }
+    if (spd < baseBallSpeed * 0.5 && spd > 0) {
+      localBall.vx = (localBall.vx / spd) * baseBallSpeed * 0.5;
+      localBall.vy = (localBall.vy / spd) * baseBallSpeed * 0.5;
+    }
 
     let scoredSide = null;
     if (localBall.y < -0.02) scoredSide = 'top';
