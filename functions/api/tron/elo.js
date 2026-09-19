@@ -109,17 +109,6 @@ export async function onRequestPost(context) {
          is_provisional = excluded.is_provisional,
          last_active = excluded.last_active`
     ).bind(pid, newRating, newGp, newWins, newLosses, newProv, now).run();
-
-    if (points > 0) {
-      await db.prepare(
-        `INSERT INTO scores (user_id, username, total, plays, updated_at)
-         VALUES (?, ?, ?, 1, ?)
-         ON CONFLICT(user_id) DO UPDATE SET
-           total = total + excluded.total,
-           plays = plays + 1,
-           updated_at = excluded.updated_at`
-      ).bind(pid, usernames[npid] || '', points, Math.floor(Date.now() / 1000)).run();
-    }
   }
 
   await db.prepare(

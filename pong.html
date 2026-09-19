@@ -265,6 +265,26 @@
   .results-row {
     display: flex; gap: 10px; margin-top: 8px;
   }
+  .lb-panel {
+    margin-top: 20px; width: 100%; max-width: 420px;
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(var(--acc-main),0.15);
+    border-radius: 10px; padding: 12px 16px; text-align: left;
+  }
+  .lb-panel-title {
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgba(var(--acc-main),0.5); margin-bottom: 8px; text-align: center;
+  }
+  .lb-panel .lb-row {
+    display: grid; grid-template-columns: 28px 1fr 50px;
+    align-items: center; padding: 4px 0;
+    font-size: 12px; color: rgba(var(--acc-main),0.7);
+    border-bottom: 1px solid rgba(var(--acc-main),0.06);
+  }
+  .lb-panel .lb-row:last-child { border-bottom: none; }
+  .lb-panel .lb-row.me { color: rgba(var(--acc-bright),1); }
+  .lb-panel .lb-rk { color: rgba(var(--acc-main),0.4); font-size: 11px; }
+  .lb-panel .lb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-panel .lb-elo { text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
 
   /* ---- Cursor ---- */
   #cursorfx {
@@ -393,6 +413,10 @@
   <div class="results-row">
     <button class="lobby-btn primary" id="rematchBtn">Rematch</button>
     <button class="lobby-btn" id="backLobbyBtn">Back to Lobby</button>
+  </div>
+  <div class="lb-panel" id="lbPanel" style="display:none">
+    <div class="lb-panel-title">Pong ELO Leaderboard</div>
+    <div id="lbPanelRows"></div>
   </div>
 </div>
 
@@ -904,6 +928,26 @@
         } catch {}
       }).catch(() => {});
     }
+
+    loadResultsLeaderboard();
+  }
+
+  async function loadResultsLeaderboard() {
+    const panel = document.getElementById('lbPanel');
+    const rows = document.getElementById('lbPanelRows');
+    try {
+      const res = await fetch('/api/leaderboard?limit=10&game=pong');
+      const data = await res.json();
+      const lb = data.leaderboard || [];
+      if (!lb.length) { panel.style.display = 'none'; return; }
+      panel.style.display = 'block';
+      rows.innerHTML = lb.map((r, i) =>
+        '<div class="lb-row' + (r.username === playerUsername ? ' me' : '') + '">' +
+        '<span class="lb-rk">' + (i + 1) + '</span>' +
+        '<span class="lb-name">' + (r.username || '???') + '</span>' +
+        '<span class="lb-elo">' + (r.value || 0) + '</span></div>'
+      ).join('');
+    } catch { panel.style.display = 'none'; }
   }
 
   // ---- Countdown ----
