@@ -669,7 +669,11 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'create', player: playerUsername, mode: selectedMode, maxPlayers: selectedMaxPlayers, speed: selectedSpeed, rounds: selectedRounds })
       });
-      data = await res.json();
+      const txt = await res.text();
+      try { data = JSON.parse(txt); } catch(e) {
+        status.textContent = 'Status ' + res.status + ': ' + txt.slice(0, 200);
+        return;
+      }
     } catch (e) {
       status.textContent = 'Fetch error: ' + e.message;
       return;
