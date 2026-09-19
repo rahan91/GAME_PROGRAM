@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
     'SELECT id, username, email, password_hash FROM users WHERE username = ? OR email = ?'
   ).bind(login, login).first();
 
-  if (!user || !verifyPassword(password, user.password_hash)) {
+  if (!user || !(await verifyPassword(password, user.password_hash))) {
     return json({ error: 'Invalid login or password' }, 401);
   }
 

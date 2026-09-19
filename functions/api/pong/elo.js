@@ -43,7 +43,7 @@ export async function onRequestPost(context) {
 
   const ratings = {};
   for (const row of (eloEntries.results || [])) {
-    ratings[row.user_id] = row;
+    ratings[String(Number(row.user_id))] = row;
   }
 
   const usernameEntries = await db.prepare(
@@ -51,33 +51,35 @@ export async function onRequestPost(context) {
   ).bind(roomId, ...players).all();
   const usernames = {};
   for (const row of (usernameEntries.results || [])) {
-    usernames[row.user_id] = row.username;
+    usernames[String(Number(row.user_id))] = row.username;
   }
 
-  const winnerRating = ratings[winnerId] ? ratings[winnerId].rating : 1200;
-  const winnerGames = ratings[winnerId] ? ratings[winnerId].games_played : 0;
+  const normWinner = String(Number(winnerId));
+  const winnerRating = ratings[normWinner] ? ratings[normWinner].rating : 1200;
+  const winnerGames = ratings[normWinner] ? ratings[normWinner].games_played : 0;
   const winnerK = getKFactor(winnerGames);
 
-  const opponentIds = players.filter((p) => p !== winnerId);
+  const opponentIds = players.filter((p) => String(Number(p)) !== normWinner);
   const avgOpponentRating = opponentIds.length > 0
-    ? opponentIds.reduce((sum, id) => sum + (ratings[id] ? ratings[id].rating : 1200), 0) / opponentIds.length
+    ? opponentIds.reduce((sum, id) => sum + (ratings[String(Number(id))] ? ratings[String(Number(id))].rating : 1200), 0) / opponentIds.length
     : 1200;
 
   const ratingFactor = clamp(1 + (avgOpponentRating - winnerRating) / 1000, 0.5, 2.0);
   const winnerPoints = Math.round(basePoints * ratingFactor);
 
   for (const pid of players) {
-    const r = ratings[pid] ? ratings[pid].rating : 1200;
-    const gp = ratings[pid] ? ratings[pid].games_played : 0;
-    const w = ratings[pid] ? ratings[pid].wins : 0;
-    const l = ratings[pid] ? ratings[pid].losses : 0;
-    const prov = ratings[pid] ? ratings[pid].is_provisional : 1;
+    const npid = String(Number(pid));
+    const r = ratings[npid] ? ratings[npid].rating : 1200;
+    const gp = ratings[npid] ? ratings[npid].games_played : 0;
+    const w = ratings[npid] ? ratings[npid].wins : 0;
+    const l = ratings[npid] ? ratings[npid].losses : 0;
+    const prov = ratings[npid] ? ratings[npid].is_provisional : 1;
 
-    const isWinner = String(pid) === winnerId;
+    const isWinner = npid === normWinner;
     const scoreA = isWinner ? 1 : 0;
     const opponentRatings = players
-      .filter((p) => p !== pid)
-      .map((p) => (ratings[p] ? ratings[p].rating : 1200));
+      .filter((p) => String(Number(p)) !== npid)
+      .map((p) => (ratings[String(Number(p))] ? ratings[String(Number(p))].rating : 1200));
     const avgOpp = opponentRatings.length > 0
       ? opponentRatings.reduce((a, b) => a + b, 0) / opponentRatings.length
       : 1200;
@@ -90,7 +92,7 @@ export async function onRequestPost(context) {
     const rf = clamp(1 + (avgOpp - r) / 1000, 0.5, 2.0);
     const points = isWinner ? Math.round(basePoints * rf) : Math.round(basePoints * 0.2);
 
-    ratingChanges[pid] = { old: r, new: newRating, points, isWinner };
+    ratingChanges[String(Number(pid))] = { old: r, new: newRating, points, isWinner };
 
     const newGp = gp + 1;
     const newWins = w + (isWinner ? 1 : 0);
@@ -117,7 +119,7 @@ export async function onRequestPost(context) {
            total = total + excluded.total,
            plays = plays + 1,
            updated_at = excluded.updated_at`
-      ).bind(pid, usernames[pid] || '', points, Math.floor(Date.now() / 1000)).run();
+      ).bind(pid, usernames[npid] || '', points, Math.floor(Date.now() / 1000)).run();
     }
   }
 

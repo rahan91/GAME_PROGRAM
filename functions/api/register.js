@@ -26,7 +26,7 @@ export async function onRequestPost(context) {
     return json({ error: 'Username or email already taken' }, 409);
   }
 
-  const passwordHash = hashPassword(password);
+  const passwordHash = await hashPassword(password);
 
   const result = await env.DATABASE.prepare(
     'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)'

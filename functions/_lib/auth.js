@@ -35,12 +35,12 @@ export async function hashToken(token) {
   return Array.from(new Uint8Array(data)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function hashPassword(password) {
-  return bcrypt.hashSync(password, 10);
+export async function hashPassword(password) {
+  return await bcrypt.hash(password, 10);
 }
 
-export function verifyPassword(password, hash) {
-  return bcrypt.compareSync(password, hash);
+export async function verifyPassword(password, hash) {
+  return await bcrypt.compare(password, hash);
 }
 
 export function generateToken() {
