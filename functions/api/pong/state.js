@@ -21,13 +21,13 @@ async function handleState(context, code, user) {
   let room;
   try {
     room = await db.prepare(
-      'SELECT id, code, mode, status, host_id, max_players, speed, winner_id, rounds_target, round_num FROM pong_rooms WHERE code = ?'
+      'SELECT id, code, mode, status, host_id, max_players, speed, winner_id, rounds_target, round_num, score_top, score_bottom, score_left, score_right FROM pong_rooms WHERE code = ?'
     ).bind(code.toUpperCase()).first();
   } catch {
     room = await db.prepare(
       'SELECT id, code, mode, status, host_id, max_players, speed, winner_id FROM pong_rooms WHERE code = ?'
     ).bind(code.toUpperCase()).first();
-    if (room) { room.rounds_target = 3; room.round_num = 0; }
+    if (room) { room.rounds_target = 3; room.round_num = 0; room.score_top = 0; room.score_bottom = 0; room.score_left = 0; room.score_right = 0; }
   }
   if (!room) return json({ error: 'Room not found' }, 404);
 
@@ -123,35 +123,37 @@ async function handleState(context, code, user) {
           bvx = Math.cos(angle) * baseSpd * speedMul;
           bvy = Math.sin(angle) * baseSpd * speedMul;
 
-          const aliveAfter = players.filter(p => p.alive);
-          const aliveSidesAfter = new Set(aliveAfter.map(p => p.side));
+          const sides = ['top', 'bottom', 'left', 'right'];
+          for (const s of sides) {
+            if (s === scoredSide) continue;
+            const col = 'score_' + s;
+            room[col] = (room[col] || 0) + 1;
+            writes.push(db.prepare('UPDATE pong_rooms SET ' + col + ' = ? WHERE id = ?').bind(room[col], room.id));
+          }
 
-          if (aliveSidesAfter.size <= 1) {
-            const survivingSide = aliveSidesAfter.size === 1 ? [...aliveSidesAfter][0] : null;
-            let roundNum = (room.round_num || 0);
-            if (survivingSide === 'left' || survivingSide === 'top') roundNum++;
-            else if (survivingSide === 'right' || survivingSide === 'bottom') roundNum--;
+          const target = room.rounds_target || 3;
+          const scores = { top: room.score_top || 0, bottom: room.score_bottom || 0, left: room.score_left || 0, right: room.score_right || 0 };
+          const maxScore = Math.max(...Object.values(scores));
+          const sidesAtMax = sides.filter(s => scores[s] === maxScore);
 
-            try { await db.prepare('UPDATE pong_rooms SET round_num = ? WHERE id = ?').bind(roundNum, room.id).run(); } catch {}
-            room.round_num = roundNum;
-
-            const absScore = Math.abs(roundNum);
-            const target = room.rounds_target || 3;
-
-            if (absScore >= target) {
-              const wp = aliveAfter.find(p => p.side === survivingSide);
+          if (maxScore >= target) {
+            if (sidesAtMax.length === 1) {
+              const winSide = sidesAtMax[0];
+              const wp = players.find(p => p.side === winSide);
               const winnerUserId = wp ? wp.user_id : null;
               writes.push(db.prepare("UPDATE pong_rooms SET status = 'finished', winner_id = ? WHERE id = ?").bind(winnerUserId, room.id));
               writes.push(db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id));
               room.status = 'finished';
               room.winner_id = winnerUserId;
-            } else {
-              for (const p of players) {
-                writes.push(db.prepare('UPDATE pong_players SET paddle_y = 0.5, alive = 1, dir = 0 WHERE id = ?').bind(p.id));
-                p.alive = 1;
-                p.paddle_y = 0.5;
-                p.dir = 0;
-              }
+            }
+          }
+
+          if (room.status === 'playing') {
+            for (const p of players) {
+              writes.push(db.prepare('UPDATE pong_players SET paddle_y = 0.5, alive = 1, dir = 0 WHERE id = ?').bind(p.id));
+              p.alive = 1;
+              p.paddle_y = 0.5;
+              p.dir = 0;
             }
           }
         }
@@ -192,11 +194,13 @@ async function handleState(context, code, user) {
     points = isWinner ? 50 : 10;
   }
 
-  const leftScore = (room.round_num || 0) > 0 ? room.round_num : 0;
-  const rightScore = (room.round_num || 0) < 0 ? Math.abs(room.round_num) : 0;
+  const leftScore = (room.score_left || 0);
+  const rightScore = (room.score_right || 0);
+  const topScore = (room.score_top || 0);
+  const bottomScore = (room.score_bottom || 0);
 
   return json({
-    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed, isHost: !!isHost, roundsTarget: room.rounds_target || 3, roundNum: room.round_num || 0, leftScore, rightScore },
+    room: { id: room.id, code: room.code, mode: room.mode, status: room.status, hostId: room.host_id, hostUsername: hostPlayer ? hostPlayer.username : null, maxPlayers: room.max_players, speed: room.speed, isHost: !!isHost, roundsTarget: room.rounds_target || 3, leftScore, rightScore, topScore, bottomScore },
     myIndex: myIdx,
     players: players.map((p) => ({
       id: p.id, userId: p.user_id, username: p.username, rating: p.rating,

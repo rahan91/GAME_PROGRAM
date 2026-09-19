@@ -216,6 +216,40 @@
       border: 1px solid rgba(var(--acc-btn), 0.4);
       z-index: 2;
     }
+    .card.beta .tag-beta {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(147, 51, 234, 0.3);
+      color: rgba(192, 132, 252, 0.9);
+      border: 1px solid rgba(147, 51, 234, 0.5);
+      z-index: 2;
+    }
+    .card.top-game {
+      border-color: rgba(234, 179, 8, 0.6);
+      box-shadow: 0 0 22px rgba(234, 179, 8, 0.25), 0 6px 24px rgba(0,0,0,0.25);
+    }
+    .card.top-game .tag-top {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(234, 179, 8, 0.35);
+      color: rgba(253, 224, 71, 0.95);
+      border: 1px solid rgba(234, 179, 8, 0.5);
+      z-index: 2;
+    }
     .card:not(a) {
       border-style: dashed;
       background: rgba(var(--acc-dim), 0.08);
@@ -615,13 +649,15 @@
         <div class="icon"><img src="assets/circle-icon.png" alt="Circle" width="56" height="56"></div>
         <div class="label">Circle</div>
       </a>
-      <a class="card online" href="/pong">
+      <a class="card online beta" href="/pong" data-game="pong">
         <div class="icon"><img src="assets/pong-icon.png" alt="Pong" width="56" height="56"></div>
         <div class="label">Pong</div>
+        <span class="tag-beta">BETA TEST</span>
       </a>
-      <a class="card online" href="/tron">
+      <a class="card online beta" href="/tron" data-game="tron">
         <div class="icon"><img src="assets/tron-icon.png" alt="Tron" width="56" height="56"></div>
         <div class="label">Tron</div>
+        <span class="tag-beta">BETA TEST</span>
       </a>
     </div>
   </div>
@@ -869,6 +905,28 @@
     loadLeaderboard();
     window.addEventListener('pageshow', () => { initAuth(); loadLeaderboard(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { initAuth(); loadLeaderboard(); } });
+
+    // ---- Top Game Tag ----
+    (async function() {
+      try {
+        const res = await fetch('/api/plays');
+        const data = await res.json();
+        let maxGame = null, maxPlays = 0;
+        for (const [game, plays] of Object.entries(data)) {
+          if (plays > maxPlays) { maxPlays = plays; maxGame = game; }
+        }
+        if (maxGame && maxPlays > 0) {
+          const card = document.querySelector('[data-game="' + maxGame + '"]');
+          if (card) {
+            card.classList.add('top-game');
+            const span = document.createElement('span');
+            span.className = 'tag-top';
+            span.textContent = 'TOP';
+            card.appendChild(span);
+          }
+        }
+      } catch {}
+    })();
   </script>
 </body>
 </html>

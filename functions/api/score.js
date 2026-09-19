@@ -48,6 +48,13 @@ export async function onRequestPost(context) {
 
   await context.env.DATABASE.batch(ops);
 
+  if (GAMES[game]) {
+    try {
+      await context.env.DATABASE.prepare('UPDATE game_plays SET plays = plays + 1, last_updated = ? WHERE game = ?')
+        .bind(now, game).run();
+    } catch {}
+  }
+
   const row = await context.env.DATABASE.prepare(
     'SELECT total, plays, spent FROM scores WHERE user_id = ?'
   ).bind(user.id).first();

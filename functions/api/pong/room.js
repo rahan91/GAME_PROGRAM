@@ -209,7 +209,7 @@ async function handleStart(db, user, body, now) {
   if (room.mode === 'quads' && playerCount % 4 !== 0) return json({ error: 'Quads mode needs players divisible by 4' }, 400);
 
   try {
-    await db.prepare("UPDATE pong_rooms SET status = 'playing', round_num = 0, winner_id = NULL, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
+    await db.prepare("UPDATE pong_rooms SET status = 'playing', round_num = 0, score_top = 0, score_bottom = 0, score_left = 0, score_right = 0, winner_id = NULL, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
   } catch (e) {
     await db.prepare("UPDATE pong_rooms SET status = 'playing', expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
   }
@@ -261,7 +261,7 @@ async function handleRematch(db, user, body, now) {
   if (!room) return json({ error: 'Room not found' }, 404);
   if (room.status !== 'finished') return json({ error: 'Game not finished' }, 409);
 
-  await db.prepare("UPDATE pong_rooms SET status = 'waiting', round_num = 0, winner_id = NULL, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
+  await db.prepare("UPDATE pong_rooms SET status = 'waiting', round_num = 0, score_top = 0, score_bottom = 0, score_left = 0, score_right = 0, winner_id = NULL, expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
   await db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id).run();
   await db.prepare('UPDATE pong_players SET alive = 0, ready = 0, paddle_y = 0.5, dir = 0 WHERE room_id = ?').bind(room.id).run();
 
