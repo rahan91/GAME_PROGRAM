@@ -720,7 +720,6 @@
     stopPolling();
     stopGamePoll();
     stopRenderLoop();
-    stopInputLoop();
     document.getElementById('roomInfo').style.display = 'none';
     document.getElementById('playerList').style.display = 'none';
     document.getElementById('readyBtn').textContent = 'Ready';
@@ -739,7 +738,6 @@
     stopPolling();
     stopGamePoll();
     stopRenderLoop();
-    stopInputLoop();
     showScreen('lobby');
     document.getElementById('roomInfo').style.display = 'none';
     document.getElementById('playerList').style.display = 'none';
@@ -837,7 +835,6 @@
     showScreen('game');
     stopPolling();
     gameState = data;
-    lastSentDir = 0;
     resizeCanvas();
     document.getElementById('endGameBtn').style.display = isHost ? '' : 'none';
     document.getElementById('cursorfx').style.display = 'none';
@@ -848,26 +845,8 @@
       countdownEl.classList.remove('show');
     }
     startRenderLoop();
-    startInputLoop();
     startGamePoll();
   }
-
-  // ---- Game State Polling ----
-  let gamePollTimer = null;
-  function startGamePoll() {
-    stopGamePoll();
-    gamePollTimer = setInterval(async () => {
-      if (!roomCode || currentScreen !== 'game') { stopGamePoll(); return; }
-      const data = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
-      if (!data || data.error) return;
-      gameState = data;
-      if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
-        stopGamePoll();
-        if (data.room.status === 'finished') enterResults(data);
-      }
-    }, 120);
-  }
-  function stopGamePoll() { if (gamePollTimer) { clearInterval(gamePollTimer); gamePollTimer = null; } }
 
   // ---- Enter Results ----
   function enterResults(data) {
@@ -875,7 +854,6 @@
     stopPolling();
     stopGamePoll();
     stopRenderLoop();
-    stopInputLoop();
     gameState = data;
     renderResults(data);
     startPolling();
@@ -1184,30 +1162,14 @@
     if (html !== _lastHudHtml) { _lastHudHtml = html; hud.innerHTML = html; }
   }
 
-  // ---- Input Loop ----
-  let inputRunning = false;
-  let lastSentDir = 0;
-  function startInputLoop() {
-    if (inputRunning) return;
-    inputRunning = true;
-    sendInput();
-  }
-  function stopInputLoop() { inputRunning = false; }
-
-  function sendInput() {
-    if (!inputRunning || currentScreen !== 'game') { inputRunning = false; return; }
-
+  // ---- Input: compute current dir from keys/touch/mouse ----
+  function getCurrentDir() {
     let dir = 0;
-    // Keyboard
     const w = keys['KeyW'] || keys['ArrowUp'];
     const s = keys['KeyS'] || keys['ArrowDown'];
     if (w && !s) dir = -1;
     else if (s && !w) dir = 1;
-
-    // Touch override
     if (touchDir !== 0) dir = touchDir;
-
-    // Mouse override — follow cursor Y position relative to paddle
     if (mouseActive && mouseY >= 0 && gameState) {
       const me = (gameState.players || []).find(p => myUserId && String(p.userId) === myUserId);
       if (me) {
@@ -1216,14 +1178,26 @@
         if (Math.abs(diff) > 0.03) dir = diff > 0 ? 1 : -1;
       }
     }
-
-    if (roomCode && dir !== lastSentDir) {
-      lastSentDir = dir;
-      apiPost('/api/pong/move', { room: roomCode, dir });
-    }
-
-    setTimeout(sendInput, 33);
+    return dir;
   }
+
+  // ---- Game State Polling (POST with dir) ----
+  let gamePollTimer = null;
+  function startGamePoll() {
+    stopGamePoll();
+    gamePollTimer = setInterval(async () => {
+      if (!roomCode || currentScreen !== 'game') { stopGamePoll(); return; }
+      const dir = getCurrentDir();
+      const data = await apiPost('/api/pong/state', { room: roomCode, dir });
+      if (!data || data.error) return;
+      gameState = data;
+      if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
+        stopGamePoll();
+        if (data.room.status === 'finished') enterResults(data);
+      }
+    }, 120);
+  }
+  function stopGamePoll() { if (gamePollTimer) { clearInterval(gamePollTimer); gamePollTimer = null; } }
 
   // ---- Resize handler ----
   window.addEventListener('resize', resizeCanvas);

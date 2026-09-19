@@ -728,7 +728,6 @@
     stopPolling();
     stopGamePoll();
     stopRenderLoop();
-    stopInputLoop();
     document.getElementById('roomInfo').style.display = 'none';
     document.getElementById('playerList').style.display = 'none';
     document.getElementById('readyBtn').textContent = 'Ready';
@@ -747,7 +746,6 @@
     stopPolling();
     stopGamePoll();
     stopRenderLoop();
-    stopInputLoop();
     showScreen('lobby');
     document.getElementById('roomInfo').style.display = 'none';
     document.getElementById('playerList').style.display = 'none';
@@ -759,7 +757,6 @@
       const data = await apiPost('/api/tron/room', { action: 'rematch', code: roomCode });
       if (data && data.ok) {
         ready = false;
-        lastSentDir = null;
         document.getElementById('readyBtn').textContent = 'Ready';
         showScreen('lobby');
         startPolling();
@@ -844,7 +841,6 @@
     showScreen('game');
     stopPolling();
     gameState = data;
-    lastSentDir = null;
     resizeCanvas();
     document.getElementById('endGameBtn').style.display = isHost ? '' : 'none';
     document.getElementById('cursorfx').style.display = 'none';
@@ -855,17 +851,17 @@
       countdownEl.classList.remove('show');
     }
     startRenderLoop();
-    startInputLoop();
     startGamePoll();
   }
 
-  // ---- Game State Polling ----
+  // ---- Game State Polling (POST with dir) ----
   let gamePollTimer = null;
   function startGamePoll() {
     stopGamePoll();
     gamePollTimer = setInterval(async () => {
       if (!roomCode || currentScreen !== 'game') { stopGamePoll(); return; }
-      const data = await apiGet('/api/tron/state?room=' + encodeURIComponent(roomCode));
+      const dir = getCurrentDir();
+      const data = await apiPost('/api/tron/state', { room: roomCode, dir });
       if (!data || data.error) return;
       gameState = data;
       if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
@@ -882,7 +878,6 @@
     stopPolling();
     stopGamePoll();
     stopRenderLoop();
-    stopInputLoop();
     gameState = data;
     renderResults(data);
     startPolling();
@@ -1074,22 +1069,9 @@
     if (html !== _lastHudHtml) { _lastHudHtml = html; hud.innerHTML = html; }
   }
 
-  // ---- Input Loop ----
-  let inputRunning = false;
-  let lastSentDir = null;
-  function startInputLoop() {
-    if (inputRunning) return;
-    inputRunning = true;
-    sendInput();
-  }
-  function stopInputLoop() { inputRunning = false; }
-
-  function sendInput() {
-    if (!inputRunning || currentScreen !== 'game') { inputRunning = false; return; }
-
+  // ---- Input: compute current dir from keys/dpad/swipe ----
+  function getCurrentDir() {
     let dir = null;
-
-    // Keyboard
     const up = keys['ArrowUp'] || keys['KeyW'];
     const down = keys['ArrowDown'] || keys['KeyS'];
     const left = keys['ArrowLeft'] || keys['KeyA'];
@@ -1098,19 +1080,9 @@
     else if (down && !up && !left && !right) dir = 'down';
     else if (left && !right && !up && !down) dir = 'left';
     else if (right && !left && !up && !down) dir = 'right';
-
-    // D-Pad override
     if (dpadDir) dir = dpadDir;
-
-    // Swipe override
     if (swipeDir) dir = swipeDir;
-
-    if (dir && roomCode && dir !== lastSentDir) {
-      lastSentDir = dir;
-      apiPost('/api/tron/move', { room: roomCode, dir });
-    }
-
-    setTimeout(() => requestAnimationFrame(sendInput), 33);
+    return dir;
   }
 
   // ---- Resize handler ----

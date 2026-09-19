@@ -1,13 +1,10 @@
 import { json, getUserFromRequest } from '../../_lib/auth.js';
 
 const DIR_MAP = { up: { dx: 0, dy: -1 }, down: { dx: 0, dy: 1 }, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } };
+const VALID_DIRS = new Set(['up', 'down', 'left', 'right']);
+const OPPOSITE = { up: 'down', down: 'up', left: 'right', right: 'left' };
 
-export async function onRequestGet(context) {
-  try {
-  const url = new URL(context.request.url);
-  const code = url.searchParams.get('room');
-  if (!code) return json({ error: 'Missing room parameter' }, 400);
-
+async function handleState(context, code, user) {
   const db = context.env.DATABASE;
 
   const room = await db.prepare(
@@ -113,13 +110,12 @@ export async function onRequestGet(context) {
 
   const hostPlayer = players.find(p => String(p.user_id) === String(room.host_id));
 
-  const me = await getUserFromRequest(context.env, context.request);
-  const myUserId = me ? String(me.id) : null;
-  const isHost = myUserId ? await db.prepare('SELECT 1 FROM tron_rooms WHERE id = ? AND host_id = ?').bind(room.id, me.id).first() : false;
+  const myUserId = user ? String(user.id) : null;
+  const isHost = myUserId ? await db.prepare('SELECT 1 FROM tron_rooms WHERE id = ? AND host_id = ?').bind(room.id, user.id).first() : false;
   const myIdx = myUserId ? players.findIndex(p => String(Number(p.user_id)) === myUserId || String(p.user_id) === myUserId) : -1;
 
   let points = null;
-  if (room.status === 'finished' && me) {
+  if (room.status === 'finished' && user) {
     const isWinner = winner && (String(Number(winner)) === myUserId || String(winner) === myUserId);
     points = isWinner ? 50 : 10;
   }
@@ -134,6 +130,50 @@ export async function onRequestGet(context) {
     })),
     winner, winnerName, points,
   });
+}
+
+export async function onRequestGet(context) {
+  try {
+    const url = new URL(context.request.url);
+    const code = url.searchParams.get('room');
+    if (!code) return json({ error: 'Missing room parameter' }, 400);
+    const user = await getUserFromRequest(context.env, context.request);
+    return await handleState(context, code, user);
+  } catch (e) {
+    return json({ error: 'State error: ' + (e.message || e) }, 500);
+  }
+}
+
+export async function onRequestPost(context) {
+  try {
+    const user = await getUserFromRequest(context.env, context.request);
+    if (!user) return json({ error: 'Not logged in' }, 401);
+
+    let body;
+    try { body = await context.request.json(); } catch { return json({ error: 'Invalid body' }, 400); }
+
+    const code = body && body.room ? String(body.room).toUpperCase() : null;
+    if (!code) return json({ error: 'Missing room' }, 400);
+
+    if (body.dir) {
+      const dir = String(body.dir).toLowerCase();
+      if (VALID_DIRS.has(dir)) {
+        const db = context.env.DATABASE;
+        const player = await db.prepare(
+          "SELECT dir FROM tron_players WHERE room_id = (SELECT id FROM tron_rooms WHERE code = ? AND status = 'playing') AND user_id = ?"
+        ).bind(code, user.id).first();
+
+        if (player) {
+          if (!player.dir || player.dir === '' || player.dir !== OPPOSITE[dir]) {
+            await db.prepare(
+              "UPDATE tron_players SET dir = ? WHERE room_id = (SELECT id FROM tron_rooms WHERE code = ? AND status = 'playing') AND user_id = ?"
+            ).bind(dir, code, user.id).run();
+          }
+        }
+      }
+    }
+
+    return await handleState(context, code, user);
   } catch (e) {
     return json({ error: 'State error: ' + (e.message || e) }, 500);
   }

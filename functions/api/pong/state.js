@@ -15,12 +15,7 @@ function findNearestPaddle(players, ballCoord, wallSide) {
   }, { paddle: candidates[0], dist: Infinity }).paddle;
 }
 
-export async function onRequestGet(context) {
-  try {
-  const url = new URL(context.request.url);
-  const code = url.searchParams.get('room');
-  if (!code) return json({ error: 'Missing room parameter' }, 400);
-
+async function handleState(context, code, user) {
   const db = context.env.DATABASE;
 
   let room;
@@ -187,13 +182,12 @@ export async function onRequestGet(context) {
     winnerName = wp ? wp.username : null;
   }
 
-  const me = await getUserFromRequest(context.env, context.request);
-  const myUserId = me ? String(me.id) : null;
-  const isHost = myUserId ? await db.prepare('SELECT 1 FROM pong_rooms WHERE id = ? AND host_id = ?').bind(room.id, me.id).first() : false;
+  const myUserId = user ? String(user.id) : null;
+  const isHost = myUserId ? await db.prepare('SELECT 1 FROM pong_rooms WHERE id = ? AND host_id = ?').bind(room.id, user.id).first() : false;
   const myIdx = myUserId ? players.findIndex(p => String(Number(p.user_id)) === myUserId || String(p.user_id) === myUserId) : -1;
 
   let points = null;
-  if (room.status === 'finished' && me) {
+  if (room.status === 'finished' && user) {
     const isWinner = winner && (String(Number(winner)) === myUserId || String(winner) === myUserId);
     points = isWinner ? 50 : 10;
   }
@@ -211,6 +205,42 @@ export async function onRequestGet(context) {
     ball: ballData,
     winner, winnerName, points,
   });
+}
+
+export async function onRequestGet(context) {
+  try {
+    const url = new URL(context.request.url);
+    const code = url.searchParams.get('room');
+    if (!code) return json({ error: 'Missing room parameter' }, 400);
+    const user = await getUserFromRequest(context.env, context.request);
+    return await handleState(context, code, user);
+  } catch (e) {
+    return json({ error: 'State error: ' + (e.message || e) }, 500);
+  }
+}
+
+export async function onRequestPost(context) {
+  try {
+    const user = await getUserFromRequest(context.env, context.request);
+    if (!user) return json({ error: 'Not logged in' }, 401);
+
+    let body;
+    try { body = await context.request.json(); } catch { return json({ error: 'Invalid body' }, 400); }
+
+    const code = body && body.room ? String(body.room).toUpperCase() : null;
+    if (!code) return json({ error: 'Missing room' }, 400);
+
+    if (body.dir !== undefined) {
+      const dir = Number(body.dir);
+      if (Number.isInteger(dir) && dir >= -1 && dir <= 1) {
+        const db = context.env.DATABASE;
+        await db.prepare(
+          "UPDATE pong_players SET dir = ? WHERE room_id = (SELECT id FROM pong_rooms WHERE code = ?) AND user_id = ?"
+        ).bind(dir, code, user.id).run();
+      }
+    }
+
+    return await handleState(context, code, user);
   } catch (e) {
     return json({ error: 'State error: ' + (e.message || e) }, 500);
   }
