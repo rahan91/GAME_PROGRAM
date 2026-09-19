@@ -401,10 +401,9 @@
   </div>
 </div>
 
-<div id="gameScreen" class="screen">
+  <div id="gameScreen" class="screen">
   <canvas id="gameCanvas"></canvas>
   <div id="gameHud"></div>
-  <button class="lobby-btn" id="endGameBtn" style="display:none;position:fixed;top:12px;right:12px;z-index:100;font-size:11px;padding:8px 16px;background:rgba(180,40,40,0.8);border:1px solid rgba(255,80,80,0.4)">End Game</button>
 </div>
 
 <div id="resultsScreen" class="screen">
@@ -780,16 +779,6 @@
     }
   });
 
-  document.getElementById('endGameBtn').addEventListener('click', async () => {
-    if (!roomCode || !isHost) return;
-    const winnerUsername = prompt('Enter winner username (leave empty for draw):');
-    const data = await apiPost('/api/pong/room', { action: 'end', code: roomCode, winnerName: winnerUsername || null });
-    if (data && data.ok) {
-      const state = await apiGet('/api/pong/state?room=' + encodeURIComponent(roomCode));
-      if (state && state.room && state.room.status === 'finished') enterResults(state);
-    }
-  });
-
   // ---- Polling ----
   function startPolling() {
     stopPolling();
@@ -860,7 +849,6 @@
     stopPolling();
     gameState = data;
     resizeCanvas();
-    document.getElementById('endGameBtn').style.display = isHost ? '' : 'none';
     document.getElementById('cursorfx').style.display = 'none';
     trail.forEach(t => t.style.display = 'none');
     if (data.countdown > 0) {
@@ -1174,8 +1162,9 @@
 
     // Ball
     if (state.ball && (state.ball.vx !== 0 || state.ball.vy !== 0)) {
-      const bx = (state.ball.x || 0.5) * W;
-      const by = (state.ball.y || 0.5) * H;
+      const bpos = getInterpolatedBall();
+      const bx = bpos.x * W;
+      const by = bpos.y * H;
       const bs = 8;
 
       ctx.fillStyle = '#fff';
@@ -1230,13 +1219,23 @@
 
   // ---- Game State Polling (POST with dir) ----
   let gamePollTimer = null;
+  let serverBall = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
+  let lastServerTime = 0;
+
   function startGamePoll() {
     stopGamePoll();
     gamePollTimer = setInterval(async () => {
       if (!roomCode || currentScreen !== 'game') { stopGamePoll(); return; }
       const dir = getCurrentDir();
+      const t0 = Date.now();
       const data = await apiPost('/api/pong/state', { room: roomCode, dir });
       if (!data || data.error) return;
+      const t1 = Date.now();
+      const latency = (t1 - t0) / 1000;
+      lastServerTime = t1;
+      if (data.ball) {
+        serverBall = { x: data.ball.x || 0.5, y: data.ball.y || 0.5, vx: data.ball.vx || 0, vy: data.ball.vy || 0 };
+      }
       gameState = data;
       if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
         stopGamePoll();
@@ -1245,6 +1244,21 @@
     }, 33);
   }
   function stopGamePoll() { if (gamePollTimer) { clearInterval(gamePollTimer); gamePollTimer = null; } }
+
+  function getInterpolatedBall() {
+    if (!gameState || !gameState.ball) return { x: 0.5, y: 0.5 };
+    const now = Date.now();
+    const elapsed = (now - lastServerTime) / 1000;
+    if (elapsed <= 0 || serverBall.vx === 0 && serverBall.vy === 0) {
+      return { x: serverBall.x, y: serverBall.y };
+    }
+    const speedMul = gameState.room && gameState.room.speed === 'fast' ? 1.5 : gameState.room && gameState.room.speed === 'slow' ? 0.7 : 1;
+    let ix = serverBall.x + serverBall.vx * speedMul * elapsed;
+    let iy = serverBall.y + serverBall.vy * speedMul * elapsed;
+    ix = Math.max(-0.05, Math.min(1.05, ix));
+    iy = Math.max(-0.05, Math.min(1.05, iy));
+    return { x: ix, y: iy };
+  }
 
   // ---- Resize handler ----
   window.addEventListener('resize', resizeCanvas);
