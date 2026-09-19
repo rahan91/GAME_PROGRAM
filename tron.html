@@ -951,18 +951,37 @@
   }
 
   // ---- Canvas Resize ----
+  let gridCanvas = null;
   function resizeCanvas() {
+    let gw, gh;
     if (gameState && gameState.gridSize) {
-      const gw = gameState.gridSize.w;
-      const gh = gameState.gridSize.h;
+      gw = gameState.gridSize.w;
+      gh = gameState.gridSize.h;
       const scale = Math.min(window.innerWidth * 0.9 / gw, window.innerHeight * 0.9 / gh, 1);
       canvas.width = Math.floor(gw * scale);
       canvas.height = Math.floor(gh * scale);
     } else {
+      gw = 640; gh = 480;
       const size = Math.floor(Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9, 600));
       canvas.width = size;
       canvas.height = size;
     }
+
+    gridCanvas = document.createElement('canvas');
+    gridCanvas.width = canvas.width;
+    gridCanvas.height = canvas.height;
+    const gc = gridCanvas.getContext('2d');
+    gc.fillStyle = 'rgba(0,0,0,0.35)';
+    gc.fillRect(0, 0, canvas.width, canvas.height);
+    gc.strokeStyle = 'rgba(255,255,255,0.02)';
+    gc.lineWidth = 1;
+    gc.beginPath();
+    for (let x = 0; x <= canvas.width; x += 40) { gc.moveTo(x, 0); gc.lineTo(x, canvas.height); }
+    for (let y = 0; y <= canvas.height; y += 40) { gc.moveTo(0, y); gc.lineTo(canvas.width, y); }
+    gc.stroke();
+    gc.strokeStyle = 'rgba(255,255,255,0.15)';
+    gc.lineWidth = 2;
+    gc.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
   }
 
   // ---- Render Loop ----
@@ -986,25 +1005,13 @@
   function drawGame(state) {
     const W = canvas.width;
     const H = canvas.height;
-    ctx.clearRect(0, 0, W, H);
 
-    // Background
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillRect(0, 0, W, H);
-
-    // Grid lines (batched)
-    const cellSize = 4;
-    ctx.strokeStyle = 'rgba(255,255,255,0.02)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let x = 0; x <= W; x += cellSize * 10) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
-    for (let y = 0; y <= H; y += cellSize * 10) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
-    ctx.stroke();
-
-    // Border glow
-    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, W - 2, H - 2);
+    if (gridCanvas) {
+      ctx.drawImage(gridCanvas, 0, 0);
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(0, 0, W, H);
+    }
 
     const players = state.players || [];
     const gw = (state.gridSize && state.gridSize.w) || 640;
@@ -1013,68 +1020,41 @@
     const scaleY = H / gh;
 
     // Draw trails
-    players.forEach((p) => {
-      if (!p.trail || !p.trail.length) return;
+    for (let pi = 0; pi < players.length; pi++) {
+      const p = players[pi];
+      if (!p.trail || !p.trail.length) continue;
       const color = p.color || 'rgba(0,229,255,0.85)';
       const isDead = !p.alive;
 
-      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 4;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.lineWidth = 4;
-
-      if (isDead) {
-        ctx.globalAlpha = 0.35;
-      }
-
-      ctx.strokeStyle = color;
+      ctx.globalAlpha = isDead ? 0.35 : 1;
       ctx.beginPath();
-      const startX = p.trail[0].x * scaleX + scaleX / 2;
-      const startY = p.trail[0].y * scaleY + scaleY / 2;
-      ctx.moveTo(startX, startY);
-
+      ctx.moveTo(p.trail[0].x * scaleX + scaleX / 2, p.trail[0].y * scaleY + scaleY / 2);
       for (let i = 1; i < p.trail.length; i++) {
-        const tx = p.trail[i].x * scaleX + scaleX / 2;
-        const ty = p.trail[i].y * scaleY + scaleY / 2;
-        ctx.lineTo(tx, ty);
+        ctx.lineTo(p.trail[i].x * scaleX + scaleX / 2, p.trail[i].y * scaleY + scaleY / 2);
       }
       ctx.stroke();
-      ctx.restore();
 
-      // Draw head (current position)
+      // Draw head
       const hx = p.x * scaleX + scaleX / 2;
       const hy = p.y * scaleY + scaleY / 2;
-
-      ctx.save();
-      if (isDead) {
-        ctx.globalAlpha = 0.35;
-      }
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(hx, hy, isDead ? 3 : 4.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
 
-      // Player name above head
+      // Player name
       if (!isDead) {
-        const nx = p.x * scaleX + scaleX / 2;
-        const ny = p.y * scaleY + scaleY / 2;
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.font = '10px "IBM Plex Mono", monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(p.username || '', nx, ny - 10);
+        ctx.fillText(p.username || '', hx, hy - 10);
       }
-    });
-
-    // Particles (death effects)
-    if (state.particles) {
-      state.particles.forEach((pt) => {
-        ctx.fillStyle = 'rgba(' + (pt.r || 255) + ',' + (pt.g || 255) + ',' + (pt.b || 255) + ',' + (pt.life || 0.5) + ')';
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, pt.size || 2, 0, Math.PI * 2);
-        ctx.fill();
-      });
     }
+    ctx.globalAlpha = 1;
 
     // Alive count overlay
     const aliveCount = players.filter(p => p.alive).length;

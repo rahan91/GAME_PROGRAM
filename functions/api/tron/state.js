@@ -74,6 +74,7 @@ export async function onRequestGet(context) {
         if (targetCounts[key] > 1) { toKill.push(p); continue; }
 
         p.trail.push({ x: p.x, y: p.y });
+        if (p.trail.length > 200) p.trail = p.trail.slice(-200);
         p.x = nx;
         p.y = ny;
       }
