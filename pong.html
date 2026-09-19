@@ -1021,14 +1021,18 @@
   let localPaddles = {};
   let scoreCooldown = 0;
   let baseBallSpeed = 0.03;
+  let needBallSync = true;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
-  function syncFromServer(data) {
+  function syncFromServer(data, syncBall) {
     if (!data) return;
-    const serverBall = data.ball || {};
-    localBall = { x: serverBall.x || 0.5, y: serverBall.y || 0.5, vx: serverBall.vx || 0, vy: serverBall.vy || 0 };
-    baseBallSpeed = Math.sqrt(localBall.vx * localBall.vx + localBall.vy * localBall.vy) || 0.03;
+    if (syncBall) {
+      const serverBall = data.ball || {};
+      localBall = { x: serverBall.x || 0.5, y: serverBall.y || 0.5, vx: serverBall.vx || 0, vy: serverBall.vy || 0 };
+      baseBallSpeed = Math.sqrt(localBall.vx * localBall.vx + localBall.vy * localBall.vy) || 0.03;
+      needBallSync = false;
+    }
     const players = data.players || [];
     for (const p of players) {
       if (!localPaddles[p.side]) localPaddles[p.side] = { y: 0.5, alive: true };
@@ -1114,7 +1118,7 @@
       apiPost('/api/pong/state', { room: roomCode, scoredSide }).then(d => {
         if (d && !d.error) {
           gameState = d;
-          syncFromServer(d);
+          syncFromServer(d, true);
         }
       }).catch(() => {});
     }
@@ -1127,9 +1131,9 @@
     if (renderRunning) return;
     renderRunning = true;
     lastPhysicsTime = Date.now();
-    localBall = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
     localPaddles = {};
-    syncFromServer(gameState);
+    needBallSync = true;
+    syncFromServer(gameState, true);
     requestAnimationFrame(renderFrame);
   }
   function stopRenderLoop() { renderRunning = false; }
@@ -1343,7 +1347,7 @@
       const data = await apiPost('/api/pong/state', { room: roomCode, dir });
       if (!data || data.error) return;
       gameState = data;
-      syncFromServer(data);
+      syncFromServer(data, false);
       if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
         stopGamePoll();
         if (data.room.status === 'finished') enterResults(data);
