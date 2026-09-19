@@ -1014,11 +1014,118 @@
     gc.setLineDash([]);
   }
 
-  // ---- Render Loop ----
+  // ---- Client-side physics state ----
+  const PADDLE_HALF = 0.12;
+  const PADDLE_SPEED = 0.035;
+  let localBall = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
+  let localPaddles = {};
+  let scoreCooldown = 0;
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function syncFromServer(data) {
+    if (!data) return;
+    const serverBall = data.ball || {};
+    const dx = Math.abs(localBall.x - serverBall.x);
+    const dy = Math.abs(localBall.y - serverBall.y);
+    if (dx > 0.05 || dy > 0.05 || localBall.vx === 0) {
+      localBall = { x: serverBall.x || 0.5, y: serverBall.y || 0.5, vx: serverBall.vx || 0, vy: serverBall.vy || 0 };
+    }
+    const players = data.players || [];
+    for (const p of players) {
+      if (!localPaddles[p.side]) localPaddles[p.side] = { y: 0.5, alive: true };
+      localPaddles[p.side].alive = p.alive;
+    }
+  }
+
+  function runPhysics(dt) {
+    if (!gameState || gameState.room.status !== 'playing') return;
+    if (dt > 0.1) dt = 0.016;
+
+    const speedMul = gameState.room.speed === 'fast' ? 1.5 : gameState.room.speed === 'slow' ? 0.7 : 1;
+    const players = gameState.players || [];
+
+    for (const p of players) {
+      if (!p.alive) continue;
+      if (!localPaddles[p.side]) localPaddles[p.side] = { y: 0.5, alive: true };
+      const pad = localPaddles[p.side];
+      const d = p.dir || 0;
+      pad.y = clamp(pad.y + d * PADDLE_SPEED * dt * 60, PADDLE_HALF, 1 - PADDLE_HALF);
+    }
+
+    localBall.x += localBall.vx * speedMul * dt * 60;
+    localBall.y += localBall.vy * speedMul * dt * 60;
+
+    const alivePlayers = players.filter(p => p.alive);
+    const aliveSides = new Set(alivePlayers.map(p => p.side));
+
+    if (!aliveSides.has('top') && localBall.y < PADDLE_HALF * 0.3) { localBall.y = PADDLE_HALF * 0.3; localBall.vy = Math.abs(localBall.vy); }
+    if (!aliveSides.has('bottom') && localBall.y > 1 - PADDLE_HALF * 0.3) { localBall.y = 1 - PADDLE_HALF * 0.3; localBall.vy = -Math.abs(localBall.vy); }
+    if (!aliveSides.has('left') && localBall.x < PADDLE_HALF * 0.3) { localBall.x = PADDLE_HALF * 0.3; localBall.vx = Math.abs(localBall.vx); }
+    if (!aliveSides.has('right') && localBall.x > 1 - PADDLE_HALF * 0.3) { localBall.x = 1 - PADDLE_HALF * 0.3; localBall.vx = -Math.abs(localBall.vx); }
+
+    for (const p of alivePlayers) {
+      const pad = localPaddles[p.side];
+      if (!pad) continue;
+      const half = PADDLE_HALF;
+      if (p.side === 'top') {
+        const pL = pad.y - half, pR = pad.y + half;
+        if (localBall.x >= pL && localBall.x <= pR && localBall.y <= 0.06 && localBall.vy < 0) {
+          localBall.y = 0.06; localBall.vy = Math.abs(localBall.vy) * 1.02;
+          localBall.vx += ((localBall.x - pad.y) / half) * 0.004;
+        }
+      } else if (p.side === 'bottom') {
+        const pL = pad.y - half, pR = pad.y + half;
+        if (localBall.x >= pL && localBall.x <= pR && localBall.y >= 0.94 && localBall.vy > 0) {
+          localBall.y = 0.94; localBall.vy = -Math.abs(localBall.vy) * 1.02;
+          localBall.vx += ((localBall.x - pad.y) / half) * 0.004;
+        }
+      } else if (p.side === 'left') {
+        const pT = pad.y - half, pB = pad.y + half;
+        if (localBall.y >= pT && localBall.y <= pB && localBall.x <= 0.06 && localBall.vx < 0) {
+          localBall.x = 0.06; localBall.vx = Math.abs(localBall.vx) * 1.02;
+          localBall.vy += ((localBall.y - pad.y) / half) * 0.004;
+        }
+      } else if (p.side === 'right') {
+        const pT = pad.y - half, pB = pad.y + half;
+        if (localBall.y >= pT && localBall.y <= pB && localBall.x >= 0.94 && localBall.vx > 0) {
+          localBall.x = 0.94; localBall.vx = -Math.abs(localBall.vx) * 1.02;
+          localBall.vy += ((localBall.y - pad.y) / half) * 0.004;
+        }
+      }
+    }
+
+    const spd = Math.sqrt(localBall.vx * localBall.vx + localBall.vy * localBall.vy);
+    const baseSpd = Math.sqrt((gameState.ball.vx || 0) ** 2 + (gameState.ball.vy || 0) ** 2) || 0.03;
+    if (spd > 0 && baseSpd > 0) { localBall.vx = (localBall.vx / spd) * baseSpd; localBall.vy = (localBall.vy / spd) * baseSpd; }
+
+    let scoredSide = null;
+    if (localBall.y < -0.02) scoredSide = 'top';
+    else if (localBall.y > 1.02) scoredSide = 'bottom';
+    else if (localBall.x < -0.02) scoredSide = 'left';
+    else if (localBall.x > 1.02) scoredSide = 'right';
+
+    if (scoredSide && Date.now() > scoreCooldown) {
+      scoreCooldown = Date.now() + 500;
+      apiPost('/api/pong/state', { room: roomCode, scoredSide }).then(d => {
+        if (d && !d.error) {
+          gameState = d;
+          syncFromServer(d);
+        }
+      }).catch(() => {});
+    }
+  }
+
+  // ---- Render Loop (integrated with physics) ----
   let renderRunning = false;
+  let lastPhysicsTime = 0;
   function startRenderLoop() {
     if (renderRunning) return;
     renderRunning = true;
+    lastPhysicsTime = Date.now();
+    localBall = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
+    localPaddles = {};
+    syncFromServer(gameState);
     requestAnimationFrame(renderFrame);
   }
   function stopRenderLoop() { renderRunning = false; }
@@ -1026,6 +1133,10 @@
   function renderFrame() {
     if (!renderRunning) return;
     if (!gameState || currentScreen !== 'game') { renderRunning = false; return; }
+    const now = Date.now();
+    const dt = (now - lastPhysicsTime) / 1000;
+    lastPhysicsTime = now;
+    runPhysics(dt);
     drawGame(gameState);
     updateGameHud(gameState);
     requestAnimationFrame(renderFrame);
@@ -1111,18 +1222,18 @@
       const teamColor = getTeam(p.side);
       let px, py;
 
-      if (p.side === 'left') { px = 16; py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2; }
-      else if (p.side === 'right') { px = W - pw - 16; py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2; }
-      else if (p.side === 'top') { py = 16; px = (p.paddleY != null ? p.paddleY : 0.5) * W - ph / 2; }
-      else if (p.side === 'bottom') { py = H - pw - 16; px = (p.paddleY != null ? p.paddleY : 0.5) * W - ph / 2; }
-
       const isHorizontal = p.side === 'top' || p.side === 'bottom';
       const paddleW = isHorizontal ? ph : pw;
       const paddleH = isHorizontal ? pw : ph;
+      const localY = localPaddles[p.side] ? localPaddles[p.side].y : 0.5;
 
       // Paddle body — team color fill
       ctx.fillStyle = teamColor;
       ctx.beginPath();
+      if (p.side === 'left') { px = 16; py = localY * H - paddleH / 2; }
+      else if (p.side === 'right') { px = W - pw - 16; py = localY * H - paddleH / 2; }
+      else if (p.side === 'top') { py = 16; px = localY * W - paddleW / 2; }
+      else if (p.side === 'bottom') { py = H - pw - 16; px = localY * W - paddleW / 2; }
       ctx.roundRect(px, py, paddleW, paddleH, 3);
       ctx.fill();
 
@@ -1147,10 +1258,11 @@
     players.forEach((p) => {
       if (p.alive) return;
       let px, py;
-      if (p.side === 'left') { px = 16; py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2; }
-      else if (p.side === 'right') { px = W - pw - 16; py = (p.paddleY != null ? p.paddleY : 0.5) * H - ph / 2; }
-      else if (p.side === 'top') { py = 16; px = (p.paddleY != null ? p.paddleY : 0.5) * W - ph / 2; }
-      else if (p.side === 'bottom') { py = H - pw - 16; px = (p.paddleY != null ? p.paddleY : 0.5) * W - ph / 2; }
+      const localY = localPaddles[p.side] ? localPaddles[p.side].y : 0.5;
+      if (p.side === 'left') { px = 16; py = localY * H - ph / 2; }
+      else if (p.side === 'right') { px = W - pw - 16; py = localY * H - ph / 2; }
+      else if (p.side === 'top') { py = 16; px = localY * W - ph / 2; }
+      else if (p.side === 'bottom') { py = H - pw - 16; px = localY * W - ph / 2; }
       const isHorizontal = p.side === 'top' || p.side === 'bottom';
       const paddleW = isHorizontal ? ph : pw;
       const paddleH = isHorizontal ? pw : ph;
@@ -1161,10 +1273,9 @@
     });
 
     // Ball
-    if (state.ball && (state.ball.vx !== 0 || state.ball.vy !== 0)) {
-      const bpos = getLerpedBall();
-      const bx = bpos.x * W;
-      const by = bpos.y * H;
+    if (localBall.vx !== 0 || localBall.vy !== 0) {
+      const bx = localBall.x * W;
+      const by = localBall.y * H;
       const bs = 8;
 
       ctx.fillStyle = '#fff';
@@ -1208,8 +1319,8 @@
     if (touchDir !== 0) dir = touchDir;
     if (mouseActive && mouseY >= 0 && gameState) {
       const me = (gameState.players || []).find(p => myUserId && String(p.userId) === myUserId);
-      if (me) {
-        const paddleCenter = me.paddleY != null ? me.paddleY : 0.5;
+      if (me && localPaddles[me.side]) {
+        const paddleCenter = localPaddles[me.side].y;
         const diff = mouseY - paddleCenter;
         if (Math.abs(diff) > 0.03) dir = diff > 0 ? 1 : -1;
       }
@@ -1219,32 +1330,16 @@
 
   // ---- Game State Polling (POST with dir) ----
   let gamePollTimer = null;
-  let prevBall = { x: 0.5, y: 0.5 };
-  let curBall = { x: 0.5, y: 0.5 };
-  let prevBallTime = 0;
-  let curBallTime = 0;
-  let pollInterval = 33;
 
   function startGamePoll() {
     stopGamePoll();
-    pollInterval = 33;
-    prevBallTime = Date.now();
-    curBallTime = Date.now();
-    prevBall = { x: 0.5, y: 0.5 };
-    curBall = { x: 0.5, y: 0.5 };
     gamePollTimer = setInterval(async () => {
       if (!roomCode || currentScreen !== 'game') { stopGamePoll(); return; }
       const dir = getCurrentDir();
       const data = await apiPost('/api/pong/state', { room: roomCode, dir });
       if (!data || data.error) return;
-      prevBall = { x: curBall.x, y: curBall.y };
-      prevBallTime = curBallTime;
-      curBallTime = Date.now();
-      pollInterval = Math.max(33, curBallTime - prevBallTime);
-      if (data.ball) {
-        curBall = { x: data.ball.x || 0.5, y: data.ball.y || 0.5 };
-      }
       gameState = data;
+      syncFromServer(data);
       if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
         stopGamePoll();
         if (data.room.status === 'finished') enterResults(data);
@@ -1252,17 +1347,6 @@
     }, 33);
   }
   function stopGamePoll() { if (gamePollTimer) { clearInterval(gamePollTimer); gamePollTimer = null; } }
-
-  function getLerpedBall() {
-    const now = Date.now();
-    if (pollInterval <= 0) return curBall;
-    let t = (now - curBallTime) / pollInterval;
-    t = Math.min(t, 1);
-    return {
-      x: prevBall.x + (curBall.x - prevBall.x) * t,
-      y: prevBall.y + (curBall.y - prevBall.y) * t
-    };
-  }
 
   // ---- Resize handler ----
   window.addEventListener('resize', resizeCanvas);
