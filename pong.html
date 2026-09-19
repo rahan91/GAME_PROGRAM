@@ -669,17 +669,13 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'create', player: playerUsername, mode: selectedMode, maxPlayers: selectedMaxPlayers, speed: selectedSpeed, rounds: selectedRounds })
       });
-      const txt = await res.text();
-      try { data = JSON.parse(txt); } catch(e) {
-        status.textContent = 'Status ' + res.status + ' URL:' + res.url + ': ' + txt.slice(0, 300);
-        return;
-      }
+      data = await res.json();
     } catch (e) {
-      status.textContent = 'Fetch err: ' + e.message;
+      status.textContent = 'Connection error. Please try again.';
       return;
     }
     if (!data || data.error) {
-      status.textContent = data ? (data.error || 'Failed (status ' + (data ? 'unknown' : 'null') + ')') : 'No response from server';
+      status.textContent = data ? (data.error || 'Failed to create room') : 'No response from server';
       return;
     }
     roomCode = data.code;

@@ -13,6 +13,6 @@
     "wrangler": "^4.0.0"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.3"
+    "bcryptjs": "^2.4.3"
   }
 }
