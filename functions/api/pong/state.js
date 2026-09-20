@@ -116,17 +116,19 @@ export async function onRequestPost(context) {
             left: Number(room.score_left) || 0,
             right: Number(room.score_right) || 0,
           };
-          const sides = ['top', 'bottom', 'left', 'right'];
+          const playerRows = await db.prepare('SELECT side FROM pong_players WHERE room_id = ?').bind(room.id).all();
+          const activeSides = new Set((playerRows.results || []).map(r => r.side));
+          const scoringSides = ['top', 'bottom', 'left', 'right'].filter(s => s !== scoredSide && activeSides.has(s));
           const writes = [];
-          for (const s of sides) {
-            if (s === scoredSide) continue;
+          for (const s of scoringSides) {
             scores[s]++;
             writes.push(db.prepare('UPDATE pong_rooms SET score_' + s + ' = ? WHERE id = ?').bind(scores[s], room.id));
           }
 
           const target = Number(room.rounds_target) || 3;
-          const maxScore = Math.max(...Object.values(scores));
-          const sidesAtMax = sides.filter(s => scores[s] === maxScore);
+          const activeScoreArr = ['top', 'bottom', 'left', 'right'].filter(s => activeSides.has(s));
+          const maxScore = Math.max(...activeScoreArr.map(s => scores[s]));
+          const sidesAtMax = activeScoreArr.filter(s => scores[s] === maxScore);
           let gameOver = false;
 
           if (maxScore >= target && sidesAtMax.length === 1) {
