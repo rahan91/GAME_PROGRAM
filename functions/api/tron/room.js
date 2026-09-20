@@ -98,9 +98,9 @@ async function handleCreate(db, user, body, now) {
     ).bind(roomId, code, user.id, maxPlayers, speed, grid.w, grid.h, now, expiresAt).run();
   } catch (e) {
     await db.prepare(
-      `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, created_at, expires_at)
-       VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?)`
-    ).bind(roomId, code, user.id, maxPlayers, speed, now, expiresAt).run();
+      `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
+       VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(roomId, code, user.id, maxPlayers, speed, grid.w, grid.h, now, expiresAt).run();
   }
 
   const pos = generateStartPositions(grid.w, grid.h, 1)[0];
@@ -138,9 +138,9 @@ async function handleJoin(db, user, body, now) {
         ).bind(roomId, roomCode, user.id, grid.w, grid.h, now, expiresAt).run();
       } catch (e) {
         await db.prepare(
-          `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, created_at, expires_at)
-           VALUES (?, ?, 'waiting', ?, 4, 'medium', ?, ?)`
-        ).bind(roomId, roomCode, user.id, now, expiresAt).run();
+          `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
+           VALUES (?, ?, 'waiting', ?, 4, 'medium', ?, ?, ?, ?)`
+        ).bind(roomId, roomCode, user.id, grid.w, grid.h, now, expiresAt).run();
       }
       room = { id: roomId, code: roomCode, status: 'waiting', host_id: user.id, max_players: 4, speed: 'medium', grid_w: grid.w, grid_h: grid.h };
     }
