@@ -70,13 +70,16 @@ async function handleCreate(db, user, body, now) {
   const maxPlayers = [2, 4, 6, 8, 10, 12, 14, 16].includes(Number(body?.maxPlayers)) ? Number(body.maxPlayers) : (mode === 'quads' ? 4 : 4);
   const speed = ['slow', 'medium', 'fast'].includes(body?.speed) ? body.speed : 'medium';
   const roundsTarget = [1, 3, 5, 7, 10].includes(Number(body?.rounds)) ? Number(body.rounds) : 3;
+  const roomName = typeof body?.roomName === 'string' ? body.roomName.slice(0, 60) : '';
+  const isPrivate = body?.isPrivate ? 1 : 0;
+  const minPlayers = Math.max(2, Math.min(maxPlayers, Number(body?.minPlayers) || 2));
   const expiresAt = now + ROOM_EXPIRY_SECONDS;
 
   try {
     await db.prepare(
-      `INSERT INTO pong_rooms (id, code, mode, status, host_id, max_players, speed, rounds_target, round_num, created_at, expires_at)
-       VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, 0, ?, ?)`
-    ).bind(roomId, code, mode, user.id, maxPlayers, speed, roundsTarget, now, expiresAt).run();
+      `INSERT INTO pong_rooms (id, code, mode, status, host_id, max_players, speed, rounds_target, round_num, room_name, is_private, min_players, created_at, expires_at)
+       VALUES (?, ?, ?, 'waiting', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)`
+    ).bind(roomId, code, mode, user.id, maxPlayers, speed, roundsTarget, roomName, isPrivate, minPlayers, now, expiresAt).run();
   } catch (e) {
     await db.prepare(
       `INSERT INTO pong_rooms (id, code, mode, status, host_id, max_players, speed, created_at, expires_at)
@@ -90,7 +93,7 @@ async function handleCreate(db, user, body, now) {
      VALUES (?, ?, ?, 1200, ?, 0.5, 1, 0, 0, ?, ?)`
   ).bind(roomId, user.id, user.username, side, COLORS[0], now).run();
 
-  return json({ code, mode, maxPlayers, speed, roundsTarget, status: 'waiting', playerIndex: 0, hostId: user.id });
+  return json({ code, mode, maxPlayers, speed, roundsTarget, roomName, isPrivate: !!isPrivate, minPlayers, status: 'waiting', playerIndex: 0, hostId: user.id });
 }
 
 async function handleJoin(db, user, body, now) {

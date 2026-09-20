@@ -366,6 +366,24 @@
     </div>
   </div>
 
+  <div class="settings-group">
+    <div class="settings-label">Room Name</div>
+    <input class="lobby-input" id="roomNameInput" type="text" placeholder="(optional)" maxlength="60" autocomplete="off">
+  </div>
+
+  <div class="settings-group">
+    <div class="settings-label">Min Players to Start</div>
+    <div class="settings-options" id="minPlayersOpts">
+      <button class="settings-opt active" data-val="2">2</button>
+      <button class="settings-opt" data-val="3">3</button>
+      <button class="settings-opt" data-val="4">4</button>
+    </div>
+  </div>
+
+  <div class="settings-group" style="flex-direction:row;align-items:center;gap:10px;">
+    <button class="settings-opt" id="privateToggle" data-val="0" style="font-size:11px;">Public</button>
+  </div>
+
   <div class="lobby-row">
     <button class="lobby-btn primary" id="createBtn">Create Room</button>
   </div>
@@ -625,10 +643,13 @@
   let selectedMaxPlayers = 4;
   let selectedSpeed = 'medium';
   let selectedRounds = 3;
+  let selectedMinPlayers = 2;
+  let selectedPrivate = false;
   document.querySelectorAll('#maxPlayersOpts .settings-opt').forEach((btn) => {
     btn.addEventListener('click', () => {
       selectedMaxPlayers = Number(btn.dataset.val);
       document.querySelectorAll('#maxPlayersOpts .settings-opt').forEach(b => b.classList.toggle('active', b === btn));
+      if (selectedMinPlayers > selectedMaxPlayers) { selectedMinPlayers = selectedMaxPlayers; updateMinPlayersUI(); }
     });
   });
   document.querySelectorAll('#speedOpts .settings-opt').forEach((btn) => {
@@ -643,6 +664,24 @@
       document.querySelectorAll('#roundsOpts .settings-opt').forEach(b => b.classList.toggle('active', b === btn));
     });
   });
+  document.querySelectorAll('#minPlayersOpts .settings-opt').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedMinPlayers = Number(btn.dataset.val);
+      document.querySelectorAll('#minPlayersOpts .settings-opt').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+  function updateMinPlayersUI() {
+    document.querySelectorAll('#minPlayersOpts .settings-opt').forEach(b => b.classList.toggle('active', Number(b.dataset.val) === selectedMinPlayers));
+  }
+  const privateToggle = document.getElementById('privateToggle');
+  if (privateToggle) {
+    privateToggle.addEventListener('click', () => {
+      selectedPrivate = !selectedPrivate;
+      privateToggle.textContent = selectedPrivate ? 'Private' : 'Public';
+      privateToggle.dataset.val = selectedPrivate ? '1' : '0';
+      privateToggle.classList.toggle('active', selectedPrivate);
+    });
+  }
 
   // ---- API helpers ----
   async function apiPost(endpoint, body) {
@@ -679,7 +718,7 @@
       const res = await fetch('/api/pong/room', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', player: playerUsername, mode: selectedMode, maxPlayers: selectedMaxPlayers, speed: selectedSpeed, rounds: selectedRounds })
+        body: JSON.stringify({ action: 'create', player: playerUsername, mode: selectedMode, maxPlayers: selectedMaxPlayers, speed: selectedSpeed, rounds: selectedRounds, roomName: document.getElementById('roomNameInput')?.value || '', isPrivate: selectedPrivate, minPlayers: selectedMinPlayers })
       });
       data = await res.json();
     } catch (e) {

@@ -88,14 +88,17 @@ async function handleCreate(db, user, body, now) {
   const code = generateCode();
   const maxPlayers = [2, 4, 6, 8, 10, 12, 14, 16].includes(Number(body?.maxPlayers)) ? Number(body.maxPlayers) : 4;
   const speed = ['slow', 'medium', 'fast'].includes(body?.speed) ? body.speed : 'medium';
+  const roomName = typeof body?.roomName === 'string' ? body.roomName.slice(0, 60) : '';
+  const isPrivate = body?.isPrivate ? 1 : 0;
+  const minPlayers = Math.max(2, Math.min(maxPlayers, Number(body?.minPlayers) || 2));
   const expiresAt = now + ROOM_EXPIRY_SECONDS;
   const grid = computeGridSize(maxPlayers);
 
   try {
     await db.prepare(
-      `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
-       VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(roomId, code, user.id, maxPlayers, speed, grid.w, grid.h, now, expiresAt).run();
+      `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, room_name, is_private, min_players, created_at, expires_at)
+       VALUES (?, ?, 'waiting', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(roomId, code, user.id, maxPlayers, speed, grid.w, grid.h, roomName, isPrivate, minPlayers, now, expiresAt).run();
   } catch (e) {
     await db.prepare(
       `INSERT INTO tron_rooms (id, code, status, host_id, max_players, speed, grid_w, grid_h, created_at, expires_at)
@@ -109,7 +112,7 @@ async function handleCreate(db, user, body, now) {
      VALUES (?, ?, ?, 1200, ?, ?, ?, 1, 0, ?, '[]', ?)`
   ).bind(roomId, user.id, user.username, pos.x, pos.y, pos.dir, COLORS[0], now).run();
 
-  return json({ code, status: 'waiting', playerIndex: 0, hostId: user.id, maxPlayers, speed, gridW: grid.w, gridH: grid.h });
+  return json({ code, status: 'waiting', playerIndex: 0, hostId: user.id, maxPlayers, speed, roomName, isPrivate: !!isPrivate, minPlayers, gridW: grid.w, gridH: grid.h });
 }
 
 async function handleJoin(db, user, body, now) {
