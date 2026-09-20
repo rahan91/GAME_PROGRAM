@@ -43,8 +43,8 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
-    min-height: 100vh;
+  html, body {
+    height: 100%;
     background: #1c1c1c;
     color: #e0e0e0;
     font-family: 'IBM Plex Mono', 'Courier New', monospace;
@@ -101,7 +101,7 @@
   .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
   /* ---- Lobby ---- */
-  #lobbyScreen { gap: 16px; padding-top: 70px; justify-content: flex-start; overflow-y: auto; }
+  #lobbyScreen { gap: 16px; padding-top: 70px; padding-bottom: 60px; justify-content: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .lobby-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; margin-bottom: 8px; }
   .lobby-input {
     font-family: inherit; font-size: 14px; letter-spacing: 2px;
@@ -196,13 +196,12 @@
   }
 
   /* ---- Game Canvas ---- */
-  #gameScreen { gap: 0; padding-top: 64px; }
+  #gameScreen { gap: 0; padding: 0; justify-content: center; align-items: center; }
   #gameCanvas {
     display: block;
-    width: min(90vmin, 600px);
-    max-width: 90vw;
-    aspect-ratio: 1 / 1;
-    border-radius: 12px;
+    max-width: 95vw;
+    max-height: calc(100vh - 100px);
+    border-radius: 8px;
     background: rgba(0,0,0,0.28);
     border: 1px solid rgba(var(--acc-main),0.14);
     box-shadow: 0 12px 40px rgba(0,0,0,0.35) inset;
@@ -232,23 +231,23 @@
   /* ---- D-Pad (Mobile) ---- */
   #dpad {
     display: none;
-    position: fixed; bottom: 20px; right: 20px;
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
     z-index: 15; pointer-events: auto;
   }
   #dpad.active { display: grid; }
   .dpad-grid {
     display: grid;
-    grid-template-columns: 60px 60px 60px;
-    grid-template-rows: 60px 60px 60px;
-    gap: 4px;
+    grid-template-columns: 56px 56px 56px;
+    grid-template-rows: 56px 56px 56px;
+    gap: 3px;
   }
   .dpad-btn {
-    width: 60px; height: 60px;
-    border-radius: 12px;
+    width: 56px; height: 56px;
+    border-radius: 10px;
     border: 1px solid rgba(var(--acc-main),0.3);
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.55);
     color: rgba(var(--acc-texthi),0.8);
-    font-size: 22px;
+    font-size: 20px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
@@ -265,7 +264,7 @@
   .dpad-empty { width: 60px; height: 60px; }
 
   /* ---- Results ---- */
-  #resultsScreen { gap: 16px; }
+  #resultsScreen { gap: 16px; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
   .results-winner {
     font-size: 28px; font-weight: 700; letter-spacing: 3px;
     color: rgba(var(--acc-bright),1);
@@ -996,31 +995,34 @@
     if (gameState && gameState.gridSize) {
       gw = gameState.gridSize.w;
       gh = gameState.gridSize.h;
-      const scale = Math.min(window.innerWidth * 0.9 / gw, window.innerHeight * 0.9 / gh, 1);
-      canvas.width = Math.floor(gw * scale);
-      canvas.height = Math.floor(gh * scale);
     } else {
       gw = 640; gh = 480;
-      const size = Math.floor(Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9, 600));
-      canvas.width = size;
-      canvas.height = size;
     }
+    const maxW = window.innerWidth * 0.95;
+    const maxH = (window.innerHeight - 100) * 0.95;
+    const scale = Math.min(maxW / gw, maxH / gh, 2);
+    const cw = Math.floor(gw * scale);
+    const ch = Math.floor(gh * scale);
+    canvas.width = cw;
+    canvas.height = ch;
+    canvas.style.width = cw + 'px';
+    canvas.style.height = ch + 'px';
 
     gridCanvas = document.createElement('canvas');
-    gridCanvas.width = canvas.width;
-    gridCanvas.height = canvas.height;
+    gridCanvas.width = cw;
+    gridCanvas.height = ch;
     const gc = gridCanvas.getContext('2d');
-    gc.fillStyle = 'rgba(0,0,0,0.35)';
-    gc.fillRect(0, 0, canvas.width, canvas.height);
-    gc.strokeStyle = 'rgba(255,255,255,0.02)';
+    gc.fillStyle = 'rgba(0,0,0,0.4)';
+    gc.fillRect(0, 0, cw, ch);
+    gc.strokeStyle = 'rgba(255,255,255,0.03)';
     gc.lineWidth = 1;
     gc.beginPath();
-    for (let x = 0; x <= canvas.width; x += 40) { gc.moveTo(x, 0); gc.lineTo(x, canvas.height); }
-    for (let y = 0; y <= canvas.height; y += 40) { gc.moveTo(0, y); gc.lineTo(canvas.width, y); }
+    for (let x = 0; x <= cw; x += 40) { gc.moveTo(x, 0); gc.lineTo(x, ch); }
+    for (let y = 0; y <= ch; y += 40) { gc.moveTo(0, y); gc.lineTo(cw, y); }
     gc.stroke();
-    gc.strokeStyle = 'rgba(255,255,255,0.15)';
+    gc.strokeStyle = 'rgba(255,255,255,0.12)';
     gc.lineWidth = 2;
-    gc.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+    gc.strokeRect(1, 1, cw - 2, ch - 2);
   }
 
   // ---- Render Loop ----
@@ -1048,7 +1050,7 @@
     if (gridCanvas) {
       ctx.drawImage(gridCanvas, 0, 0);
     } else {
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.fillRect(0, 0, W, H);
     }
 
@@ -1058,18 +1060,39 @@
     const scaleX = W / gw;
     const scaleY = H / gh;
 
-    // Draw trails
+    // Draw trails with glow
     for (let pi = 0; pi < players.length; pi++) {
       const p = players[pi];
       if (!p.trail || !p.trail.length) continue;
       const color = p.color || 'rgba(0,229,255,0.85)';
       const isDead = !p.alive;
 
+      ctx.globalAlpha = isDead ? 0.2 : 1;
+
+      // Glow pass
+      if (!isDead) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.globalAlpha = 0.25;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.moveTo(p.trail[0].x * scaleX + scaleX / 2, p.trail[0].y * scaleY + scaleY / 2);
+        for (let i = 1; i < p.trail.length; i++) {
+          ctx.lineTo(p.trail[i].x * scaleX + scaleX / 2, p.trail[i].y * scaleY + scaleY / 2);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      // Core trail
+      ctx.globalAlpha = isDead ? 0.2 : 0.9;
       ctx.strokeStyle = color;
-      ctx.lineWidth = 4;
+      ctx.lineWidth = isDead ? 2 : 3;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.globalAlpha = isDead ? 0.35 : 1;
       ctx.beginPath();
       ctx.moveTo(p.trail[0].x * scaleX + scaleX / 2, p.trail[0].y * scaleY + scaleY / 2);
       for (let i = 1; i < p.trail.length; i++) {
@@ -1077,17 +1100,28 @@
       }
       ctx.stroke();
 
-      // Draw head
+      // Head with glow
       const hx = p.x * scaleX + scaleX / 2;
       const hy = p.y * scaleY + scaleY / 2;
+      if (!isDead) {
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.arc(hx, hy, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      ctx.globalAlpha = isDead ? 0.25 : 1;
       ctx.fillStyle = color;
       ctx.beginPath();
-      ctx.arc(hx, hy, isDead ? 3 : 4.5, 0, Math.PI * 2);
+      ctx.arc(hx, hy, isDead ? 2.5 : 4, 0, Math.PI * 2);
       ctx.fill();
 
       // Player name
       if (!isDead) {
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
         ctx.font = '10px "IBM Plex Mono", monospace';
         ctx.textAlign = 'center';
         ctx.fillText(p.username || '', hx, hy - 10);
@@ -1097,10 +1131,10 @@
 
     // Alive count overlay
     const aliveCount = players.filter(p => p.alive).length;
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.font = 'bold 14px "IBM Plex Mono", monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.font = 'bold 13px "IBM Plex Mono", monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(aliveCount + ' remaining', W / 2, 24);
+    ctx.fillText(aliveCount + ' remaining', W / 2, 20);
   }
 
   let _lastHudHtml = '';
