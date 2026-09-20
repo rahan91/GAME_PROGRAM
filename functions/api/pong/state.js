@@ -99,8 +99,8 @@ function tickBall(ball, players, speed, elapsed) {
 
 async function tickAndUpdate(db, room, players) {
   const now = Date.now();
-  const lastTick = Number(room.last_tick_at) || now;
-  const elapsed = now - lastTick;
+  const lastTick = Number(room.last_tick_at);
+  const elapsed = lastTick > 0 ? (now - lastTick) : 100;
   if (elapsed < 25) return;
 
   const dt = elapsed / 16.67;
