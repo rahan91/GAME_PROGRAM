@@ -103,20 +103,26 @@ async function tickAndUpdate(db, room, players) {
   const elapsed = lastTick > 0 ? (now - lastTick) : 100;
   if (elapsed < 25) return;
 
-  const dt = elapsed / 16.67;
   const paddleWrites = [];
   const updatedPlayers = players.map(p => {
     if (!p.alive || !p.dir) return p;
-    const newY = clamp(Number(p.paddle_y) || 0.5 + p.dir * PADDLE_SPEED * dt, PADDLE_HALF, 1 - PADDLE_HALF);
-    if (newY !== Number(p.paddle_y)) {
-      paddleWrites.push(db.prepare('UPDATE pong_players SET paddle_y = ? WHERE id = ?').bind(newY, p.id));
-      return { ...p, paddle_y: newY };
-    }
-    return p;
+    const dt = Math.min(elapsed, 50) / 16.67;
+    const newY = clamp((Number(p.paddle_y) || 0.5) + p.dir * PADDLE_SPEED * dt, PADDLE_HALF, 1 - PADDLE_HALF);
+    paddleWrites.push(db.prepare('UPDATE pong_players SET paddle_y = ? WHERE id = ?').bind(newY, p.id));
+    return { ...p, paddle_y: newY };
   });
 
   const ball = await loadBall(db, room.id);
-  const result = tickBall(ball, updatedPlayers, room.speed, elapsed);
+  const maxStep = 16.67;
+  const steps = Math.max(1, Math.min(8, Math.ceil(elapsed / maxStep)));
+  const stepMs = elapsed / steps;
+  let currentBall = ball;
+  let result;
+  for (let i = 0; i < steps; i++) {
+    result = tickBall(currentBall, updatedPlayers, room.speed, stepMs);
+    if (result.scoredSide) break;
+    currentBall = { x: result.x, y: result.y, vx: result.vx, vy: result.vy };
+  }
 
   const writes = [...paddleWrites];
 
