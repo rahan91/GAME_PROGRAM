@@ -1032,12 +1032,9 @@
 
   // ---- Client-side physics state ----
   const PADDLE_HALF = 0.12;
-  const PADDLE_SPEED = 0.035;
+  const PADDLE_SPEED = 0.045;
   let localBall = { x: 0.5, y: 0.5, vx: 0, vy: 0 };
   let localPaddles = {};
-  let scoreCooldown = 0;
-  let baseBallSpeed = 0.03;
-  let needBallSync = true;
 
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -1046,8 +1043,6 @@
     if (syncBall) {
       const serverBall = data.ball || {};
       localBall = { x: serverBall.x || 0.5, y: serverBall.y || 0.5, vx: serverBall.vx || 0, vy: serverBall.vy || 0 };
-      baseBallSpeed = Math.sqrt(localBall.vx * localBall.vx + localBall.vy * localBall.vy) || 0.03;
-      needBallSync = false;
     }
     const players = data.players || [];
     for (const p of players) {
@@ -1060,7 +1055,6 @@
     if (!gameState || !gameState.room || gameState.room.status !== 'playing') return;
     dt = Math.min(dt, 0.05);
 
-    const speedMul = gameState.room.speed === 'fast' ? 1.5 : gameState.room.speed === 'slow' ? 0.7 : 1;
     const players = gameState.players || [];
 
     for (const p of players) {
@@ -1069,75 +1063,6 @@
       const pad = localPaddles[p.side];
       const d = p.dir || 0;
       pad.y = clamp(pad.y + d * PADDLE_SPEED * dt * 60, PADDLE_HALF, 1 - PADDLE_HALF);
-    }
-
-    localBall.x += localBall.vx * speedMul * dt * 60;
-    localBall.y += localBall.vy * speedMul * dt * 60;
-
-    const alivePlayers = players.filter(p => p.alive);
-    const aliveSides = new Set(alivePlayers.map(p => p.side));
-
-    if (!aliveSides.has('top') && localBall.y < PADDLE_HALF * 0.3) { localBall.y = PADDLE_HALF * 0.3; localBall.vy = Math.abs(localBall.vy); }
-    if (!aliveSides.has('bottom') && localBall.y > 1 - PADDLE_HALF * 0.3) { localBall.y = 1 - PADDLE_HALF * 0.3; localBall.vy = -Math.abs(localBall.vy); }
-    if (!aliveSides.has('left') && localBall.x < PADDLE_HALF * 0.3) { localBall.x = PADDLE_HALF * 0.3; localBall.vx = Math.abs(localBall.vx); }
-    if (!aliveSides.has('right') && localBall.x > 1 - PADDLE_HALF * 0.3) { localBall.x = 1 - PADDLE_HALF * 0.3; localBall.vx = -Math.abs(localBall.vx); }
-
-    for (const p of alivePlayers) {
-      const pad = localPaddles[p.side];
-      if (!pad) continue;
-      const half = PADDLE_HALF;
-      if (p.side === 'top') {
-        const pL = pad.y - half, pR = pad.y + half;
-        if (localBall.x >= pL && localBall.x <= pR && localBall.y <= 0.06 && localBall.vy < 0) {
-          localBall.y = 0.06; localBall.vy = Math.abs(localBall.vy) * 1.02;
-          localBall.vx += ((localBall.x - pad.y) / half) * 0.004;
-        }
-      } else if (p.side === 'bottom') {
-        const pL = pad.y - half, pR = pad.y + half;
-        if (localBall.x >= pL && localBall.x <= pR && localBall.y >= 0.94 && localBall.vy > 0) {
-          localBall.y = 0.94; localBall.vy = -Math.abs(localBall.vy) * 1.02;
-          localBall.vx += ((localBall.x - pad.y) / half) * 0.004;
-        }
-      } else if (p.side === 'left') {
-        const pT = pad.y - half, pB = pad.y + half;
-        if (localBall.y >= pT && localBall.y <= pB && localBall.x <= 0.06 && localBall.vx < 0) {
-          localBall.x = 0.06; localBall.vx = Math.abs(localBall.vx) * 1.02;
-          localBall.vy += ((localBall.y - pad.y) / half) * 0.004;
-        }
-      } else if (p.side === 'right') {
-        const pT = pad.y - half, pB = pad.y + half;
-        if (localBall.y >= pT && localBall.y <= pB && localBall.x >= 0.94 && localBall.vx > 0) {
-          localBall.x = 0.94; localBall.vx = -Math.abs(localBall.vx) * 1.02;
-          localBall.vy += ((localBall.y - pad.y) / half) * 0.004;
-        }
-      }
-    }
-
-    const spd = Math.sqrt(localBall.vx * localBall.vx + localBall.vy * localBall.vy);
-    if (spd > baseBallSpeed * 2) {
-      localBall.vx = (localBall.vx / spd) * baseBallSpeed * 2;
-      localBall.vy = (localBall.vy / spd) * baseBallSpeed * 2;
-    }
-    if (spd < baseBallSpeed * 0.5 && spd > 0) {
-      localBall.vx = (localBall.vx / spd) * baseBallSpeed * 0.5;
-      localBall.vy = (localBall.vy / spd) * baseBallSpeed * 0.5;
-    }
-
-    let scoredSide = null;
-    if (localBall.y < -0.02) scoredSide = 'top';
-    else if (localBall.y > 1.02) scoredSide = 'bottom';
-    else if (localBall.x < -0.02) scoredSide = 'left';
-    else if (localBall.x > 1.02) scoredSide = 'right';
-
-    if (scoredSide && Date.now() > scoreCooldown) {
-      scoreCooldown = Date.now() + 500;
-      const dir = getCurrentDir();
-      apiPost('/api/pong/state', { room: roomCode, scoredSide, dir }).then(d => {
-        if (d && !d.error) {
-          gameState = d;
-          syncFromServer(d, true);
-        }
-      }).catch(() => {});
     }
   }
 
@@ -1149,7 +1074,6 @@
     renderRunning = true;
     lastPhysicsTime = Date.now();
     localPaddles = {};
-    needBallSync = true;
     syncFromServer(gameState, true);
     requestAnimationFrame(renderFrame);
   }
@@ -1362,7 +1286,7 @@
       const data = await apiPost('/api/pong/state', { room: roomCode, dir });
       if (!data || data.error) return;
       gameState = data;
-      syncFromServer(data, false);
+      syncFromServer(data, true);
       if (data.room && (data.room.status === 'finished' || data.room.status === 'waiting')) {
         stopGamePoll();
         if (data.room.status === 'finished') enterResults(data);
