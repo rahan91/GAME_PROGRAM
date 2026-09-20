@@ -772,6 +772,7 @@
     stopPolling();
     stopGamePoll();
     stopRenderLoop();
+    resultsEntered = false;
     showScreen('lobby');
     document.getElementById('roomInfo').style.display = 'none';
     document.getElementById('playerList').style.display = 'none';
@@ -856,6 +857,7 @@
 
   // ---- Enter Game ----
   function enterGame(data) {
+    resultsEntered = false;
     showScreen('game');
     stopPolling();
     gameState = data;
@@ -872,7 +874,10 @@
   }
 
   // ---- Enter Results ----
+  let resultsEntered = false;
   function enterResults(data) {
+    if (resultsEntered) return;
+    resultsEntered = true;
     showScreen('results');
     stopPolling();
     stopGamePoll();
@@ -906,7 +911,7 @@
         body: JSON.stringify({ points: data.points, game: 'pong' })
       }).catch(() => {});
     }
-    if (roomCode && data.winner) {
+    if (roomCode && data.winner && data.eloChange == null) {
       const playerIds = (data.players || []).map(p => p.userId).filter(Boolean);
       fetch('/api/pong/elo', {
         method: 'POST',
@@ -1052,7 +1057,7 @@
   }
 
   function runPhysics(dt) {
-    if (!gameState || gameState.room.status !== 'playing') return;
+    if (!gameState || !gameState.room || gameState.room.status !== 'playing') return;
     dt = Math.min(dt, 0.05);
 
     const speedMul = gameState.room.speed === 'fast' ? 1.5 : gameState.room.speed === 'slow' ? 0.7 : 1;
@@ -1126,7 +1131,8 @@
 
     if (scoredSide && Date.now() > scoreCooldown) {
       scoreCooldown = Date.now() + 500;
-      apiPost('/api/pong/state', { room: roomCode, scoredSide }).then(d => {
+      const dir = getCurrentDir();
+      apiPost('/api/pong/state', { room: roomCode, scoredSide, dir }).then(d => {
         if (d && !d.error) {
           gameState = d;
           syncFromServer(d, true);
@@ -1292,16 +1298,14 @@
     });
 
     // Ball
-    if (localBall.vx !== 0 || localBall.vy !== 0) {
-      const bx = localBall.x * W;
-      const by = localBall.y * H;
-      const bs = 8;
+    const bx = localBall.x * W;
+    const by = localBall.y * H;
+    const bs = 8;
 
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(bx, by, bs / 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(bx, by, bs / 2, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   let _lastHudHtml = '';
