@@ -37,7 +37,7 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -45,7 +45,7 @@ body {
     min-height: 100vh;
     background: #1c1c1c;
     color: #e0e0e0;
-    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
     overflow: hidden;
     cursor: none !important;
   }
@@ -80,10 +80,10 @@ body {
   }
   .back:hover { color: rgba(var(--acc-main),1); }
 
-  h1 {
+  h1 { font-weight: 600;
     position: fixed; top: 20px; left: 0; right: 0;
     text-align: center; pointer-events: none;
-    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
     font-weight: 700; letter-spacing: 6px;
     text-transform: uppercase; color: rgba(var(--acc-main),0.85);
   }
@@ -168,7 +168,7 @@ body {
   .lb-status { padding: 10px 14px; font-size: 11px; color: rgba(var(--acc-main),0.45); }
 
   @media (max-width: 640px) {
-    h1 { font-size: 1.25rem; letter-spacing: 4px; }
+    h1 { font-weight: 600; font-size: 1.25rem; letter-spacing: 4px; }
     #hud { top: 58px; font-size: 12px; gap: 3px 14px; }
     #runStatus, .hint { font-size: 12px; }
     #leaderboard { display: none; }

@@ -32,7 +32,7 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -96,7 +96,7 @@
       transform: translateY(0);
     }
     .title h1 {
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 4rem;
       font-weight: 700;
       letter-spacing: 0.18em;
@@ -183,15 +183,15 @@
     }
     .card .icon img { border-radius: 8px; }
     .card .label {
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 0.75rem;
-      font-weight: 300;
+      font-weight: 500;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: rgba(var(--acc-main), 0.7);
     }
     .card .coming {
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 0.55rem;
       color: rgba(var(--acc-main), 0.3);
       margin-top: 4px;
@@ -205,7 +205,7 @@
       position: absolute;
       top: 8px;
       right: 8px;
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 9px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -220,7 +220,7 @@
       position: absolute;
       bottom: 8px;
       right: 8px;
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 9px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -239,7 +239,7 @@
       position: absolute;
       bottom: 8px;
       left: 8px;
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 9px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -319,7 +319,7 @@
     .lb-row {
       color: rgba(var(--acc-text), 0.85);
       font-size: 0.78rem;
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
     }
     .lb-head .rk, .lb-head .pl, .lb-head .pt,
     .lb-row .rk, .lb-row .pl, .lb-row .pt { text-align: right; }
@@ -350,7 +350,7 @@
       border-radius: 6px;
       background: rgba(var(--acc-dim),0.2);
       color: rgba(var(--acc-main),0.9);
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 14px;
       cursor: pointer;
       transition: background 0.2s, border-color 0.2s;
@@ -375,7 +375,7 @@
       z-index: 10;
       text-decoration: none;
       color: rgba(var(--acc-main), 0.75);
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 14px;
       padding: 8px 18px;
       border: 1px solid rgba(var(--acc-main), 0.4);
@@ -409,7 +409,7 @@
       border: 1px solid rgba(var(--acc-main),0.2);
       border-radius: 10px;
       padding: 24px;
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
     }
     .modal h2 {
       color: rgba(var(--acc-main),0.9);
@@ -486,7 +486,7 @@
       border: 1px solid rgba(var(--acc-main), 0.25);
       border-radius: 8px;
       padding: 8px 14px;
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
       font-size: 14px;
       letter-spacing: 0.08em;
       color: rgba(var(--acc-main), 0.7);
@@ -577,8 +577,8 @@
 
   <a href="/admin" id="adminLink" style="position:fixed;top:20px;left:20px;z-index:10;display:none;font-size:14px;letter-spacing:2px;color:rgba(230,200,140,0.9);text-decoration:none;">ADMIN</a>
 
-  <div id="authBtnWrap" style="position:fixed;top:20px;right:20px;z-index:10;display:flex;gap:8px;align-items:center;">
-    <button class="auth-btn" id="settingsBtn" style="display:none;padding:8px 10px;" title="Settings">&#9881;</button>
+  <div id="authBtnWrap" style="position:fixed;top:20px;right:20px;z-index:10;display:flex;gap:10px;align-items:center;">
+    <button class="auth-btn" id="settingsBtn" style="display:none;padding:8px 12px;font-size:15px;" title="Settings">&#9881;</button>
     <button class="auth-btn" id="authBtn">Login</button>
   </div>
 

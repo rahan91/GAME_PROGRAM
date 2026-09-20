@@ -37,7 +37,7 @@
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -45,7 +45,7 @@
     min-height: 100vh;
     background: #1c1c1c;
     color: #e0e0e0;
-    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
     overflow: hidden;
     user-select: none;
     cursor: none !important;
@@ -81,10 +81,10 @@
   }
   .back:hover { color: rgba(var(--acc-main),1); }
 
-  h1 {
+  h1 { font-weight: 600;
     position: fixed; top: 20px; left: 0; right: 0;
     text-align: center; pointer-events: none;
-    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
     font-weight: 700; letter-spacing: 6px;
     text-transform: uppercase; color: rgba(var(--acc-main),0.85);
   }
@@ -201,7 +201,7 @@
     text-transform: uppercase; color: rgba(var(--acc-main),0.85);
     padding: 10px 14px 7px; border-bottom: 1px solid rgba(var(--acc-main),0.18);
   }
-  #leaderboard .lb-body { padding: 5px 0; overflow: hidden; }
+  #leaderboard .lb-body { padding: 5px 0; overflow-y: auto; max-height: 300px; }
   .lb-row { display: flex; align-items: center; gap: 8px; padding: 4px 14px; font-size: 12px; }
   .lb-row.me { background: rgba(var(--acc-main),0.14); }
   .lb-row .rk { width: 18px; color: rgba(var(--acc-main),0.45); font-variant-numeric: tabular-nums; text-align: right; }
@@ -241,7 +241,7 @@
   body.drawing #cross { opacity: 0 !important; }
 
   @media (max-width: 640px) {
-    h1 { font-size: 1.25rem; letter-spacing: 4px; }
+    h1 { font-weight: 600; font-size: 1.25rem; letter-spacing: 4px; }
     #hud { top: 56px; font-size: 12px; gap: 3px 14px; }
     #diffRow { top: 94px; gap: 5px; }
     .diff-btn { font-size: 10px; padding: 5px 10px; }
@@ -369,6 +369,12 @@
       realY = e.clientY;
     }
   });
+  document.addEventListener('mouseover', (e) => {
+    const INTERACTIVE = 'a, button, input, select, textarea, label, summary, [role="button"], [contenteditable]';
+    const t = e.target.closest ? e.target.closest(INTERACTIVE) : null;
+    const over = !!t;
+    cursorfx.className = over ? 'finger' : 'arrow';
+  });
   document.addEventListener('pointerlockchange', () => {
     const locked = document.pointerLockElement === board;
     if (locked && !pointerLocked) { lockX = realX; lockY = realY; }
@@ -391,12 +397,14 @@
   function cursorTick() {
     curX += (realX - curX) * 0.24;
     curY += (realY - curY) * 0.24;
-    const hotX = 1;
-    cursorfx.style.transform = 'translate3d(' + (curX - hotX) + 'px,' + curY + 'px,0)';
+    paintCursor();
+    const finger = cursorfx.className === 'finger';
     const url = cursorSpritesState && cursorSpritesState.arrow
-      ? cursorSpritesState.arrow
-      : 'assets/cursor-arrow.png';
+      ? (finger ? (cursorSpritesState.finger || cursorSpritesState.arrow) : cursorSpritesState.arrow)
+      : finger ? 'assets/cursor-finger.png' : 'assets/cursor-arrow.png';
     const filt = cursorSpritesState ? (cursorSpritesState.border || '') : '';
+    const hotX = finger ? 8 : 1;
+    cursorfx.style.transform = 'translate3d(' + (curX - hotX) + 'px,' + curY + 'px,0)';
     for (let i = TRAIL - 1; i > 0; i--) {
       trailX[i] += (trailX[i - 1] - trailX[i]) * 0.35;
       trailY[i] += (trailY[i - 1] - trailY[i]) * 0.35;
