@@ -102,30 +102,33 @@
     }
     .item {
       display: flex; flex-direction: column; align-items: center;
-      border: 1px solid rgba(var(--acc-main),0.15); border-radius: 10px;
-      background: rgba(var(--acc-dim),0.12); padding: 16px 10px 12px;
-      transition: border-color 0.2s, background 0.2s;
+      border: 1px solid rgba(var(--acc-main),0.15); border-radius: 12px;
+      background: linear-gradient(145deg, rgba(var(--acc-dim),0.15), rgba(0,0,0,0.2));
+      padding: 16px 10px 12px;
+      transition: border-color 0.25s, background 0.25s, transform 0.2s, box-shadow 0.25s;
     }
-    .item:hover { border-color: rgba(var(--acc-main),0.3); background: rgba(var(--acc-dim),0.18); }
-    .item.equipped { border-color: rgba(var(--acc-bright),0.6); background: rgba(var(--acc-main),0.12); }
+    .item:hover { border-color: rgba(var(--acc-main),0.35); background: linear-gradient(145deg, rgba(var(--acc-dim),0.22), rgba(0,0,0,0.25)); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+    .item.equipped { border-color: rgba(var(--acc-bright),0.6); background: linear-gradient(145deg, rgba(var(--acc-main),0.15), rgba(0,0,0,0.2)); }
 
     .swatch {
       width: 56px; height: 56px; margin-bottom: 10px; border-radius: 8px;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 20px rgba(var(--acc-main),0.15);
       background: rgba(var(--acc-text),0.07);
       display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
+      overflow: hidden; transition: transform 0.2s, box-shadow 0.2s;
     }
+    .item:hover .swatch { transform: scale(1.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 30px rgba(var(--acc-main),0.3); }
+    .item.equipped .swatch { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15), 0 0 30px rgba(var(--acc-bright),0.35); }
     .swatch.maze { border-radius: 8px; }
     .swatch.cursor { width: 48px; height: 48px; }
     .swatch.cursor img { width: 31px; height: 40px; image-rendering: pixelated; }
     .swatch.target { position: relative; border-radius: 50%; }
     .swatch.target img { width: 100%; height: 100%; display: block; }
-    .swatch.accent { border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 14px rgba(var(--acc-main),1); }
+    .swatch.accent { border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), 0 0 20px rgba(var(--acc-main),1), 0 0 40px rgba(var(--acc-main),0.3); }
     .swatch.nameplate {
       width: 170px; height: 26px; border-radius: 4px;
       background: rgba(20,28,22,0.8);
-      box-shadow: inset 0 0 0 1px rgba(var(--acc-main),0.25);
+      box-shadow: inset 0 0 0 1px rgba(var(--acc-main),0.25), 0 0 12px rgba(var(--acc-main),0.1);
       display: flex; align-items: center; padding: 0 8px; gap: 10px;
       font-size: 12px; letter-spacing: 0.08em;
     }
@@ -139,15 +142,15 @@
     .item .price { font-size: 12px; color: rgba(230,200,120,0.85); margin-top: 2px; }
     .item button {
       margin-top: 10px; width: 100%; padding: 8px 16px;
-      border: none; border-radius: 6px; cursor: pointer;
+      border: none; border-radius: 8px; cursor: pointer;
       font-family: inherit; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
-      transition: background 0.2s, filter 0.2s;
+      transition: background 0.2s, filter 0.2s, box-shadow 0.2s;
     }
-    .item button.buy { background: rgba(var(--acc-main),0.35); color: #e0e0e0; }
-    .item button.buy:hover { background: rgba(var(--acc-main),0.5); }
-    .item button.buy:disabled { background: rgba(var(--acc-main),0.12); color: rgba(255,255,255,0.35); cursor: default; }
-    .item button.equip { background: rgba(var(--acc-btn),0.3); color: #e0e0e0; }
-    .item button.equip:hover { background: rgba(var(--acc-btn),0.45); }
+    .item button.buy { background: rgba(var(--acc-main),0.35); color: #e0e0e0; box-shadow: 0 2px 8px rgba(var(--acc-main),0.15); }
+    .item button.buy:hover { background: rgba(var(--acc-main),0.5); box-shadow: 0 4px 12px rgba(var(--acc-main),0.25); }
+    .item button.buy:disabled { background: rgba(var(--acc-main),0.12); color: rgba(255,255,255,0.35); cursor: default; box-shadow: none; }
+    .item button.equip { background: rgba(var(--acc-btn),0.3); color: #e0e0e0; box-shadow: 0 2px 8px rgba(var(--acc-btn),0.15); }
+    .item button.equip:hover { background: rgba(var(--acc-btn),0.45); box-shadow: 0 4px 12px rgba(var(--acc-btn),0.25); }
     .item .tag { margin-top: 10px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--acc-bright),0.9); }
     .item .unequip {
       margin-top: 6px; background: none; border: none; cursor: pointer;
