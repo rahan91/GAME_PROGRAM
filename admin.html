@@ -110,6 +110,14 @@
   }
   .strip-btn:hover { background: rgba(200,60,50,0.35); }
   td.empty { text-align: center; color: rgba(var(--acc-main),0.35); padding: 32px; font-size: 13px; }
+  .close-room-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 4px 10px; border-radius: 5px;
+    background: rgba(200,60,50,0.15); border: 1px solid rgba(200,60,50,0.3);
+    color: rgba(255,140,130,0.8); font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer; transition: background 0.15s;
+  }
+  .close-room-btn:hover { background: rgba(200,60,50,0.35); }
 
   #ctx {
     display: none; position: fixed; z-index: 200;
@@ -248,6 +256,27 @@
             </tr>
           </thead>
           <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section" id="roomsSection" style="display:none;">
+      <div class="section-head"><h2>Active Rooms</h2><div class="line"></div></div>
+      <div class="stats-bar">
+        <div class="stat"><div class="stat-label">Pong Rooms</div><div class="stat-val" id="stPongRooms">-</div></div>
+        <div class="stat"><div class="stat-label">Tron Rooms</div><div class="stat-val" id="stTronRooms">-</div></div>
+        <div class="stat"><div class="stat-label">Maze Plays</div><div class="stat-val" id="stMaze">-</div></div>
+        <div class="stat"><div class="stat-label">Target Plays</div><div class="stat-val" id="stTarget">-</div></div>
+        <div class="stat"><div class="stat-label">Button Plays</div><div class="stat-val" id="stButton">-</div></div>
+        <div class="stat"><div class="stat-label">Cut Plays</div><div class="stat-val" id="stCut">-</div></div>
+        <div class="stat"><div class="stat-label">Circle Plays</div><div class="stat-val" id="stCircle">-</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Game</th><th>Code</th><th>Status</th><th>Players</th><th>Speed</th><th>Name</th><th></th></tr>
+          </thead>
+          <tbody id="roomRows"></tbody>
         </table>
       </div>
     </div>
@@ -518,7 +547,61 @@
     render();
   }
 
+  async function loadRooms() {
+    try {
+      var data = await (await fetch('/api/admin/rooms')).json();
+      if (data.error) return;
+      var section = document.getElementById('roomsSection');
+      section.style.display = '';
+      document.getElementById('stPongRooms').textContent = (data.pongRooms || []).length;
+      document.getElementById('stTronRooms').textContent = (data.tronRooms || []).length;
+      var gs = data.gameStats || {};
+      document.getElementById('stMaze').textContent = gs.maze || 0;
+      document.getElementById('stTarget').textContent = gs.target || 0;
+      document.getElementById('stButton').textContent = gs.button || 0;
+      document.getElementById('stCut').textContent = gs.cut || 0;
+      document.getElementById('stCircle').textContent = gs.circle || 0;
+      var tbody = document.getElementById('roomRows');
+      tbody.innerHTML = '';
+      var all = [];
+      (data.pongRooms || []).forEach(function (r) { all.push(Object.assign(r, { game: 'pong' })); });
+      (data.tronRooms || []).forEach(function (r) { all.push(Object.assign(r, { game: 'tron' })); });
+      if (!all.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">no active rooms</td></tr>';
+        return;
+      }
+      all.forEach(function (r) {
+        var tr = document.createElement('tr');
+        var name = r.room_name || '-';
+        var statusColor = r.status === 'playing' ? 'color:rgba(100,200,130,0.9)' : '';
+        tr.innerHTML =
+          '<td style="text-transform:uppercase;letter-spacing:1px;font-size:11px;">' + r.game + '</td>' +
+          '<td style="font-family:monospace;letter-spacing:2px;">' + r.code + '</td>' +
+          '<td style="' + statusColor + '">' + r.status + '</td>' +
+          '<td class="num">' + r.player_count + '/' + r.max_players + '</td>' +
+          '<td>' + r.speed + '</td>' +
+          '<td style="font-size:12px;">' + name + '</td>' +
+          '<td><button class="close-room-btn" data-game="' + r.game + '" data-id="' + r.id + '">Close</button></td>';
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('.close-room-btn').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          if (!confirm('Force close this room?')) return;
+          var res = await fetch('/api/admin/close-room', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ game: btn.dataset.game, roomId: btn.dataset.id })
+          });
+          var d = await res.json();
+          if (!res.ok) { flash(d.error || 'failed', true); return; }
+          flash('Room closed');
+          loadRooms();
+        });
+      });
+    } catch (e) {}
+  }
+
   load();
+  loadRooms();
 })();
 </script>
 </body>
