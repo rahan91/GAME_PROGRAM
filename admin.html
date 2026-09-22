@@ -537,6 +537,8 @@
 
   async function deleteUser(username) {
     if (!confirm('PERMANENTLY DELETE ' + username + "?\n\nThis removes their account, scores, purchases, and equips.")) return;
+    var phrase = prompt('Type DELETE ' + username.toUpperCase() + ' to confirm:');
+    if (!phrase || phrase !== ('DELETE ' + username.toUpperCase())) { flash('Confirmation failed', true); return; }
     var res = await fetch('/api/admin/delete', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: username })
