@@ -593,6 +593,7 @@
   let ready = false;
   let pollTimer = null;
   let gameState = null;
+  let resultsEntered = false;
   let lastStateTime = 0;
 
   // Key state
@@ -917,6 +918,7 @@
   function enterGame(data) {
     showScreen('game');
     stopPolling();
+    resultsEntered = false;
     gameState = data;
     resizeCanvas();
     document.getElementById('endGameBtn').style.display = isHost ? '' : 'none';
@@ -951,6 +953,8 @@
 
   // ---- Enter Results ----
   function enterResults(data) {
+    if (resultsEntered) return;
+    resultsEntered = true;
     showScreen('results');
     stopPolling();
     stopGamePoll();

@@ -1,4 +1,5 @@
 (function () {
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function fmtNum(n) {
     var v = Number(n);
     if (!isFinite(v)) return String(n == null ? '' : n);
@@ -383,7 +384,7 @@
       return 'color:' + (first || '#828282');
     },
     npHTML: function (row) {
-      var uname = (row && row.username) || '';
+      var uname = esc((row && row.username) || '');
       if (row && row.nameplateColors && row.nameplateColors.length) {
         var aid = npAnimId(row.nameplateColors);
         npKeyframes(aid, row.nameplateColors);
