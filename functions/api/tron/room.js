@@ -1,4 +1,5 @@
 import { json, getUserFromRequest } from '../../_lib/auth.js';
+import { hasProfanity } from '../../_lib/moderation.js';
 
 const ROOM_EXPIRY_SECONDS = 30 * 60;
 const MAX_PLAYERS = 16;
@@ -89,6 +90,9 @@ async function handleCreate(db, user, body, now) {
   const maxPlayers = [2, 4, 6, 8, 10, 12, 14, 16].includes(Number(body?.maxPlayers)) ? Number(body.maxPlayers) : 4;
   const speed = ['slow', 'medium', 'fast'].includes(body?.speed) ? body.speed : 'medium';
   const roomName = typeof body?.roomName === 'string' ? body.roomName.slice(0, 60) : '';
+  if (roomName && hasProfanity(roomName)) {
+    return json({ error: 'Room name contains blocked words' }, 400);
+  }
   const isPrivate = body?.isPrivate ? 1 : 0;
   const minPlayers = Math.max(2, Math.min(maxPlayers, Number(body?.minPlayers) || 2));
   const expiresAt = now + ROOM_EXPIRY_SECONDS;

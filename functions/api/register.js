@@ -1,10 +1,16 @@
 import { json, hashPassword, createSession, setSessionCookie } from '../_lib/auth.js';
+import { hasProfanity, checkRateLimit } from '../_lib/moderation.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
+
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+    if (!checkRateLimit('register:' + ip, 3, 60000)) {
+      return json({ error: 'Too many attempts. Wait a minute.' }, 429);
+    }
 
     const username = (body.username || '').trim();
     const email = (body.email || '').trim() || null;
@@ -15,6 +21,9 @@ export async function onRequestPost(context) {
     }
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
       return json({ error: 'Username may only contain letters, numbers, and underscores' }, 400);
+    }
+    if (hasProfanity(username)) {
+      return json({ error: 'Username contains blocked words' }, 400);
     }
     if (password.length < 8) {
       return json({ error: 'Password must be at least 8 characters' }, 400);
@@ -40,6 +49,6 @@ export async function onRequestPost(context) {
     setSessionCookie(response, token);
     return response;
   } catch (e) {
-    return json({ error: e.message, stack: e.stack }, 500);
+    return json({ error: e.message }, 500);
   }
 }

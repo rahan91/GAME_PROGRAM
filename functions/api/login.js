@@ -1,10 +1,16 @@
 import { json, verifyPassword, createSession, setSessionCookie } from '../_lib/auth.js';
+import { checkRateLimit } from '../_lib/moderation.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400); }
+
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+    if (!checkRateLimit('login:' + ip, 8, 60000)) {
+      return json({ error: 'Too many login attempts. Wait a minute.' }, 429);
+    }
 
     const login = (body.login || '').trim();
     const password = body.password || '';
@@ -26,6 +32,6 @@ export async function onRequestPost(context) {
     setSessionCookie(response, token);
     return response;
   } catch (e) {
-    return json({ error: e.message, stack: e.stack }, 500);
+    return json({ error: e.message }, 500);
   }
 }
