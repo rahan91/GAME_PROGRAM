@@ -121,6 +121,12 @@
     paint();
     loadCustom();
     requestAnimationFrame(tick);
+
+    fetch('/api/settings').then(function(r){ return r.json(); }).then(function(s){
+      if (s.showTrail === false) {
+        trail.forEach(function(t){ t.style.display = 'none'; });
+      }
+    }).catch(function(){});
   }
 
   if (document.readyState === 'loading') {

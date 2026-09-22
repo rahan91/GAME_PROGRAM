@@ -604,6 +604,16 @@
           <input type="checkbox" id="settingAutoReady"> Auto-ready in lobbies
         </label>
       </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="settingShowTrail"> Show cursor trail
+        </label>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="settingAnimations"> Page animations
+        </label>
+      </div>
       <button class="submit" id="saveSettings">Save</button>
       <div id="settingsStatus" style="margin-top:8px;font-size:12px;min-height:18px;"></div>
     </div>
@@ -838,6 +848,8 @@
         document.getElementById('settingLeftHanded').checked = !!data.leftHanded;
         document.getElementById('settingAutoReady').checked = !!data.autoReady;
         document.getElementById('settingCursor').value = data.cursorStyle || 'default';
+        document.getElementById('settingShowTrail').checked = data.showTrail !== false;
+        document.getElementById('settingAnimations').checked = data.animations !== false;
       } catch {}
       settingsModal.classList.add('open');
     });
@@ -855,6 +867,8 @@
             leftHanded: document.getElementById('settingLeftHanded').checked,
             autoReady: document.getElementById('settingAutoReady').checked,
             cursorStyle: document.getElementById('settingCursor').value,
+            showTrail: document.getElementById('settingShowTrail').checked,
+            animations: document.getElementById('settingAnimations').checked,
           })
         });
         const data = await res.json();
