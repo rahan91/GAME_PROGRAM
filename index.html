@@ -297,6 +297,20 @@
       margin: 0 auto 10px;
       text-shadow: 0 0 30px rgba(var(--acc-btn), 0.3);
     }
+    .lb-pool-stat {
+      flex: 1; padding: 10px 14px; background: rgba(0,0,0,0.35);
+      text-align: center;
+    }
+    .lb-pool-stat:first-child { border-radius: 8px 0 0 8px; }
+    .lb-pool-stat:last-child { border-radius: 0 8px 8px 0; }
+    .lb-pool-label {
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(var(--acc-main),0.5); margin-bottom: 2px;
+    }
+    .lb-pool-val {
+      font-size: 16px; font-weight: 600; color: rgba(var(--acc-text),0.95);
+      font-variant-numeric: tabular-nums;
+    }
     .lb-board {
       width: 100%;
       max-height: 55vh;
@@ -689,6 +703,7 @@
 
   <div class="lb">
     <div class="lb-title">Leaderboard</div>
+    <div id="lbPool" style="max-width:500px;margin:0 auto 10px;display:flex;gap:1px;border-radius:8px;overflow:hidden;background:rgba(var(--acc-main),0.12);"></div>
     <div class="lb-board">
       <div class="lb-head">
         <div class="rk">#</div>
@@ -953,8 +968,22 @@
         '</div>'
       ).join('');
     }
+    async function loadPoolStats() {
+      const pool = document.getElementById('lbPool');
+      try {
+        const res = await fetch('/api/leaderboard?limit=1');
+        const data = await res.json();
+        const lb = data.leaderboard || [];
+        const totalPlayers = data.total || lb.length;
+        const topScore = lb.length ? Shop.fmt(lb[0].total) : '0';
+        pool.innerHTML =
+          '<div class="lb-pool-stat"><div class="lb-pool-label">Players</div><div class="lb-pool-val">' + totalPlayers + '</div></div>' +
+          '<div class="lb-pool-stat"><div class="lb-pool-label">Top Score</div><div class="lb-pool-val">' + topScore + '</div></div>';
+      } catch {}
+    }
     loadLeaderboard();
-    window.addEventListener('pageshow', () => { initAuth(); loadLeaderboard(); });
+    loadPoolStats();
+    window.addEventListener('pageshow', () => { initAuth(); loadLeaderboard(); loadPoolStats(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) { initAuth(); loadLeaderboard(); } });
 
     // ---- Top Game Tag ----

@@ -28,7 +28,8 @@ export async function onRequestGet(context) {
     const rows = await context.env.DATABASE.prepare(
       'SELECT user_id AS id, username, total FROM scores WHERE total > 0 ORDER BY total DESC, updated_at ASC LIMIT ?'
     ).bind(limit).all();
-    return json({ leaderboard: await attachNameplates(context.env, rows.results) });
+    const count = await context.env.DATABASE.prepare('SELECT COUNT(*) AS c FROM scores WHERE total > 0').first();
+    return json({ leaderboard: await attachNameplates(context.env, rows.results), total: count ? count.c : rows.results.length });
   }
 
   const col = metric === 'best' ? 'best' : 'total';
