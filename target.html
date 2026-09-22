@@ -84,7 +84,7 @@ body {
     position: fixed; top: 20px; left: 0; right: 0;
     text-align: center; pointer-events: none;
     font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
-    font-weight: 700; letter-spacing: 6px;
+    letter-spacing: 6px;
     text-transform: uppercase; color: rgba(var(--acc-main),0.85);
   }
 
@@ -154,7 +154,7 @@ body {
     text-transform: uppercase; color: rgba(var(--acc-main),0.85);
     padding: 10px 14px 7px; border-bottom: 1px solid rgba(var(--acc-main),0.18);
   }
-  #leaderboard .lb-body { padding: 5px 0; overflow: hidden; }
+  #leaderboard .lb-body { padding: 5px 0; overflow-y: auto; }
   .lb-row { display: flex; align-items: center; gap: 8px; padding: 4px 14px; font-size: 12px; }
   .lb-row.me { background: rgba(var(--acc-main),0.14); }
   .lb-row .rk { width: 18px; color: rgba(var(--acc-main),0.45); font-variant-numeric: tabular-nums; text-align: right; }
