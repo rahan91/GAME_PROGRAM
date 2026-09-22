@@ -620,6 +620,15 @@
           <input type="checkbox" id="settingAnimations"> Page animations
         </label>
       </div>
+      <div style="border-top:1px solid rgba(var(--acc-main),0.15);padding-top:14px;margin-top:6px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(200,100,90,0.7);margin-bottom:10px;">Danger Zone</div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(var(--acc-main),0.5);display:block;margin-bottom:6px;">New Password</label>
+          <input type="password" id="settingNewPass" placeholder="(leave blank to keep)" style="width:100%;padding:8px;border:1px solid rgba(var(--acc-main),0.2);border-radius:6px;background:rgba(var(--acc-dim),0.15);color:#e0e0e0;font-size:13px;">
+        </div>
+        <button class="submit" id="changePassBtn" style="background:rgba(200,140,60,0.25);margin-bottom:10px;width:100%;">Change Password</button>
+        <button class="submit" id="deleteAccountBtn" style="background:rgba(200,60,50,0.25);color:rgba(255,140,130,0.9);width:100%;">Delete Account</button>
+      </div>
       <button class="submit" id="saveSettings">Save</button>
       <div id="settingsStatus" style="margin-top:8px;font-size:12px;min-height:18px;"></div>
     </div>
@@ -885,6 +894,36 @@
           status.textContent = data.error || 'Error';
         }
       } catch { status.textContent = 'Network error'; }
+    });
+
+    document.getElementById('changePassBtn').addEventListener('click', async () => {
+      const newPass = document.getElementById('settingNewPass').value;
+      if (!newPass || newPass.length < 6) { document.getElementById('settingsStatus').textContent = 'Password must be 6+ chars'; return; }
+      try {
+        const res = await fetch('/api/settings/password', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: newPass })
+        });
+        const data = await res.json();
+        if (data.ok) { document.getElementById('settingsStatus').textContent = 'Password changed!'; document.getElementById('settingNewPass').value = ''; }
+        else { document.getElementById('settingsStatus').textContent = data.error || 'Error'; }
+      } catch { document.getElementById('settingsStatus').textContent = 'Network error'; }
+    });
+
+    document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
+      if (!confirm('PERMANENTLY DELETE your account?\n\nThis removes all your scores, purchases, and equips. This cannot be undone.')) return;
+      if (!confirm('Are you REALLY sure? Type your username to confirm in the next prompt.')) return;
+      const username = prompt('Type your username to confirm deletion:');
+      if (!username) return;
+      try {
+        const res = await fetch('/api/settings/delete-account', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirm: username })
+        });
+        const data = await res.json();
+        if (data.ok) { window.location.href = '/gallery'; }
+        else { document.getElementById('settingsStatus').textContent = data.error || 'Error'; }
+      } catch { document.getElementById('settingsStatus').textContent = 'Network error'; }
     });
 
     // ---- Leaderboard ----
