@@ -60,6 +60,6 @@ export async function onRequestPost(context) {
 
     return json({ ok: true });
   } catch (e) {
-    return json({ track_error: 'Track error' }, 500);
+    return json({ error: 'Track error' }, 500);
   }
 }
