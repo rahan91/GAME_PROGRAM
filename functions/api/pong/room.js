@@ -215,7 +215,7 @@ async function handleStart(db, user, body, now) {
   if (room.mode === 'quads' && playerCount % 4 !== 0) return json({ error: 'Quads mode needs players divisible by 4' }, 400);
 
   try {
-    await db.prepare("UPDATE pong_rooms SET status = 'playing', round_num = 0, score_top = 0, score_bottom = 0, score_left = 0, score_right = 0, winner_id = NULL, last_tick_at = ?, expires_at = ? WHERE id = ?").bind(now, now + ROOM_EXPIRY_SECONDS, room.id).run();
+    await db.prepare("UPDATE pong_rooms SET status = 'playing', round_num = 0, score_top = 0, score_bottom = 0, score_left = 0, score_right = 0, winner_id = NULL, last_tick_at = ?, expires_at = ? WHERE id = ?").bind(Date.now(), now + ROOM_EXPIRY_SECONDS, room.id).run();
   } catch (e) {
     await db.prepare("UPDATE pong_rooms SET status = 'playing', expires_at = ? WHERE id = ?").bind(now + ROOM_EXPIRY_SECONDS, room.id).run();
   }
