@@ -341,6 +341,11 @@
     .lb-row.rank-1 { background: linear-gradient(90deg, rgba(255,215,0,0.15), transparent 70%); }
     .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192,192,192,0.12), transparent 70%); }
     .lb-row.rank-3 { background: linear-gradient(90deg, rgba(205,127,50,0.12), transparent 70%); }
+    .nm-medal { flex: 1; overflow: hidden; }
+    .nm-medal .nm { display: block; padding: 2px 6px; border-radius: 3px; }
+    .nm-medal.medal-1 .nm { background: linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,170,0,0.1)); }
+    .nm-medal.medal-2 .nm { background: linear-gradient(135deg, rgba(192,192,192,0.15), rgba(200,200,200,0.08)); }
+    .nm-medal.medal-3 .nm { background: linear-gradient(135deg, rgba(205,127,50,0.15), rgba(220,160,96,0.08)); }
     .lb-head .rk, .lb-head .pl, .lb-head .pt,
     .lb-row .rk, .lb-row .pl, .lb-row .pt { text-align: right; }
     .lb-head .rk, .lb-head .pl, .lb-row .rk, .lb-row .pl { padding-right: 8px; }
@@ -935,13 +940,15 @@
 
     document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
       if (!confirm('PERMANENTLY DELETE your account?\n\nThis removes all your scores, purchases, and equips. This cannot be undone.')) return;
-      if (!confirm('Are you REALLY sure? Type your username to confirm in the next prompt.')) return;
-      const username = prompt('Type your username to confirm deletion:');
-      if (!username) return;
+      if (!confirm('Are you REALLY sure?')) return;
+      const password = prompt('Enter your password to confirm:');
+      if (!password) return;
+      const phrase = prompt('Type DELETE MY ACCOUNT to confirm:');
+      if (!phrase || phrase !== 'DELETE MY ACCOUNT') { document.getElementById('settingsStatus').textContent = 'Confirmation failed'; return; }
       try {
         const res = await fetch('/api/settings/delete-account', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ confirm: username })
+          body: JSON.stringify({ confirm: 'DELETE MY ACCOUNT', password: password })
         });
         const data = await res.json();
         if (data.ok) { window.location.href = '/gallery'; }
@@ -970,7 +977,7 @@
       container.innerHTML = rows.map((row, i) =>
         '<div class="lb-row' + (row.username === meUser ? ' me' : '') + (i < 3 ? ' rank-' + (i + 1) : '') + '">' +
         '<div class="rk' + (i < 3 ? ' top rk' + (i + 1) : '') + '">' + (i + 1) + '</div>' +
-        window.Shop.npHTML(row) +
+        '<div class="nm-medal medal-' + (i + 1) + '">' + window.Shop.npHTML(row) + '</div>' +
         '<div class="pl">' + (row.id !== undefined ? row.id : '') + '</div>' +
         '<div class="pt">' + (row.total !== undefined ? Shop.fmt(row.total) : 0) + '</div>' +
         '</div>'
