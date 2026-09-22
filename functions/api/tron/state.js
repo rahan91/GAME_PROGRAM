@@ -99,7 +99,7 @@ async function handleState(context, code, user) {
     }
   }
 
-  if (writes.length) { try { await db.batch(writes); } catch {} }
+  if (writes.length) { try { await db.batch(writes); } catch (e) { console.error('tron state batch error:', e); } }
 
   let winner = null, winnerName = null;
   if (room.status === 'finished' && room.winner_id) {
@@ -140,7 +140,7 @@ export async function onRequestGet(context) {
     const user = await getUserFromRequest(context.env, context.request);
     return await handleState(context, code, user);
   } catch (e) {
-    return json({ error: 'State error: ' + (e.message || e) }, 500);
+    return json({ error: 'State error' }, 500);
   }
 }
 
@@ -175,6 +175,6 @@ export async function onRequestPost(context) {
 
     return await handleState(context, code, user);
   } catch (e) {
-    return json({ error: 'State error: ' + (e.message || e) }, 500);
+    return json({ error: 'State error' }, 500);
   }
 }

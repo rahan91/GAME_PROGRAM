@@ -1,4 +1,5 @@
 import { json } from '../_lib/auth.js';
+import { checkRateLimit } from '../_lib/moderation.js';
 
 const RESET_INTERVAL = 3600;
 
@@ -42,16 +43,20 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   try {
+    const ip = context.request.headers.get('cf-connecting-ip') || 'unknown';
+    if (!checkRateLimit('plays:' + ip, 60, 60000)) {
+      return json({ error: 'Too many requests' }, 429);
+    }
+
     let body;
     try { body = await context.request.json(); } catch { return json({ error: 'Invalid body' }, 400); }
     const game = body && body.game ? String(body.game).toLowerCase() : null;
     if (!game) return json({ error: 'Missing game' }, 400);
 
     const db = context.env.DATABASE;
-    try {
-      await db.prepare('UPDATE game_plays SET plays = plays + 1, last_updated = ? WHERE game = ?')
-        .bind(Math.floor(Date.now() / 1000), game).run();
-    } catch {}
+    await db.prepare(
+      'INSERT INTO game_plays (game, plays, last_updated) VALUES (?, 1, ?) ON CONFLICT(game) DO UPDATE SET plays = plays + 1, last_updated = excluded.last_updated'
+    ).bind(game, Math.floor(Date.now() / 1000)).run();
 
     return json({ ok: true });
   } catch (e) {

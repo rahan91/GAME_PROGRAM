@@ -12,7 +12,7 @@ export async function onRequestPost(context) {
   if (!username) return json({ error: 'username is required' }, 400);
 
   const user = await context.env.DATABASE.prepare(
-    'SELECT id FROM users WHERE username = ?'
+    'SELECT id FROM users WHERE LOWER(username) = LOWER(?)'
   ).bind(username).first();
   if (!user) return json({ error: 'User not found' }, 404);
 
@@ -24,6 +24,9 @@ export async function onRequestPost(context) {
     context.env.DATABASE.prepare('DELETE FROM cut_runs WHERE user_id = ?').bind(user.id),
     context.env.DATABASE.prepare('DELETE FROM circle_runs WHERE user_id = ?').bind(user.id),
     context.env.DATABASE.prepare('DELETE FROM elo_ratings WHERE user_id = ?').bind(user.id),
+    context.env.DATABASE.prepare('DELETE FROM user_settings WHERE user_id = ?').bind(user.id),
+    context.env.DATABASE.prepare('DELETE FROM pong_players WHERE user_id = ?').bind(user.id),
+    context.env.DATABASE.prepare('DELETE FROM tron_players WHERE user_id = ?').bind(user.id),
   ]);
 
   return json({ username, reset: true });

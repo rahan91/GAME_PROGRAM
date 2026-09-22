@@ -75,7 +75,7 @@ export async function onRequestPost(context) {
     if (action === 'rematch') return handleRematch(db, user, body, now);
     return json({ error: 'Unknown action' }, 400);
   } catch (e) {
-    return json({ error: 'Server error: ' + (e.message || e) }, 500);
+    return json({ error: 'Server error' }, 500);
   }
 }
 

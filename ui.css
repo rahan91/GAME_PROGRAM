@@ -19,6 +19,9 @@ h1 {
     0 0 60px rgba(var(--acc-btn), 0.08);
 }
 
+/* index title uses transparent gradient fill + drop-shadow; skip text-shadow so it doesn't bleed through */
+.title h1 { text-shadow: none; }
+
 /* back links slide slightly on hover */
 .back {
   display: inline-block;

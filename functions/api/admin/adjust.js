@@ -18,7 +18,7 @@ export async function onRequestPost(context) {
   if (!Number.isFinite(delta)) return json({ error: 'delta must be a number' }, 400);
 
   const user = await context.env.DATABASE.prepare(
-    'SELECT id, username FROM users WHERE username = ?'
+    'SELECT id, username FROM users WHERE LOWER(username) = LOWER(?)'
   ).bind(username).first();
   if (!user) return json({ error: 'User not found' }, 404);
 

@@ -46,18 +46,8 @@ export async function onRequestPost(context) {
     ratings[String(Number(row.user_id))] = row;
   }
 
-  const usernameEntries = await db.prepare(
-    `SELECT user_id, username FROM tron_players WHERE room_id = ? AND user_id IN (${players.map(() => '?').join(',')})`
-  ).bind(roomId, ...players).all();
-  const usernames = {};
-  for (const row of (usernameEntries.results || [])) {
-    usernames[String(Number(row.user_id))] = row.username;
-  }
-
   const normWinner = String(Number(winnerId));
   const winnerRating = ratings[normWinner] ? ratings[normWinner].rating : 1200;
-  const winnerGames = ratings[normWinner] ? ratings[normWinner].games_played : 0;
-  const winnerK = getKFactor(winnerGames);
 
   const opponentIds = players.filter((p) => String(Number(p)) !== normWinner);
   const avgOpponentRating = opponentIds.length > 0

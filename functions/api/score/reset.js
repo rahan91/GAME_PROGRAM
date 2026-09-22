@@ -12,6 +12,8 @@ export async function onRequestPost(context) {
     context.env.DATABASE.prepare('DELETE FROM cut_runs WHERE user_id = ?').bind(user.id),
     context.env.DATABASE.prepare('DELETE FROM circle_runs WHERE user_id = ?').bind(user.id),
     context.env.DATABASE.prepare('DELETE FROM elo_ratings WHERE user_id = ?').bind(user.id),
+    context.env.DATABASE.prepare('DELETE FROM pong_players WHERE user_id = ?').bind(user.id),
+    context.env.DATABASE.prepare('DELETE FROM tron_players WHERE user_id = ?').bind(user.id),
   ]);
 
   return json({ total: 0, plays: 0, spent: 0, balance: 0 });

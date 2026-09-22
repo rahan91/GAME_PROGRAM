@@ -100,8 +100,12 @@ function tickBall(ball, players, speed, elapsed) {
 async function tickAndUpdate(db, room, players) {
   const now = Date.now();
   const lastTick = Number(room.last_tick_at);
-  const elapsed = lastTick > 0 ? (now - lastTick) : 100;
-  if (elapsed < 25) return;
+  const realElapsed = lastTick > 0 ? (now - lastTick) : 100;
+  if (realElapsed < 25) return;
+
+  // Cap catch-up physics so throttled/backgrounded tabs can't tunnel the ball
+  // through paddles or walls; the remainder is discarded, not fast-forwarded.
+  const elapsed = Math.min(realElapsed, 400);
 
   const paddleWrites = [];
   const updatedPlayers = players.map(p => {
@@ -177,7 +181,7 @@ async function tickAndUpdate(db, room, players) {
   writes.push(db.prepare('UPDATE pong_rooms SET last_tick_at = ? WHERE id = ?').bind(now, room.id));
 
   if (writes.length) {
-    try { await db.batch(writes); } catch {}
+    try { await db.batch(writes); } catch (e) { console.error('pong state batch error:', e); }
   }
 }
 
@@ -235,7 +239,7 @@ export async function onRequestGet(context) {
     const user = await getUserFromRequest(context.env, context.request);
     return await handleState(context, code, user);
   } catch (e) {
-    return json({ error: 'State error: ' + (e.message || e) }, 500);
+    return json({ error: 'State error' }, 500);
   }
 }
 
@@ -263,6 +267,6 @@ export async function onRequestPost(context) {
 
     return await handleState(context, code, user);
   } catch (e) {
-    return json({ error: 'State error: ' + (e.message || e) }, 500);
+    return json({ error: 'State error' }, 500);
   }
 }

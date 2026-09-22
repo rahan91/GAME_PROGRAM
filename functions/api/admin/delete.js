@@ -13,7 +13,7 @@ export async function onRequestPost(context) {
   if (username.toLowerCase() === 'ruruskaado') return json({ error: 'Cannot delete admin' }, 400);
 
   const user = await context.env.DATABASE.prepare(
-    'SELECT id FROM users WHERE username = ?'
+    'SELECT id FROM users WHERE LOWER(username) = LOWER(?)'
   ).bind(username).first();
   if (!user) return json({ error: 'User not found' }, 404);
 

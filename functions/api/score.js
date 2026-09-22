@@ -49,10 +49,9 @@ export async function onRequestPost(context) {
   await context.env.DATABASE.batch(ops);
 
   if (GAMES[game]) {
-    try {
-      await context.env.DATABASE.prepare('UPDATE game_plays SET plays = plays + 1, last_updated = ? WHERE game = ?')
-        .bind(now, game).run();
-    } catch {}
+    await context.env.DATABASE.prepare(
+      'INSERT INTO game_plays (game, plays, last_updated) VALUES (?, 1, ?) ON CONFLICT(game) DO UPDATE SET plays = plays + 1, last_updated = excluded.last_updated'
+    ).bind(game, now).run();
   }
 
   const row = await context.env.DATABASE.prepare(

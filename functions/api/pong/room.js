@@ -55,7 +55,7 @@ export async function onRequestPost(context) {
     if (action === 'rematch') return handleRematch(db, user, body, now);
     return json({ error: 'Unknown action' }, 400);
   } catch (e) {
-    return json({ error: 'Server error: ' + (e.message || e) }, 500);
+    return json({ error: 'Server error' }, 500);
   }
 }
 
@@ -226,7 +226,7 @@ async function handleStart(db, user, body, now) {
   }
 
   await db.prepare('DELETE FROM pong_ball WHERE room_id = ?').bind(room.id).run();
-  const spd = room.speed === 'fast' ? 8 : room.speed === 'slow' ? 3 : 5;
+  const spd = room.speed === 'fast' ? 0.045 : room.speed === 'slow' ? 0.02 : 0.03;
   const vx = room.speed === 'fast' ? 0.045 : room.speed === 'slow' ? 0.02 : 0.03;
   const angle = Math.random() * Math.PI * 2;
   const bvx = Math.cos(angle) * vx;

@@ -38,8 +38,17 @@ async function hmacVerify(data, sig, secret) {
   return crypto.subtle.verify('HMAC', key, sigBytes, new TextEncoder().encode(data));
 }
 
+let ephemeralSecret = null;
+
 function getSecret(env) {
-  return env.SESSION_SECRET || env.JWT_SECRET || 'game-program-fallback-secret-key-2024';
+  if (env.SESSION_SECRET || env.JWT_SECRET) return env.SESSION_SECRET || env.JWT_SECRET;
+  if (!ephemeralSecret) {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    ephemeralSecret = b64url(bytes);
+    console.warn('auth: no SESSION_SECRET/JWT_SECRET configured; using ephemeral secret. Sessions will not survive Worker restarts.');
+  }
+  return ephemeralSecret;
 }
 
 export function json(data, status = 200) {

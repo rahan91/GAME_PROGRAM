@@ -49,6 +49,6 @@ export async function onRequestPost(context) {
     setSessionCookie(response, token);
     return response;
   } catch (e) {
-    return json({ error: e.message }, 500);
+    return json({ error: 'Server error' }, 500);
   }
 }
