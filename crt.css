@@ -1,12 +1,12 @@
 :root {
-  --acc-main: 140,180,150;
-  --acc-dim: 80,100,90;
-  --acc-bright: 160,220,180;
-  --acc-text: 200,220,205;
-  --acc-texthi: 220,240,225;
-  --acc-btn: 100,180,120;
-  --acc-panel: 30,38,34;
-  --acc-orb: 70,95,80;
+  --acc-main: 130,165,140;
+  --acc-dim: 75,95,85;
+  --acc-bright: 150,205,170;
+  --acc-text: 195,215,200;
+  --acc-texthi: 215,235,220;
+  --acc-btn: 95,165,115;
+  --acc-panel: 28,35,32;
+  --acc-orb: 65,88,75;
 }
 
 .crt {
