@@ -83,9 +83,9 @@
 
   // ---------------- Button ----------------
   // Score grows with hold time on a single saturating curve:
-  //   score(t) = 450 * (1 - e^(-0.0428 * t))^2.3     (t in seconds)
-  // Fast early gains that taper off; never exceeds 450.
-  var BUTTON_SCORE_MAX = 450;
+  //   score(t) = 2000 * (1 - e^(-0.0428 * t))^2.3     (t in seconds)
+  // Fast early gains that taper off; never exceeds 2000.
+  var BUTTON_SCORE_MAX = 2000;
   var BUTTON_SCORE_RATE = 0.0428;
   var BUTTON_SCORE_POWER = 2.3;
 
@@ -103,7 +103,7 @@
   // score; difficulty adds only a small multiplier on top (how well you traced
   // the shape matters far more than which difficulty you picked); finishing
   // fast adds a small bonus.
-  var CUT_ACC_PERFECT = 40;    // accuracy component at 100% IoU (before mult)
+  var CUT_ACC_PERFECT = 200;    // accuracy component at 100% IoU (before mult)
   var CUT_ACC_POWER = 2.0;      // accuracy is squared: sub-perfect cuts decay fast
   var CUT_TIME_MAX = 1.05;      // fast finish: +5% max, never more
   var CUT_DIFFS = {
@@ -135,7 +135,7 @@
   //      * size      — how well the mean radius matches the guide ring radius
   //  - coverage is the fraction of the loop actually drawn
   //  - time is only a modest swing between -15% and +15%. No hard errors.
-  var CIRCLE_ACC_PERFECT = 20;   // accuracy term at 100% (full coverage too)
+  var CIRCLE_ACC_PERFECT = 200;   // accuracy term at 100% (full coverage too)
   var CIRCLE_ACC_POWER = 3.0;    // accuracy is cubed: wobble hurts fast
   var CIRCLE_ACC_K = 2.5;        // circularity calibration: score drops 2.5x
                                  // faster than the raw radial error, matching
