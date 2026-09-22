@@ -320,7 +320,13 @@
       color: rgba(var(--acc-text), 0.85);
       font-size: 0.78rem;
       font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
+      border-radius: 4px;
+      transition: background 0.15s;
     }
+    .lb-row.me { background: rgba(var(--acc-main), 0.12); }
+    .lb-row.rank-1 { background: linear-gradient(90deg, rgba(255,215,0,0.15), transparent 70%); }
+    .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192,192,192,0.12), transparent 70%); }
+    .lb-row.rank-3 { background: linear-gradient(90deg, rgba(205,127,50,0.12), transparent 70%); }
     .lb-head .rk, .lb-head .pl, .lb-head .pt,
     .lb-row .rk, .lb-row .pl, .lb-row .pt { text-align: right; }
     .lb-head .rk, .lb-head .pl, .lb-row .rk, .lb-row .pl { padding-right: 8px; }
@@ -900,7 +906,7 @@
       if (!rows.length) { container.innerHTML = '<div class="lb-status">No scores yet. Play a game, then come back.</div>'; return; }
       const meUser = me;
       container.innerHTML = rows.map((row, i) =>
-        '<div class="lb-row' + (row.username === meUser ? ' me' : '') + '">' +
+        '<div class="lb-row' + (row.username === meUser ? ' me' : '') + (i < 3 ? ' rank-' + (i + 1) : '') + '">' +
         '<div class="rk' + (i < 3 ? ' top rk' + (i + 1) : '') + '">' + (i + 1) + '</div>' +
         window.Shop.npHTML(row) +
         '<div class="pl">' + (row.id !== undefined ? row.id : '') + '</div>' +
