@@ -566,7 +566,6 @@
       .grid-inner {
         width: min(558px, calc(100vw - 32px));
         grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: none;
         gap: 14px;
       }
       .card {
@@ -941,7 +940,7 @@
 
     document.getElementById('changePassBtn').addEventListener('click', async () => {
       const newPass = document.getElementById('settingNewPass').value;
-      if (!newPass || newPass.length < 6) { document.getElementById('settingsStatus').textContent = 'Password must be 6+ chars'; return; }
+      if (!newPass || newPass.length < 8) { document.getElementById('settingsStatus').textContent = 'Password must be 8+ chars'; return; }
       try {
         const res = await fetch('/api/settings/password', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },

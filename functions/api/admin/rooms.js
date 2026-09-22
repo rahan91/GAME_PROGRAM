@@ -27,13 +27,13 @@ export async function onRequestGet(context) {
   ).bind(now).all();
 
   const gameStats = await context.env.DATABASE.prepare(
-    `SELECT (SELECT COUNT(*) FROM game_plays WHERE game = 'maze') AS maze,
-            (SELECT COUNT(*) FROM game_plays WHERE game = 'target') AS target,
-            (SELECT COUNT(*) FROM game_plays WHERE game = 'button') AS button,
-            (SELECT COUNT(*) FROM game_plays WHERE game = 'cut') AS cut,
-            (SELECT COUNT(*) FROM game_plays WHERE game = 'circle') AS circle,
-            (SELECT COUNT(*) FROM game_plays WHERE game = 'pong') AS pong,
-            (SELECT COUNT(*) FROM game_plays WHERE game = 'tron') AS tron`
+    `SELECT (SELECT plays FROM game_plays WHERE game = 'maze') AS maze,
+            (SELECT plays FROM game_plays WHERE game = 'target') AS target,
+            (SELECT plays FROM game_plays WHERE game = 'button') AS button,
+            (SELECT plays FROM game_plays WHERE game = 'cut') AS cut,
+            (SELECT plays FROM game_plays WHERE game = 'circle') AS circle,
+            (SELECT plays FROM game_plays WHERE game = 'pong') AS pong,
+            (SELECT plays FROM game_plays WHERE game = 'tron') AS tron`
   ).first();
 
   return json({

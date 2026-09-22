@@ -310,6 +310,7 @@
   <script src="shop.js"></script>
   <script>
 (function () {
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   var notAdmin = document.getElementById('notAdmin');
   var panel = document.getElementById('panel');
   var who = document.getElementById('who');
@@ -494,7 +495,7 @@
       var date = u.created_at ? new Date(u.created_at * 1000).toISOString().slice(0, 10) : '-';
       tr.innerHTML =
         '<td>' + (i + 1) + '</td>' +
-        '<td class="user">' + u.username + '</td>' +
+        '<td class="user">' + esc(u.username) + '</td>' +
         '<td class="num">' + Shop.fmt(u.total) + '</td>' +
         '<td class="num">' + Shop.fmt(u.spent) + '</td>' +
         '<td class="num">' + Shop.fmt(u.balance) + '</td>' +
@@ -582,7 +583,7 @@
           '<td style="' + statusColor + '">' + r.status + '</td>' +
           '<td class="num">' + r.player_count + '/' + r.max_players + '</td>' +
           '<td>' + r.speed + '</td>' +
-          '<td style="font-size:12px;">' + name + '</td>' +
+          '<td style="font-size:12px;">' + esc(name) + '</td>' +
           '<td><button class="close-room-btn" data-game="' + r.game + '" data-id="' + r.id + '">Close</button></td>';
         tbody.appendChild(tr);
       });

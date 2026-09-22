@@ -8,8 +8,7 @@ export async function onRequestPost(context) {
     context.env.DATABASE.prepare(
       'UPDATE scores SET total = 0, plays = 0, spent = 0, updated_at = unixepoch() WHERE user_id = ?'
     ).bind(user.id),
-    context.env.DATABASE.prepare('DELETE FROM purchases WHERE user_id = ?').bind(user.id),
-    context.env.DATABASE.prepare('DELETE FROM equips WHERE user_id = ?').bind(user.id),
+    context.env.DATABASE.prepare('DELETE FROM game_stats WHERE user_id = ?').bind(user.id),
   ]);
 
   return json({ total: 0, plays: 0, spent: 0, balance: 0 });
