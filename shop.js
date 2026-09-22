@@ -387,9 +387,11 @@
       if (row && row.nameplateColors && row.nameplateColors.length) {
         var aid = npAnimId(row.nameplateColors);
         npKeyframes(aid, row.nameplateColors);
-        return '<span class="nm" style="animation:' + aid + ' ' + npDuration(row.nameplateColors, row.nameplateSpeed) + ' linear infinite">' + uname + '</span>';
+        return '<span class="nm" style="animation:' + aid + ' ' + npDuration(row.nameplateColors, row.nameplateSpeed) + ' linear infinite;text-shadow:0 0 8px currentColor">' + uname + '</span>';
       }
-      return '<span class="nm" style="color:' + ((row && row.nameplate) || '#828282') + '">' + uname + '</span>';
+      var c = (row && row.nameplate) || '#828282';
+      var glow = c === '#828282' ? '' : ';text-shadow:0 0 8px ' + c;
+      return '<span class="nm" style="color:' + c + glow + '">' + uname + '</span>';
     },
 
     state: function () {
