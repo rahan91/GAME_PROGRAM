@@ -29,8 +29,12 @@ export async function onRequestPost(context) {
       return json({ error: 'Password must be at least 8 characters' }, 400);
     }
 
+    if (username.toLowerCase() === 'ruruskaado') {
+      return json({ error: 'Username reserved' }, 409);
+    }
+
     const existing = await env.DATABASE.prepare(
-      'SELECT id FROM users WHERE username = ? OR (email IS NOT NULL AND email = ?)'
+      'SELECT id FROM users WHERE LOWER(username) = LOWER(?) OR (email IS NOT NULL AND email = ?)'
     ).bind(username, email).first();
     if (existing) {
       return json({ error: 'Username or email already taken' }, 409);
