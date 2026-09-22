@@ -8,7 +8,7 @@ async function handleState(context, code, user) {
   const db = context.env.DATABASE;
 
   const room = await db.prepare(
-    'SELECT id, code, status, host_id, max_players, speed, winner_id, grid_w, grid_h FROM tron_rooms WHERE code = ?'
+    'SELECT id, code, status, host_id, max_players, speed, winner_id, grid_w, grid_h, last_tick_at FROM tron_rooms WHERE code = ?'
   ).bind(code.toUpperCase()).first();
   if (!room) return json({ error: 'Room not found' }, 404);
 

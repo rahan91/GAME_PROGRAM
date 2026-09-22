@@ -1,0 +1,2 @@
+ALTER TABLE pong_rooms ADD COLUMN last_tick_at INTEGER DEFAULT 0;
+ALTER TABLE tron_rooms ADD COLUMN last_tick_at INTEGER DEFAULT 0;
