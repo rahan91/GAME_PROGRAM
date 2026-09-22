@@ -24,7 +24,7 @@ export async function onRequestPost(context) {
   await db.prepare('DELETE FROM purchases WHERE user_id = ?').bind(user.id).run();
   await db.prepare('DELETE FROM equips WHERE user_id = ?').bind(user.id).run();
   await db.prepare('DELETE FROM scores WHERE user_id = ?').bind(user.id).run();
-  await db.prepare('DELETE FROM game_plays WHERE user_id = ?').bind(user.id).run();
+  await db.prepare('DELETE FROM game_stats WHERE user_id = ?').bind(user.id).run();
   await db.prepare('DELETE FROM user_settings WHERE user_id = ?').bind(user.id).run();
   await db.prepare('DELETE FROM elo_ratings WHERE user_id = ?').bind(user.id).run();
   await db.prepare('DELETE FROM pong_players WHERE user_id = ?').bind(user.id).run();

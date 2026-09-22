@@ -33,14 +33,4 @@ export function checkRateLimit(key, max, windowMs) {
   return true;
 }
 
-const userIps = new Map();
 
-export function trackIp(userId, ip) {
-  if (!ip) return;
-  const existing = userIps.get(ip);
-  if (existing && existing !== userId) {
-    return { alt: existing, ip };
-  }
-  userIps.set(ip, userId);
-  return null;
-}
