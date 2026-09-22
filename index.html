@@ -426,8 +426,10 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
+      opacity: 0;
+      transition: opacity 0.2s ease;
     }
-    .modal-overlay.open { display: flex; }
+    .modal-overlay.open { display: flex; opacity: 1; }
     .modal {
       width: 320px;
       background: #1c1c1c;
@@ -435,7 +437,10 @@
       border-radius: 10px;
       padding: 24px;
       font-family: 'Space Grotesk', 'IBM Plex Mono', 'Courier New', monospace;
+      transform: scale(0.95);
+      transition: transform 0.2s ease;
     }
+    .modal-overlay.open .modal { transform: scale(1); }
     .modal h2 {
       color: rgba(var(--acc-main),0.9);
       font-weight: 300;
@@ -469,17 +474,21 @@
       font-size: 14px;
       box-sizing: border-box;
     }
-    .modal input:focus { outline: none; border-color: rgba(var(--acc-main),0.5); }
+    .modal input:focus { outline: none; border-color: rgba(var(--acc-main),0.5); box-shadow: 0 0 0 3px rgba(var(--acc-main),0.1); }
     .modal .submit {
       width: 100%;
-      padding: 10px;
+      padding: 9px 16px;
       border: none;
       border-radius: 6px;
       background: rgba(var(--acc-main),0.35);
       color: #e0e0e0;
-      font-weight: 600;
+      font-family: inherit;
+      font-size: 14px;
+      letter-spacing: 0.08em;
       cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
     }
+    .modal .submit:disabled { opacity: 0.5; cursor: default; }
     .modal .submit:hover { background: rgba(var(--acc-main),0.5); }
     .modal .err {
       color: rgba(220,120,120,0.9);
@@ -846,6 +855,9 @@
       const payload = mode === 'register'
         ? { username: login, email, password }
         : { login, password };
+      authSubmit.disabled = true;
+      authSubmit.textContent = mode === 'register' ? 'Creating...' : 'Logging in...';
+      authErr.textContent = '';
       try {
         const res = await fetch('/api/' + (mode === 'register' ? 'register' : 'login'), {
           method: 'POST',
@@ -861,6 +873,9 @@
         loadLeaderboard();
       } catch (err) {
         authErr.textContent = 'Network error';
+      } finally {
+        authSubmit.disabled = false;
+        authSubmit.textContent = mode === 'register' ? 'Create account' : 'Log in';
       }
     });
 
